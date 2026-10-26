@@ -1,4 +1,4 @@
-import { Crown } from 'lucide-react'
+import { Crown, Search } from 'lucide-react'
 import { PageTitle } from '@/components/ui/PageTitle'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -6,7 +6,6 @@ import { QueryState } from '@/components/feedback/QueryState'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { DataTable } from '@/components/ui/DataTable'
-import { TextField } from '@/components/ui/Field'
 import { Modal } from '@/components/ui/Modal'
 import { formatDateTime, formatMoney } from '@/utils/format'
 import { customersApi, POINT_LABEL } from '../api/customersApi'
@@ -30,12 +29,16 @@ export default function CustomersPage() {
           setApplied(q)
         }}
       >
-        <TextField
-          label="Tìm theo tên hoặc số điện thoại"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          className="flex-1"
-        />
+        <label className="vt-field flex min-h-11 max-w-md flex-1 items-center gap-2 rounded-full border border-line bg-white px-4">
+          <Search size={17} aria-hidden className="shrink-0 text-ink-soft" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Tìm theo tên hoặc số điện thoại..."
+            aria-label="Tìm theo tên hoặc số điện thoại"
+            className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-ink-soft"
+          />
+        </label>
         <Button type="submit">Tìm</Button>
       </form>
       <QueryState isPending={list.isPending} error={list.error} onRetry={() => void list.refetch()}>

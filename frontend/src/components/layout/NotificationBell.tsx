@@ -2,7 +2,7 @@ import clsx from 'clsx'
 import { AlertTriangle, Bell, BellOff, CheckCheck, CircleCheck, Info, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { notifications, useNotifications, type NotifTone } from '@/lib/notifications'
+import { notifications, useExtraState, useNotifications, type NotifTone } from '@/lib/notifications'
 
 export interface NotifExtra {
   id: string
@@ -32,8 +32,20 @@ export function NotificationBell({ extras = [] }: { extras?: NotifExtra[] }) {
   const list = useNotifications()
   const [open, setOpen] = useState(false)
   const box = useRef<HTMLDivElement>(null)
-  const unread = list.filter((n) => !n.read).length
-  const badge = unread + extras.length
+  const extraState = useExtraState()
+  const keyOf = (x: NotifExtra) => `${x.id}|${x.title}`
+  const shownExtras = extras.filter((x) => !extraState.hidden.includes(keyOf(x)))
+  const unreadExtras = shownExtras.filter((x) => !extraState.read.includes(keyOf(x)))
+  const unread = list.filter((n) => !n.read).length + unreadExtras.length
+  const badge = unread
+  const markAllRead = () => {
+    notifications.markAllRead()
+    notifications.readExtras(shownExtras.map(keyOf))
+  }
+  const clearAll = () => {
+    notifications.clear()
+    notifications.hideExtras(shownExtras.map(keyOf))
+  }
 
   useEffect(() => {
     if (!open) return
@@ -57,9 +69,9 @@ export function NotificationBell({ extras = [] }: { extras?: NotifExtra[] }) {
         aria-expanded={open}
         onClick={() => {
           setOpen((o) => !o)
-          if (open) notifications.markAllRead()
+          if (open) markAllRead()
         }}
-        className="vt-hover-lift relative grid h-11 w-11 place-items-center rounded-full border border-brass/60 bg-white/70 text-coffee-900 hover:bg-coffee-100"
+        className="relative grid h-10 w-10 place-items-center rounded-full border border-line bg-white text-coffee-900 transition hover:border-brass"
       >
         <Bell
           size={20}
@@ -83,7 +95,7 @@ export function NotificationBell({ extras = [] }: { extras?: NotifExtra[] }) {
             <div className="flex gap-1">
               <button
                 type="button"
-                onClick={() => notifications.markAllRead()}
+                onClick={markAllRead}
                 disabled={unread === 0}
                 title="Đánh dấu đã đọc"
                 aria-label="Đánh dấu tất cả đã đọc"
@@ -93,8 +105,8 @@ export function NotificationBell({ extras = [] }: { extras?: NotifExtra[] }) {
               </button>
               <button
                 type="button"
-                onClick={() => notifications.clear()}
-                disabled={list.length === 0}
+                onClick={clearAll}
+                disabled={list.length === 0 && shownExtras.length === 0}
                 title="Xóa tất cả"
                 aria-label="Xóa tất cả thông báo"
                 className="grid h-9 w-9 place-items-center rounded-full hover:bg-coffee-100 disabled:opacity-40"
@@ -104,8 +116,14 @@ export function NotificationBell({ extras = [] }: { extras?: NotifExtra[] }) {
             </div>
           </div>
           <ul className="max-h-[420px] overflow-y-auto">
-            {extras.map((x) => (
-              <li key={x.id} className="border-b border-line last:border-0">
+            {shownExtras.map((x) => (
+              <li
+                key={x.id}
+                className={clsx(
+                  'border-b border-line last:border-0',
+                  !extraState.read.includes(keyOf(x)) && 'bg-brass/10',
+                )}
+              >
                 <Link
                   to={x.to}
                   onClick={() => setOpen(false)}
@@ -159,7 +177,7 @@ export function NotificationBell({ extras = [] }: { extras?: NotifExtra[] }) {
                 </li>
               )
             })}
-            {list.length === 0 && extras.length === 0 && (
+            {list.length === 0 && shownExtras.length === 0 && (
               <li className="flex flex-col items-center gap-2 px-4 py-10 text-ink-soft">
                 <BellOff size={28} aria-hidden />
                 <span className="text-sm">Chưa có thông báo nào</span>

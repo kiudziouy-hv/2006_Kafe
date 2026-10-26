@@ -23,7 +23,16 @@ public class MenuImageController {
     @GetMapping("/{id}/image")
     public ResponseEntity<byte[]> image(@PathVariable int id, HttpSession s) {
         access.who(s, Role.WAITER, Role.CASHIER, Role.BARISTA);
-        var img = images.read(id);
+        var img = images.read(MenuImageStore.Kind.ITEM, id);
+        if (img == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType(img.getKey()))
+                .cacheControl(CacheControl.maxAge(Duration.ofDays(30)).cachePrivate()).body(img.getValue());
+    }
+
+    @GetMapping("/toppings/{id}/image")
+    public ResponseEntity<byte[]> toppingImage(@PathVariable int id, HttpSession s) {
+        access.who(s, Role.WAITER, Role.CASHIER, Role.BARISTA);
+        var img = images.read(MenuImageStore.Kind.TOPPING, id);
         if (img == null) return ResponseEntity.notFound().build();
         return ResponseEntity.ok().contentType(MediaType.parseMediaType(img.getKey()))
                 .cacheControl(CacheControl.maxAge(Duration.ofDays(30)).cachePrivate()).body(img.getValue());

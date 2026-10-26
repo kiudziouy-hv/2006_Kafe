@@ -3,7 +3,6 @@ import clsx from 'clsx'
 import { Link } from 'react-router-dom'
 import { useToast } from '@/components/feedback/Toaster'
 import { QueryState } from '@/components/feedback/QueryState'
-import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/features/auth'
 import { toApiError } from '@/lib/http'
@@ -15,7 +14,6 @@ const LABEL: Record<TableStatus, string> = {
   SERVING: 'Đang phục vụ',
   WAITING_PAY: 'Chờ thanh toán',
 }
-const TONE = { EMPTY: 'neutral', SERVING: 'warning', WAITING_PAY: 'danger' } as const
 
 /** UC-07..11: sơ đồ bàn (bấm bàn để gọi món) theo khu vực. Dữ liệu tự làm mới khi có thông báo thời gian thực. */
 export default function TablesPage() {
@@ -52,33 +50,31 @@ export default function TablesPage() {
       onRetry={() => void tables.refetch()}
     >
       {zones.map(([zone, list]) => (
-        <section key={zone} className="mb-6">
-          <h2 className="mb-2 text-lg font-bold">
-            {zone} ({list.length} bàn)
-          </h2>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <section key={zone} className="mb-7">
+          <h2 className="mb-3 text-lg font-semibold">{zone}</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {list.map((t) => (
               <article
                 key={t.no}
                 className={clsx(
-                  'vt-hover-lift rounded-2xl border p-4',
-                  t.status === 'EMPTY'
-                    ? 'border-brass/50 bg-gradient-to-br from-ivory to-coffee-50'
-                    : 'border-brass bg-gradient-to-br from-coffee-200 to-coffee-300/80',
+                  'vt-hover-lift relative rounded-2xl border p-4',
+                  t.status === 'EMPTY' && 'border-coffee-600/50 bg-white',
+                  t.status === 'SERVING' && 'border-coffee-600/60 bg-[#dacbb1]',
+                  t.status === 'WAITING_PAY' && 'border-dashed border-brass-dark bg-[#e9d79b]',
                 )}
               >
-                <h3 className="text-xl font-bold">Bàn {t.no}</h3>
-                <Badge tone={TONE[t.status]}>{LABEL[t.status]}</Badge>
                 <Link
                   to={`${base}/${t.no}`}
-                  className="vt-btn vt-btn-primary mt-3 block rounded-xl px-4 py-2 text-center font-semibold"
+                  aria-label={`${t.status === 'EMPTY' ? 'Gọi món' : 'Xem đơn'} bàn ${t.no}`}
+                  className="block rounded-xl outline-offset-4 after:absolute after:inset-0 after:rounded-2xl"
                 >
-                  {t.status === 'EMPTY' ? 'Gọi món' : 'Xem đơn / gọi thêm'}
+                  <h3 className="text-xl font-bold">Bàn {t.no}</h3>
+                  <p className="text-sm text-ink-soft">{LABEL[t.status]}</p>
                 </Link>
                 {t.status === 'SERVING' && t.orderId !== null && (
                   <Button
                     variant="secondary"
-                    className="mt-3 w-full"
+                    className="relative z-10 mt-3 w-full"
                     loading={finish.isPending}
                     onClick={() => finish.mutate(t.orderId!)}
                   >

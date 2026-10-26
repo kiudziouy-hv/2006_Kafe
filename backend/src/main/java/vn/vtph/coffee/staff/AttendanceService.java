@@ -36,11 +36,17 @@ public class AttendanceService {
                    (SELECT COUNT(*) FROM attendance_edit x WHERE x.attendance_id = a.attendance_id) AS edits
             FROM attendance a JOIN employee e ON e.employee_id = a.employee_id""";
 
+    /** Chấm công cần tài khoản cá nhân: tài khoản quầy dùng chung không xác định được người chấm công. */
+    private static Account personal(Account a) {
+        if (a.station) throw new OpsException(422, "STATION_ACCOUNT", "Tài khoản quầy dùng chung không chấm công. Hãy chọn tài khoản cá nhân của bạn.");
+        return a;
+    }
+
     private int employeeOf(Account a) { return db.employeeId(a); }
 
     public Map<String, Object> checkIn(int accountId, String pin, String shift) {
         if (!SHIFTS.contains(shift)) throw new OpsException(422, "BAD_SHIFT", "Chọn ca sáng hoặc ca tối.");
-        Account a = auth.loginStaff(accountId, pin);
+        Account a = personal(auth.loginStaff(accountId, pin));
         int emp = employeeOf(a);
         if (!db.jdbc.queryForList("SELECT 1 FROM attendance WHERE employee_id = ? AND check_out_time IS NULL", emp).isEmpty())
             throw new OpsException(409, "ALREADY_IN", "Bạn đã chấm công vào và chưa chấm công ra. Hãy chấm công ra hoặc nhờ Chủ quán/Quản lý chỉnh sửa.");
@@ -49,7 +55,7 @@ public class AttendanceService {
     }
 
     public Map<String, Object> checkOut(int accountId, String pin) {
-        Account a = auth.loginStaff(accountId, pin);
+        Account a = personal(auth.loginStaff(accountId, pin));
         int emp = employeeOf(a);
         Integer id = db.one("SELECT attendance_id FROM attendance WHERE employee_id = ? AND check_out_time IS NULL ORDER BY check_in_time DESC LIMIT 1",
                 (rs, n) -> rs.getInt(1), emp);

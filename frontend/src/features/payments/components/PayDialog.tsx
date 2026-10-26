@@ -131,11 +131,7 @@ export function PayDialog({
             label="Tiền khách đưa (đồng)"
             value={received}
             onValueChange={setReceived}
-            hint={
-              cashIn >= payable
-                ? `Tiền thối: ${formatMoney(cashIn - payable)}`
-                : 'Chưa đủ số tiền cần thanh toán'
-            }
+            hint={cashIn >= payable ? `Tiền thối: ${formatMoney(cashIn - payable)}` : undefined}
           />
         )}
         <Button

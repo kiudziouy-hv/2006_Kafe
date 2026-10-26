@@ -1,3 +1,4 @@
+import { Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { formatMoney } from '@/utils/format'
 import { ICE_LABEL } from '../api/ordersApi'
@@ -15,7 +16,7 @@ export function describeCartLine(l: CartLine): string {
     .join(' · ')
 }
 
-/** Giỏ các dòng món đang soạn: đổi số lượng, bỏ dòng, tạm tính (khuyến mãi do hệ thống áp dụng khi xác nhận). */
+/** Giỏ các dòng món đang soạn (chưa gửi, chỉ là bản nháp): đổi số lượng, bỏ dòng là biến mất ngay, tạm tính (khuyến mãi do hệ thống áp dụng khi xác nhận). */
 export function CartPanel({
   lines,
   onChange,
@@ -35,6 +36,15 @@ export function CartPanel({
               <p className="text-sm">{formatMoney(lineTotal(l))}</p>
             </div>
             <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                aria-label={`Bỏ ${l.item.name} khỏi danh sách`}
+                title="Bỏ món này"
+                className="px-3 !text-danger"
+                onClick={() => onChange(lines.filter((x) => x.key !== l.key))}
+              >
+                <Trash2 size={17} aria-hidden />
+              </Button>
               <Button
                 variant="secondary"
                 aria-label={`Giảm ${l.item.name}`}

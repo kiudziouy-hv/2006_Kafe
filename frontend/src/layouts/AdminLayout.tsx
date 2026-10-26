@@ -1,4 +1,12 @@
-import { BarChart3, BookOpen, Crown, Package, Receipt, Armchair, UsersRound } from 'lucide-react'
+import {
+  BarChart3,
+  BookOpen,
+  Crown,
+  Package,
+  Receipt,
+  Armchair,
+  UsersRound,
+} from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { AppShell, type NavItem } from '@/components/layout/AppShell'
 import type { NotifExtra } from '@/components/layout/NotificationBell'
@@ -6,13 +14,13 @@ import { inventoryApi } from '@/features/inventory/api/inventoryApi'
 import { useOpsNotifications } from '@/hooks/useOpsNotifications'
 
 export const ADMIN_NAV: NavItem[] = [
-  { to: '/admin', label: 'Báo cáo', end: true, icon: BarChart3 },
-  { to: '/admin/menu', label: 'Thực đơn', icon: BookOpen },
-  { to: '/admin/tables', label: 'Bàn', icon: Armchair },
-  { to: '/admin/invoices', label: 'Hóa đơn', icon: Receipt },
-  { to: '/admin/inventory', label: 'Kho', icon: Package },
-  { to: '/admin/customers', label: 'Thành viên', icon: Crown },
-  { to: '/admin/staff', label: 'Nhân sự & ca', icon: UsersRound },
+  { to: '/admin', label: 'Báo cáo', end: true, icon: BarChart3, group: 'Bán hàng' },
+  { to: '/admin/invoices', label: 'Hóa đơn', icon: Receipt, group: 'Bán hàng' },
+  { to: '/admin/tables', label: 'Bàn', icon: Armchair, group: 'Bán hàng' },
+  { to: '/admin/menu', label: 'Thực đơn', icon: BookOpen, group: 'Thực đơn' },
+  { to: '/admin/inventory', label: 'Kho', icon: Package, group: 'Kho' },
+  { to: '/admin/customers', label: 'Thành viên', icon: Crown, group: 'Nhân sự & khách' },
+  { to: '/admin/staff', label: 'Nhân sự & ca', icon: UsersRound, group: 'Nhân sự & khách' },
 ]
 
 /** Chủ quán / Quản lý: thanh bên đầy đủ; kế thừa quyền ba vai trò còn lại nên vẫn mở được /service, /cashier, /kitchen. */

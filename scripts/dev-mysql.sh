@@ -20,7 +20,8 @@ until docker exec vtph-mysql mysqladmin ping -h localhost -prootpw --silent 2>/d
 echo
 
 [ -d frontend/node_modules ] || npm --prefix frontend install
-SPRING_PROFILES_ACTIVE=mysql DB_HOST=127.0.0.1 DB_PORT="$DB_PORT" DB_USER=vtph DB_PASSWORD="$DB_PASSWORD" \
+# Ảnh món và topping nằm trong backend/uploads (được commit cùng mã nguồn); dùng đường dẫn tuyệt đối để không phụ thuộc thư mục chạy.
+UPLOADS_DIR="$(pwd -W 2>/dev/null || pwd)/backend/uploads" SPRING_PROFILES_ACTIVE=mysql DB_HOST=127.0.0.1 DB_PORT="$DB_PORT" DB_USER=vtph DB_PASSWORD="$DB_PASSWORD" \
   LEGACY_DEMO_HASH=true SERVER_PORT="$SERVER_PORT" mvn -q -f backend/pom.xml spring-boot:run &
 BACK=$!
 trap 'kill $BACK 2>/dev/null || true' EXIT

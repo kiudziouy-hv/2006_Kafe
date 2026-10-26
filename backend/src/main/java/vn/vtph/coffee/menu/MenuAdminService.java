@@ -33,11 +33,19 @@ public class MenuAdminService {
 
     public Map<String, Object> saveImage(int id, String contentType, byte[] data) {
         item(id);
-        images.save(id, contentType, data);
+        images.save(MenuImageStore.Kind.ITEM, id, contentType, data);
         return item(id);
     }
 
-    public Map.Entry<String, byte[]> readImage(int id) { return images.read(id); }
+    public Map.Entry<String, byte[]> readImage(int id) { return images.read(MenuImageStore.Kind.ITEM, id); }
+
+    public Map<String, Object> saveToppingImage(int id, String contentType, byte[] data) {
+        topping(id);
+        images.save(MenuImageStore.Kind.TOPPING, id, contentType, data);
+        return topping(id);
+    }
+
+    public Map.Entry<String, byte[]> readToppingImage(int id) { return images.read(MenuImageStore.Kind.TOPPING, id); }
 
     // ================= món =================
     @Transactional(readOnly = true)
@@ -56,7 +64,7 @@ public class MenuAdminService {
             m.put("allowCold", toBool(m.get("allowCold")));
             m.put("sizes", sizes.getOrDefault(id, List.of()));
             m.put("toppingIds", tops.getOrDefault(id, List.of()));
-            Long v = images.version(id);
+            Long v = images.version(MenuImageStore.Kind.ITEM, id);
             m.put("imageUrl", v == null ? null : "/api/admin/items/" + id + "/image?v=" + v);
         }
         return items;
@@ -170,7 +178,12 @@ public class MenuAdminService {
         Map<Integer, List<Integer>> items = new LinkedHashMap<>();
         for (Map<String, Object> r : db.rows("SELECT topping_id, item_id FROM menu_item_topping ORDER BY topping_id, item_id"))
             items.computeIfAbsent(((Number) r.get("topping_id")).intValue(), k -> new ArrayList<>()).add(((Number) r.get("item_id")).intValue());
-        for (Map<String, Object> t : list) t.put("itemIds", items.getOrDefault(((Number) t.get("id")).intValue(), List.of()));
+        for (Map<String, Object> t : list) {
+            int id = ((Number) t.get("id")).intValue();
+            t.put("itemIds", items.getOrDefault(id, List.of()));
+            Long v = images.version(MenuImageStore.Kind.TOPPING, id);
+            t.put("imageUrl", v == null ? null : "/api/admin/toppings/" + id + "/image?v=" + v);
+        }
         return list;
     }
 

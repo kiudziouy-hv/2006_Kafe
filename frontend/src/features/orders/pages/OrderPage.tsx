@@ -103,109 +103,106 @@ export default function OrderPage() {
         onRetry={() => void order.refetch()}
       >
         <div className="grid gap-4 lg:grid-cols-2">
-          <div className="flex min-w-0 flex-col gap-4">
+          <div className="order-2 flex min-w-0 flex-col gap-4">
             <Card>
-              <h2 className="mb-2 text-lg font-bold">Đơn hiện tại</h2>
-              {!o ? (
-                <p className="text-ink-soft">Bàn chưa có đơn. Chọn món bên cạnh rồi gửi order.</p>
-              ) : (
-                <>
-                  <ul className="divide-y divide-line">
-                    {o.lines.map((l) => (
-                      <li key={l.id} className="flex items-start justify-between gap-2 py-2">
-                        <div>
-                          <p
-                            className={
-                              l.status === 'CANCELLED'
-                                ? 'font-semibold line-through opacity-60'
-                                : 'font-semibold'
-                            }
-                          >
-                            {l.qty}× {l.name}
-                          </p>
-                          <p className="text-xs text-ink-soft">{describe(l)}</p>
-                          {l.discountPercent > 0 && (
-                            <p className="text-xs text-success">Khuyến mãi -{l.discountPercent}%</p>
-                          )}
-                          {l.cancelReason && (
-                            <p className="text-xs text-danger">Lý do hủy: {l.cancelReason}</p>
-                          )}
-                        </div>
-                        <div className="flex flex-col items-end gap-1">
-                          <Badge tone={LINE_TONE[l.status]}>{LINE_LABEL[l.status]}</Badge>
-                          {!waitingPay &&
-                            (l.status === 'NEW' || (l.status === 'MAKING' && owner)) && (
-                              <Button
-                                variant="ghost"
-                                onClick={() =>
-                                  l.status === 'NEW' ? cancel.mutate({ line: l }) : setCancelling(l)
-                                }
-                              >
-                                Hủy món
-                              </Button>
-                            )}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="mt-2 flex justify-between text-lg font-bold">
-                    <span>Tạm tính</span>
-                    <span>{formatMoney(o.total)}</span>
-                  </p>
-                  {o.discount > 0 && (
-                    <p className="text-right text-sm text-success">
-                      Đã trừ khuyến mãi {formatMoney(o.discount)}
-                    </p>
-                  )}
-                  <div className="mt-3 grid grid-cols-2 gap-2">
-                    <Button
-                      variant="secondary"
-                      disabled={waitingPay}
-                      onClick={() => setMoving(true)}
-                    >
-                      Chuyển bàn
-                    </Button>
-                    <Button
-                      disabled={waitingPay || busyLines > 0}
-                      loading={finish.isPending}
-                      onClick={() => finish.mutate(undefined)}
-                    >
-                      Khách đã dùng xong
-                    </Button>
-                  </div>
-                  {busyLines > 0 && !waitingPay && (
-                    <p className="mt-1 text-xs text-ink-soft">
-                      Còn {busyLines} món chưa xong hoặc chưa hủy.
-                    </p>
-                  )}
-                  {waitingPay && (
-                    <p className="mt-2 text-warning">Bàn đang chờ thanh toán tại quầy thu ngân.</p>
-                  )}
-                </>
-              )}
+              <h2 className="mb-2 text-lg font-bold">Món đã chọn</h2>
+              <CartPanel lines={cart} onChange={setCart} />
+              <Button
+                className="mt-3 w-full"
+                disabled={cart.length === 0}
+                loading={send.isPending}
+                onClick={() => send.mutate(undefined)}
+              >
+                {o ? 'Gửi thêm món' : 'Gửi order'}
+              </Button>
             </Card>
+            {o && (
+              <Card>
+                <h2 className="mb-2 text-lg font-bold">Đơn đã gửi</h2>
+                {
+                  <>
+                    <ul className="divide-y divide-line">
+                      {o.lines.map((l) => (
+                        <li key={l.id} className="flex items-start justify-between gap-2 py-2">
+                          <div>
+                            <p
+                              className={
+                                l.status === 'CANCELLED'
+                                  ? 'font-semibold line-through opacity-60'
+                                  : 'font-semibold'
+                              }
+                            >
+                              {l.qty}× {l.name}
+                            </p>
+                            <p className="text-xs text-ink-soft">{describe(l)}</p>
+                            {l.discountPercent > 0 && (
+                              <p className="text-xs text-success">
+                                Khuyến mãi -{l.discountPercent}%
+                              </p>
+                            )}
+                            {l.cancelReason && (
+                              <p className="text-xs text-danger">Lý do hủy: {l.cancelReason}</p>
+                            )}
+                          </div>
+                          <div className="flex flex-col items-end gap-1">
+                            <Badge tone={LINE_TONE[l.status]}>{LINE_LABEL[l.status]}</Badge>
+                            {!waitingPay &&
+                              (l.status === 'NEW' || (l.status === 'MAKING' && owner)) && (
+                                <Button
+                                  variant="ghost"
+                                  onClick={() =>
+                                    l.status === 'NEW'
+                                      ? cancel.mutate({ line: l })
+                                      : setCancelling(l)
+                                  }
+                                >
+                                  Hủy món
+                                </Button>
+                              )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="mt-2 flex justify-between text-lg font-bold">
+                      <span>Tạm tính</span>
+                      <span>{formatMoney(o.total)}</span>
+                    </p>
+                    {o.discount > 0 && (
+                      <p className="text-right text-sm text-success">
+                        Đã trừ khuyến mãi {formatMoney(o.discount)}
+                      </p>
+                    )}
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <Button
+                        variant="secondary"
+                        disabled={waitingPay}
+                        onClick={() => setMoving(true)}
+                      >
+                        Chuyển bàn
+                      </Button>
+                      <Button
+                        disabled={waitingPay || busyLines > 0}
+                        loading={finish.isPending}
+                        onClick={() => finish.mutate(undefined)}
+                      >
+                        Khách đã dùng xong
+                      </Button>
+                    </div>
+                    {busyLines > 0 && !waitingPay && (
+                      <p className="mt-1 text-xs text-ink-soft">
+                        Còn {busyLines} món chưa xong hoặc chưa hủy.
+                      </p>
+                    )}
+                  </>
+                }
+              </Card>
+            )}
           </div>
-          <div className="flex min-w-0 flex-col gap-4">
-            {
-              <>
-                <Card>
-                  <h2 className="mb-2 text-lg font-bold">Chọn món</h2>
-                  <MenuPicker onAdd={(line) => setCart((cur) => [...cur, line])} />
-                </Card>
-                <Card>
-                  <h2 className="mb-2 text-lg font-bold">Món sắp gửi</h2>
-                  <CartPanel lines={cart} onChange={setCart} />
-                  <Button
-                    className="mt-3 w-full"
-                    disabled={cart.length === 0}
-                    loading={send.isPending}
-                    onClick={() => send.mutate(undefined)}
-                  >
-                    {o ? 'Gửi thêm món' : 'Gửi order'}
-                  </Button>
-                </Card>
-              </>
-            }
+          <div className="order-1 flex min-w-0 flex-col gap-4">
+            <Card>
+              <h2 className="mb-2 text-lg font-bold">Chọn món</h2>
+              <MenuPicker onAdd={(line) => setCart((cur) => [...cur, line])} />
+            </Card>
           </div>
         </div>
       </QueryState>

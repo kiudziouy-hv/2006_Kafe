@@ -55,7 +55,7 @@ export function MenuPicker({
               onClick={() => setPicked(i)}
               className="vt-hover-lift group flex flex-col overflow-hidden rounded-2xl border border-brass/50 bg-gradient-to-br from-ivory to-coffee-50 text-left hover:border-brass hover:from-coffee-50 hover:to-coffee-100 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <span className="relative block aspect-[4/3] w-full overflow-hidden bg-gradient-to-br from-coffee-900 to-coffee-700">
+              <span className="relative block aspect-[4/3] w-full overflow-hidden bg-gradient-to-br from-[#efe5ce] to-[#e2d3b0]">
                 {i.imageUrl ? (
                   <img
                     src={i.imageUrl}
@@ -64,7 +64,7 @@ export function MenuPicker({
                     className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
                   />
                 ) : (
-                  <span className="grid h-full w-full place-items-center text-brass-light/80">
+                  <span className="grid h-full w-full place-items-center text-coffee-600/70">
                     <Coffee size={34} strokeWidth={1.4} aria-hidden />
                   </span>
                 )}

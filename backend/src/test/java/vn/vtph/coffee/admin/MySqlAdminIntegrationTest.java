@@ -62,8 +62,8 @@ class MySqlAdminIntegrationTest extends AbstractMySqlIT {
         jdbc.execute((java.sql.Connection c) -> {
             try (var st = c.createStatement()) {
                 st.execute("SET FOREIGN_KEY_CHECKS = 0");
-                st.execute("DELETE FROM account WHERE account_id > 8");
-                st.execute("DELETE FROM employee WHERE employee_id > 8");
+                st.execute("DELETE FROM account WHERE account_id > 10");
+                st.execute("DELETE FROM employee WHERE employee_id > 10");
                 st.execute("DELETE FROM recipe_line WHERE recipe_id IN (SELECT recipe_id FROM recipe WHERE item_id > 30)");
                 st.execute("DELETE FROM recipe WHERE item_id > 30");
                 st.execute("DELETE FROM menu_item_topping WHERE item_id > 30");
@@ -187,6 +187,7 @@ class MySqlAdminIntegrationTest extends AbstractMySqlIT {
         assertEquals(61000 - 29000, r.get("revenue").asInt()); // 32.000 + 29.000 trừ hoàn 29.000
         assertEquals(1, r.get("invoices").asInt());
         assertEquals(1, r.get("itemsSold").asInt()); // dòng đã hủy không tính (BR-041)
+        assertEquals(1, r.get("daily").get(0).get("items").asInt()); // số lượng theo ngày khớp tổng
         rule(cashier, "GET", "/api/reports/summary", null, 403, "FORBIDDEN");
         rule(owner, "GET", "/api/reports/summary?from=2026-10-10&to=2026-10-01", null, 422, "BAD_RANGE");
     }
@@ -227,7 +228,7 @@ class MySqlAdminIntegrationTest extends AbstractMySqlIT {
         rule(owner, "POST", "/api/staff/1/lock", null, 409, "SELF_LOCK");
 
         // UC-03: mỗi người tự cập nhật thông tin của mình
-        JsonNode me = ok(cashier, "PUT", "/api/staff/me", "{\"fullName\":\"Hồ Quốc Tiên\",\"phone\":\"0909090909\",\"email\":\"tien@vtph.vn\"}");
+        JsonNode me = ok(cashier, "PUT", "/api/staff/me", "{\"fullName\":\"Hồ Quốc Tiến\",\"phone\":\"0909090909\",\"email\":\"tien@vtph.vn\"}");
         assertEquals("0909090909", me.get("phone").asText());
         rule(cashier, "PUT", "/api/staff/me", "{\"fullName\":\"X\",\"email\":\"khong-hop-le\"}", 422, "BAD_EMAIL");
     }
@@ -241,6 +242,9 @@ class MySqlAdminIntegrationTest extends AbstractMySqlIT {
         rule(owner, "POST", "/api/auth/attendance/out", "{\"accountId\":4,\"pin\":\"123456\"}", 409, "NOT_IN");
         ok(anon, "POST", "/api/auth/attendance/out", "{\"accountId\":2,\"pin\":\"234567\"}");
         assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM cashier_session", Integer.class)); // chấm công không mở ca (ASM-17)
+        // tài khoản quầy dùng chung (9 = thu ngân, 10 = pha chế) đăng nhập thao tác được nhưng không chấm công
+        rule(anon, "POST", "/api/auth/attendance/in", "{\"accountId\":9,\"pin\":\"234567\",\"shift\":\"MORNING\"}", 422, "STATION_ACCOUNT");
+        rule(anon, "POST", "/api/auth/attendance/out", "{\"accountId\":10,\"pin\":\"345678\"}", 422, "STATION_ACCOUNT");
 
         JsonNode rec = ok(owner, "GET", "/api/attendance", null).get(0);
         int id = rec.get("id").asInt();

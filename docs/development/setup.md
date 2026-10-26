@@ -25,12 +25,7 @@ Cách nhanh nhất: `scripts/dev-mysql.sh` (tự chạy container `vtph-mysql` c
    Flyway dựng lược đồ và nạp dữ liệu mẫu ở lần chạy đầu. Đăng nhập và toàn bộ gọi món/pha chế/thanh toán đọc ghi MySQL. Với dữ liệu mẫu, đặt thêm `LEGACY_DEMO_HASH=true` rồi dùng `owner`/`admin123` hoặc PIN `123456`. Thực đơn là 30 món của Chương 5 (ví dụ id 1 Cà phê đen, 24 Tiramisu).
 
 ## 3. Docker
-```bash
-cp .env.example .env     # điền DB_PASSWORD và DB_ROOT_PASSWORD
-docker compose up --build
-# giao diện: http://localhost:8088
-```
-Chưa chạy thử trong lần dựng khung này.
+Docker chỉ dùng để chạy MySQL (và test Testcontainers); backend và giao diện chạy trực tiếp trên máy bằng `scripts/dev-mysql.sh`. Dự án không còn cấu hình đóng gói toàn bộ hệ thống bằng `docker compose` (đã gỡ để tránh lệch với cách chạy chính).
 
 ## Chạy test MySQL (Testcontainers)
 Cần Docker đang chạy; `mvn -f backend/pom.xml test` tự bỏ qua 20 test này nếu không có Docker. Trên macOS với Docker Desktop, nếu thấy "Could not find a valid Docker environment": `export DOCKER_HOST=unix://$HOME/.docker/run/docker.sock`. Surefire đã đặt `-Dapi.version=1.44` vì Docker Desktop 29 từ chối API cũ.

@@ -17,7 +17,7 @@
     {
       "label": "CSDL: b\u1eadt MySQL (Docker)",
       "type": "shell",
-      "command": "docker compose up -d db",
+      "command": "scripts/dev-mysql.sh",
       "problemMatcher": []
     },
     {

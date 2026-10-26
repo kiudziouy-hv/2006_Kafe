@@ -20,7 +20,7 @@ public class Model {
     }
 
     public static class Topping { public int id; public String name; public int price; public String status = "ACTIVE";
-        public String ingredient; public int amount;
+        public String ingredient; public int amount; public String imageUrl;
         public Topping(int id, String n, int p, String ing, int a) { this.id = id; name = n; price = p; ingredient = ing; amount = a; } }
 
     public static class Ingredient { public String id, name, unit; public int stock, min;

@@ -1,3 +1,4 @@
+import { TabAction } from '@/components/ui/Tabs'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { QueryState } from '@/components/feedback/QueryState'
@@ -27,9 +28,9 @@ export function PromotionsTab() {
       error={promos.error}
       onRetry={() => void promos.refetch()}
     >
-      <div className="mb-3 flex items-center justify-end gap-3">
+      <TabAction>
         <Button onClick={() => setEditing('new')}>Tạo chương trình</Button>
-      </div>
+      </TabAction>
       <DataTable
         rows={promos.data ?? []}
         rowKey={(p) => p.id}
@@ -125,12 +126,7 @@ function PromotionForm({ promo, onClose }: { promo: Promotion | null; onClose: (
             </option>
           ))}
         </SelectField>
-        <NumberField
-          label="Mức giảm (%)"
-          hint="Từ 1 đến 50"
-          value={percent}
-          onValueChange={setPercent}
-        />
+        <NumberField label="Mức giảm (%)" value={percent} onValueChange={setPercent} />
         <div className="grid grid-cols-2 gap-3">
           <TextField
             label="Từ ngày (tùy chọn)"

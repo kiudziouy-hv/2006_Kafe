@@ -36,7 +36,7 @@ public class AuthService {
         this.legacyDemoHash = legacyDemoHash;
     }
 
-    /** Danh sách tài khoản nhân viên để chọn ở màn S01 (Chủ quán đăng nhập ở S02, không hiện ở đây). */
+    /** Danh sách tài khoản nhân viên (kèm tài khoản quầy dùng chung, cờ {@code station}) để chọn ở màn S01 (Chủ quán đăng nhập ở S02, không hiện ở đây). */
     public List<Map<String, Object>> staffList() {
         List<Map<String, Object>> out = new ArrayList<>();
         Instant now = Instant.now();
@@ -47,6 +47,7 @@ public class AuthService {
             m.put("fullName", a.fullName);
             m.put("role", a.role.name());
             m.put("locked", a.permanentlyLocked || a.isLocked(now));
+            m.put("station", a.station);
             out.add(m);
         }
         return out;

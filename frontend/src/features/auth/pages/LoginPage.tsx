@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Logo } from '@/components/shared/Logo'
+import { Wordmark } from '@/components/shared/Wordmark'
 import { toApiError } from '@/lib/http'
 import type { Role, StaffAccount } from '@/types/api'
 import { authApi } from '../api/authApi'
@@ -34,30 +35,24 @@ export default function LoginPage() {
   return (
     <main className="grid min-h-full place-items-center bg-[#eadcc0] bg-[radial-gradient(ellipse_at_top,#f5e9cf,transparent_70%)] p-4 sm:p-8">
       <div className="grid w-full max-w-[1040px] overflow-hidden rounded-[36px] border-2 border-double border-brass bg-gradient-to-br from-[#fbf0d9] to-[#f0dcb4] shadow-[0_30px_70px_-20px_rgba(60,30,10,0.5)] lg:grid-cols-[0.85fr_1fr]">
-        <aside className="relative hidden min-h-[640px] overflow-hidden lg:block" aria-hidden>
+        <aside className="relative h-52 overflow-hidden lg:h-auto lg:min-h-[640px]" aria-hidden>
           <img
             src="/login-bg.jpg"
             alt=""
             className="absolute inset-0 h-full w-full object-cover object-[40%_center] sepia-[0.25]"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-coffee-950/40 via-transparent to-coffee-950/20" />
-          <div className="absolute inset-y-0 right-0 w-40 bg-gradient-to-l from-[#f8ebd0] via-[#f8ebd0]/60 to-transparent" />
+          <div className="absolute inset-y-0 right-0 hidden w-40 bg-gradient-to-l from-[#f8ebd0] via-[#f8ebd0]/60 to-transparent lg:block" />
+          <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#f8ebd0] via-[#f8ebd0]/70 to-transparent lg:hidden" />
         </aside>
 
-        <section className="relative flex flex-col items-center justify-center gap-4 px-6 py-10 sm:px-12">
-          <img
-            src="/login-bg.jpg"
-            alt=""
-            aria-hidden
-            className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-20 sepia lg:hidden"
-          />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent to-brass/10" />
-          <header className="relative text-center">
-            <p className="text-xs font-semibold uppercase tracking-widest text-ink-soft">
+        <section className="relative flex flex-col items-center justify-center gap-4 px-6 pb-9 pt-0 sm:px-12 lg:py-10">
+          <header className="relative -mt-14 text-center lg:mt-0">
+            <p className="hidden text-xs font-semibold uppercase tracking-widest text-ink-soft lg:block">
               Chào mừng bạn đến với
             </p>
-            <Logo className="mx-auto mt-3 h-32 w-32 ring-4 ring-brass/60" />
-            <p className="mt-3 font-display text-sm tracking-[0.5em] text-brass-dark">✦ ❖ ✦</p>
+            <Logo className="mx-auto h-28 w-28 ring-2 ring-brass/50 lg:mt-4" />
+            <Wordmark className="mt-3 block text-[1.7rem] leading-none text-coffee-900" />
           </header>
 
           {params.get('expired') && (
@@ -91,12 +86,10 @@ export default function LoginPage() {
             ))}
           </div>
 
-          <div className="relative w-full max-w-[400px] pt-2">
-            <div className="mb-4 text-center">
-              <h1 className="text-lg font-bold uppercase after:mx-auto after:bg-[linear-gradient(90deg,transparent,var(--color-brass),transparent)]">
-                {mode === 'owner' ? 'Đăng nhập quản lý' : 'Đăng nhập nhân viên'}
-              </h1>
-            </div>
+          <div className="relative w-full max-w-[400px]">
+            <h1 className="sr-only">
+              {mode === 'owner' ? 'Đăng nhập quản lý' : 'Đăng nhập nhân viên'}
+            </h1>
             {mode === 'owner' ? <OwnerForm /> : <StaffForm />}
           </div>
 
@@ -191,7 +184,10 @@ function StaffForm() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const accounts: StaffAccount[] = (staff.data ?? []).filter((a) => a.role === role)
+  // Thu ngân và Pha chế dùng máy chung: chỉ cần PIN của quầy, không chọn tên. Chấm công mới dùng tài khoản cá nhân.
+  const ofRole = (staff.data ?? []).filter((a) => a.role === role)
+  const shared = ofRole.find((a) => a.station)
+  const accounts: StaffAccount[] = shared ? [shared] : ofRole
   const selected = accounts.find((a) => a.id === accountId) ?? accounts[0]
 
   const submit = async () => {
@@ -254,7 +250,9 @@ function StaffForm() {
           </select>
         )}
         {role && accounts.length === 1 && (
-          <p className="mt-2 text-center text-sm text-ink-soft">{accounts[0]!.fullName}</p>
+          <p className="mt-2 text-center text-sm text-ink-soft">
+            {shared ? `${accounts[0]!.fullName} (dùng chung)` : accounts[0]!.fullName}
+          </p>
         )}
         {staff.isError && (
           <p role="alert" className="mt-2 text-sm text-danger">

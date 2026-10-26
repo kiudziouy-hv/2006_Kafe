@@ -58,11 +58,21 @@ export default function KitchenBoardPage() {
       {wasting && <WasteForm onClose={() => setWasting(false)} />}
       <div className="grid gap-3 lg:grid-cols-3">
         {COLUMNS.map((c) => {
-          const lines = (board.data ?? []).filter((l) => l.status === c.status)
+          const all = (board.data ?? []).filter((l) => l.status === c.status)
+          // Cột Đã xong chỉ giữ vài món gần nhất để màn hình gọn
+          const lines = c.status === 'DONE' ? all.slice(-6).reverse() : all
           return (
-            <section key={c.status} aria-label={c.title}>
-              <h2 className="mb-2 flex items-center gap-2 text-lg font-bold">
-                {c.title} <Badge>{lines.length}</Badge>
+            <section
+              key={c.status}
+              aria-label={c.title}
+              className="rounded-3xl border border-line bg-[#efe5ce] p-4 lg:min-h-[60vh]"
+            >
+              <h2 className="mb-3 flex items-center gap-2 text-lg font-bold">
+                {c.title}
+                {c.status === 'NEW' && (
+                  <span className="text-sm font-normal text-ink-soft">· FIFO</span>
+                )}
+                <Badge>{lines.length}</Badge>
               </h2>
               <div className="flex flex-col gap-3">
                 {lines.length === 0 && <p className="text-sm text-ink-soft">Không có món.</p>}

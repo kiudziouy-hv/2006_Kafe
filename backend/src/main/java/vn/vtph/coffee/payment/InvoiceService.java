@@ -15,6 +15,7 @@ import vn.vtph.coffee.auth.Account;
 import vn.vtph.coffee.common.Db;
 import vn.vtph.coffee.ops.OpsEvent;
 import vn.vtph.coffee.ops.OpsException;
+import vn.vtph.coffee.shared.pricing.PricingPolicy;
 
 /**
  * Hóa đơn (M07): UC-34 danh sách và chi tiết, UC-23 in lại, UC-24 hủy hóa đơn, UC-13 hủy dòng món của đơn mang đi đã thanh toán
@@ -215,12 +216,12 @@ public class InvoiceService {
 
         // Số tiền hoàn: giá trị dòng sau khuyến mãi; điểm hoàn = phần nguyên của (điểm đã dùng x tỷ lệ dòng/đơn); tiền = giá trị - điểm, làm tròn 500đ, không vượt số đã thực trả (BR-027)
         long value = (((Number) l.get("unit_price")).longValue() + ((Number) l.get("tsur")).longValue()) * ((Number) l.get("quantity")).longValue();
-        long after = value - value * ((Number) l.get("discount_percent")).longValue() / 100;
+        long after = value - PricingPolicy.promotionDiscount(value, ((Number) l.get("discount_percent")).intValue());
         long orderAfter = ((Number) inv.get("subtotal")).longValue();
         int used = ((Number) inv.get("points_used")).intValue();
         int refundPoints = orderAfter <= 0 ? 0 : (int) (used * after / orderAfter);
         long alreadyCash = db.jdbc.queryForObject("SELECT COALESCE(SUM(cash_amount), 0) FROM refund_record WHERE invoice_id = ?", Long.class, invoiceId);
-        long cash = Math.max(0, Math.min(Db.round500(after - refundPoints * 1000L), ((Number) inv.get("total")).longValue() - alreadyCash));
+        long cash = Math.max(0, Math.min(PricingPolicy.payableAfterPoints(after, refundPoints), ((Number) inv.get("total")).longValue() - alreadyCash));
         cancelNewLine(l, reason, emp, orderId);
         settleOrderStatus(orderId);
         db.insertId("""
@@ -230,7 +231,7 @@ public class InvoiceService {
             int cust = ((Number) inv.get("customer_id")).intValue();
             giveBackPoints(cust, invoiceId, refundPoints);
             long paidNow = ((Number) inv.get("total")).longValue() - alreadyCash - cash; // điểm tích được tính lại trên số tiền còn lại
-            revokeEarned(cust, invoiceId, (int) (Math.max(0, paidNow) / 10_000));
+            revokeEarned(cust, invoiceId, PricingPolicy.pointsEarned(paidNow));
         }
         return detail(invoiceId);
     }

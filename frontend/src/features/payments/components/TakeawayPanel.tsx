@@ -136,9 +136,7 @@ export function TakeawayPanel() {
                     value={received}
                     onValueChange={setReceived}
                     hint={
-                      cashIn >= payable
-                        ? `Tiền thối: ${formatMoney(cashIn - payable)}`
-                        : 'Chưa đủ số tiền cần thanh toán'
+                      cashIn >= payable ? `Tiền thối: ${formatMoney(cashIn - payable)}` : undefined
                     }
                   />
                 </>

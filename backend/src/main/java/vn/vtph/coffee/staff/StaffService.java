@@ -26,7 +26,7 @@ public class StaffService {
 
     private static final String LIST_SQL = """
             SELECT e.employee_id AS id, a.account_id AS accountId, e.full_name AS fullName, e.phone, e.email, a.username,
-                   a.role, CASE WHEN a.status = 'TEMP_LOCKED' AND a.locked_until <= UTC_TIMESTAMP() THEN 'ACTIVE' ELSE a.status END AS status
+                   a.role, a.is_station AS station, CASE WHEN a.status = 'TEMP_LOCKED' AND a.locked_until <= UTC_TIMESTAMP() THEN 'ACTIVE' ELSE a.status END AS status
             FROM employee e JOIN account a ON a.employee_id = e.employee_id""";
 
     @Transactional(readOnly = true)

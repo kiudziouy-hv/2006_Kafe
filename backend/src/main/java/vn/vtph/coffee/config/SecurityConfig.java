@@ -42,7 +42,7 @@ public class SecurityConfig {
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/**", "/ws/**", "/actuator/**").authenticated()
-                .anyRequest().permitAll()); // giao diện tĩnh (src/main/resources/static)
+                .anyRequest().permitAll()); // đường dẫn còn lại: backend không còn phục vụ tài nguyên tĩnh, truy cập sẽ nhận 404
         return http.build();
     }
 

@@ -15,6 +15,8 @@ public class Account {
     int failedAttempts;
     Instant lockedUntil;
     boolean permanentlyLocked;
+    /** Tài khoản quầy dùng chung (thu ngân, pha chế): đăng nhập thao tác được, không chấm công. */
+    public boolean station;
 
     Account(int id, String username, String fullName, Role role, String secretHash) {
         this.id = id;

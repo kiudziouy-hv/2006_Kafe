@@ -1,3 +1,4 @@
+import { TabAction } from '@/components/ui/Tabs'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { QueryState } from '@/components/feedback/QueryState'
@@ -28,14 +29,22 @@ export function StaffTab() {
   )
   return (
     <QueryState isPending={list.isPending} error={list.error} onRetry={() => void list.refetch()}>
-      <div className="mb-3 flex justify-end">
+      <TabAction>
         <Button onClick={() => setEditing('new')}>Thêm nhân viên</Button>
-      </div>
+      </TabAction>
       <DataTable
         rows={list.data ?? []}
         rowKey={(s) => s.id}
         columns={[
-          { header: 'Họ tên', cell: (s) => <span className="font-semibold">{s.fullName}</span> },
+          {
+            header: 'Họ tên',
+            cell: (s) => (
+              <span className="inline-flex items-center gap-2">
+                <span className="font-semibold">{s.fullName}</span>
+                {s.station && <Badge>Dùng chung</Badge>}
+              </span>
+            ),
+          },
           { header: 'Vai trò', cell: (s) => ROLE_NAME[s.role] },
           { header: 'Điện thoại', cell: (s) => s.phone ?? '—' },
           { header: 'Email', cell: (s) => s.email ?? '—' },
@@ -55,7 +64,10 @@ export function StaffTab() {
                 </Button>
                 {s.accountId !== user?.id && (
                   <Button
-                    variant={s.status === 'LOCKED' ? 'secondary' : 'danger'}
+                    variant="secondary"
+                    className={
+                      s.status === 'LOCKED' ? undefined : '!text-danger hover:!border-danger'
+                    }
                     loading={lock.isPending}
                     onClick={() => lock.mutate({ id: s.id, locked: s.status !== 'LOCKED' })}
                   >

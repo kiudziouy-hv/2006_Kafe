@@ -20,7 +20,7 @@ SPRING_PROFILES_ACTIVE=mysql DB_PASSWORD=... mvn -f backend/pom.xml spring-boot:
 | `db/seed/V5__seed_transactions.sql` | `05_seed_transactions.sql` | chỉ môi trường phát triển |
 
 Triển khai thật: đặt `FLYWAY_LOCATIONS=classpath:db/migration` để không nạp dữ liệu mẫu.
-MySQL bật binary log cần `log_bin_trust_function_creators=1` mới tạo được trigger (compose đã đặt).
+MySQL bật binary log cần `log_bin_trust_function_creators=1` mới tạo được trigger (`scripts/dev-mysql.sh` đã đặt).
 
 ## Cần biết
 

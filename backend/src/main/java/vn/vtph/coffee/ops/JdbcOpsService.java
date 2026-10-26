@@ -36,6 +36,7 @@ import vn.vtph.coffee.ops.Model.Size;
 import vn.vtph.coffee.ops.Model.Topping;
 import vn.vtph.coffee.menu.MenuImageStore;
 import vn.vtph.coffee.promotion.PromotionService;
+import vn.vtph.coffee.shared.pricing.PricingPolicy;
 
 /**
  * Nghiệp vụ gọi món - pha chế - thanh toán trên MySQL (profile "mysql"), cùng hợp đồng API với {@link InMemoryOpsService}.
@@ -45,8 +46,9 @@ import vn.vtph.coffee.promotion.PromotionService;
  * Các quy tắc đã có trigger trong CSDL (BR-004, 025, 028, 035, ASM-01...) vẫn là lớp bảo vệ thứ hai; ở đây kiểm tra
  * trước để trả thông báo rõ cho người dùng.
  *
- * <p>Khác biệt có chủ đích so với bản bộ nhớ: khuyến mãi (UC-27) và điểm thành viên chưa áp dụng (discount_percent = 0);
- * tiền khách đưa/tiền thối không lưu (chỉ trả trong phản hồi thanh toán); giờ lưu theo UTC.
+ * <p>Khuyến mãi (UC-27) chốt vào từng dòng món khi đơn được xác nhận gửi, điểm thành viên được tính lúc thanh toán theo
+ * {@link PricingPolicy}. Khác biệt có chủ đích so với bản bộ nhớ: tiền khách đưa/tiền thối không lưu (chỉ trả trong phản hồi
+ * thanh toán); giờ lưu theo UTC.
  * Sự kiện thời gian thực chỉ được gửi sau khi giao dịch ghi thành công (NotificationBridge dùng AFTER_COMMIT).
  */
 @Service
@@ -109,8 +111,6 @@ public class JdbcOpsService implements OpsService {
         if ("DINE_IN".equals(type)) return "Bàn " + tableNo;
         return queue == null ? "Mang đi" : String.format("#%03d", queue);
     }
-
-    private static int round500(long total) { return (int) (Math.floor(total / 500.0 + 0.5) * 500); }
 
     private static String iceToApi(String db) { return "LOW".equals(db) ? "LESS" : db; }
 
@@ -182,7 +182,7 @@ public class JdbcOpsService implements OpsService {
             o.put("hotOnly", m.hotOnly()); o.put("coldOnly", m.coldOnly()); o.put("cake", m.cake()); o.put("takeaway", m.takeaway());
             o.put("sizes", ss.stream().map(s -> new Size(s.code, m.cake() ? "Phần" : s.code, s.price)).toList());
             o.put("toppingIds", allowed.getOrDefault(m.id, List.of()));
-            Long v = images.version(m.id);
+            Long v = images.version(MenuImageStore.Kind.ITEM, m.id);
             o.put("imageUrl", v == null ? null : "/api/ops/menu/" + m.id + "/image?v=" + v);
             out.add(o);
         }
@@ -190,6 +190,8 @@ public class JdbcOpsService implements OpsService {
         for (ToppingRow t : jdbc.query(TOPPING_SQL + " ORDER BY t.topping_id", Rows::topping)) {
             Topping x = new Topping(t.id, t.name, t.price, null, 0);
             x.status = !"SELLING".equals(t.status) || !t.stockOk ? ("STOPPED".equals(t.status) ? "DISCONTINUED" : "OUT_OF_STOCK") : "ACTIVE";
+            Long tv = images.version(MenuImageStore.Kind.TOPPING, t.id);
+            x.imageUrl = tv == null ? null : "/api/ops/menu/toppings/" + t.id + "/image?v=" + tv;
             tops.add(x);
         }
         return Map.of("items", out, "toppings", tops, "groups", List.of("Coffee", "Tea", "Smoothie", "Cake"));
@@ -386,10 +388,10 @@ public class JdbcOpsService implements OpsService {
             o.lines.add(l);
         }, r.id);
         o.total = o.lines.stream().filter(l -> !l.status.equals("CANCELLED")).mapToInt(Line::total).sum();
-        o.discount = o.lines.stream().filter(l -> !l.status.equals("CANCELLED")).mapToInt(l -> (int) ((long) l.total() * l.discountPercent / 100)).sum();
+        o.discount = o.lines.stream().filter(l -> !l.status.equals("CANCELLED")).mapToInt(l -> (int) PricingPolicy.promotionDiscount(l.total(), l.discountPercent)).sum();
         o.afterPromo = o.total - o.discount;
-        o.rounded = round500(o.afterPromo);
-        o.maxPoints = maxPoints(o.afterPromo);
+        o.rounded = PricingPolicy.roundToNearest500(o.afterPromo);
+        o.maxPoints = PricingPolicy.maxRedeemablePoints(o.afterPromo);
         if (r.invoiceId != null) { // đã thanh toán: lấy số liệu chốt trên hóa đơn
             jdbc.query("""
                     SELECT i.total, i.promotion_discount, i.points_used, i.points_earned, c.full_name FROM invoice i
@@ -768,13 +770,10 @@ public class JdbcOpsService implements OpsService {
                 FROM order_line l JOIN order_batch b ON b.batch_id = l.batch_id WHERE b.order_id = ? AND l.status <> 'CANCELLED'""", rs -> {
             long value = rs.getLong(1);
             t[0] += (int) value;
-            t[1] += (int) (value * rs.getInt(2) / 100);
+            t[1] += (int) PricingPolicy.promotionDiscount(value, rs.getInt(2));
         }, orderId);
         return new Amounts(t[0], t[1]);
     }
-
-    /** 1 điểm = 1.000 đồng, dùng tối đa 30% giá trị đơn sau khuyến mãi, làm tròn xuống (BR-023): 87.500đ -> 26 điểm. */
-    private static int maxPoints(int afterPromo) { return (int) (afterPromo * 30L / 100_000); }
 
     private record Member(int id, int points) {}
 
@@ -791,12 +790,12 @@ public class JdbcOpsService implements OpsService {
         if (p.points() > 0) {
             if (m == null) throw new OpsException(422, "NO_CUSTOMER", "Cần chọn thành viên để dùng điểm.");
             if (p.points() > m.points()) throw new OpsException(422, "NOT_ENOUGH_POINTS", "Thành viên chỉ có " + m.points() + " điểm.");
-            if (p.points() > maxPoints(a.afterPromo()))
-                throw new OpsException(422, "POINTS_LIMIT", "Chỉ được dùng tối đa " + maxPoints(a.afterPromo()) + " điểm (30% giá trị đơn sau khuyến mãi).");
+            if (p.points() > PricingPolicy.maxRedeemablePoints(a.afterPromo()))
+                throw new OpsException(422, "POINTS_LIMIT", "Chỉ được dùng tối đa " + PricingPolicy.maxRedeemablePoints(a.afterPromo()) + " điểm (30% giá trị đơn sau khuyến mãi).");
         }
-        int rounded = round500(a.afterPromo() - p.points() * 1000L);
+        int rounded = PricingPolicy.payableAfterPoints(a.afterPromo(), p.points());
         validatePayment(rounded, method, received);
-        int earned = m == null ? 0 : rounded / 10_000;
+        int earned = m == null ? 0 : PricingPolicy.pointsEarned(rounded);
         int invoice = insertId("""
                 INSERT INTO invoice (order_id, session_id, customer_id, payment_method, subtotal, promotion_discount, points_used, total, points_earned, issued_at, issued_by)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", orderId, sessionId, m == null ? null : m.id(), "TRANSFER".equals(method) ? "TRANSFER_QR" : "CASH",
@@ -884,13 +883,13 @@ public class JdbcOpsService implements OpsService {
             PromotionService.Applied p = promotionFor(l.item.group, true);
             long value = (long) l.unitTotal() * l.qty;
             total += value;
-            if (p != null) discount += value * p.percent() / 100;
+            if (p != null) discount += PricingPolicy.promotionDiscount(value, p.percent());
         }
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("total", total);
         out.put("discount", discount);
         out.put("afterPromo", total - discount);
-        out.put("maxPoints", maxPoints((int) (total - discount)));
+        out.put("maxPoints", PricingPolicy.maxRedeemablePoints((int) (total - discount)));
         return out;
     }
 

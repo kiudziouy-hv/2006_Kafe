@@ -30,7 +30,7 @@ class MySqlAuthIntegrationTest extends AbstractMySqlIT {
         assertEquals(28, jdbc.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE' AND table_name <> 'flyway_schema_history'", Integer.class));
         assertEquals(15, jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.triggers WHERE trigger_schema = DATABASE()", Integer.class));
-        assertEquals(8, jdbc.queryForObject("SELECT COUNT(*) FROM account", Integer.class));
+        assertEquals(10, jdbc.queryForObject("SELECT COUNT(*) FROM account", Integer.class));
         assertEquals(5, jdbc.queryForObject("SELECT COUNT(*) FROM flyway_schema_history WHERE success = 1", Integer.class));
         assertEquals("utf8mb4_0900_as_ci", jdbc.queryForObject("SELECT @@collation_database", String.class));
     }
@@ -38,9 +38,20 @@ class MySqlAuthIntegrationTest extends AbstractMySqlIT {
     @Test
     void staffListComesFromTheDatabaseWithoutTheOwner() {
         List<Map<String, Object>> staff = auth.staffList();
-        assertEquals(7, staff.size());
+        assertEquals(9, staff.size()); // 7 nhân viên + 2 tài khoản quầy dùng chung
         assertTrue(staff.stream().noneMatch(m -> "OWNER".equals(m.get("role"))));
         assertTrue(staff.stream().anyMatch(m -> "Võ Tấn Phát".equals(m.get("fullName")) && "WAITER".equals(m.get("role"))));
+    }
+
+    @Test
+    void cashierAndBaristaCanLogInWithTheSharedStationPin() {
+        List<Map<String, Object>> stations = auth.staffList().stream().filter(m -> Boolean.TRUE.equals(m.get("station"))).toList();
+        assertEquals(List.of("CASHIER", "BARISTA"), stations.stream().map(m -> m.get("role")).toList());
+        Account cashier = auth.loginStaff(9, "234567");
+        assertEquals(Role.CASHIER, cashier.role);
+        assertTrue(cashier.station);
+        assertEquals(Role.BARISTA, auth.loginStaff(10, "345678").role);
+        assertEquals("WRONG_SECRET", assertThrows(AuthException.class, () -> auth.loginStaff(9, "111111")).code);
     }
 
     @Test

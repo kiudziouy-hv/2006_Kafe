@@ -9,5 +9,5 @@ check java java -version "cần Java 21"
 check maven mvn -v "cần Maven 3.9+"
 check node node -v "cần Node 22+"
 check npm npm -v "đi kèm Node"
-check docker docker --version "tùy chọn, để chạy compose"
+check docker docker --version "cần để chạy MySQL (scripts/dev-mysql.sh) và test MySQL"
 exit $ok

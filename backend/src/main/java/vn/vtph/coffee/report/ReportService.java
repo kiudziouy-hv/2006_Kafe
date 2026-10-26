@@ -55,8 +55,15 @@ public class ReportService {
         long itemsSold = num(db.jdbc.queryForObject("""
                 SELECT COALESCE(SUM(l.quantity), 0) FROM invoice i JOIN order_batch b ON b.order_id = i.order_id JOIN order_line l ON l.batch_id = b.batch_id
                 WHERE i.status = 'PAID' AND l.status <> 'CANCELLED' AND i.issued_at >= ? AND i.issued_at < ?""", Long.class, lo, hi));
+        Map<LocalDate, Long> itemsByDay = new LinkedHashMap<>();
+        for (Map<String, Object> r : db.jdbc.queryForList("""
+                SELECT DATE(CONVERT_TZ(i.issued_at, '+00:00', ?)) AS day, SUM(l.quantity) AS qty
+                FROM invoice i JOIN order_batch b ON b.order_id = i.order_id JOIN order_line l ON l.batch_id = b.batch_id
+                WHERE i.status = 'PAID' AND l.status <> 'CANCELLED' AND i.issued_at >= ? AND i.issued_at < ?
+                GROUP BY day""", db.offset(), lo, hi))
+            itemsByDay.put(((java.sql.Date) r.get("day")).toLocalDate(), num(r.get("qty")));
         List<Map<String, Object>> daily = new ArrayList<>();
-        days.forEach((d, v) -> daily.add(Map.of("date", d.toString(), "revenue", v[0], "invoices", v[1])));
+        days.forEach((d, v) -> daily.add(Map.of("date", d.toString(), "revenue", v[0], "invoices", v[1], "items", itemsByDay.getOrDefault(d, 0L))));
 
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("from", f.toString());

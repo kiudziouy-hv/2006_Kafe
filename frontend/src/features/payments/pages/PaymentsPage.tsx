@@ -1,8 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
+import { Banknote, Clock, Receipt, ShoppingBag, Wallet } from 'lucide-react'
 import { useState } from 'react'
 import { QueryState } from '@/components/feedback/QueryState'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { Tabs } from '@/components/ui/Tabs'
 import InvoicesPage from '@/features/invoices/pages/InvoicesPage'
 import { formatMoney } from '@/utils/format'
@@ -26,19 +28,14 @@ export default function PaymentsPage() {
       error={shift.error}
       onRetry={() => void shift.refetch()}
     >
-      {!open && (
-        <p role="status" className="mb-3 rounded-2xl bg-warning-bg px-4 py-2 text-warning">
-          Chưa mở ca thu ngân. Hãy mở ca để nhận thanh toán.
-        </p>
-      )}
       <Tabs
         value={effective}
         onChange={setTab}
         tabs={[
-          { id: 'pay', label: 'Chờ thanh toán' },
-          { id: 'takeaway', label: 'Đơn mang đi' },
-          { id: 'invoices', label: 'Hóa đơn' },
-          { id: 'shift', label: 'Ca thu ngân' },
+          { id: 'pay', label: 'Chờ thanh toán', icon: Wallet },
+          { id: 'takeaway', label: 'Đơn mang đi', icon: ShoppingBag },
+          { id: 'invoices', label: 'Hóa đơn', icon: Receipt },
+          { id: 'shift', label: 'Ca thu ngân', icon: Clock },
         ]}
       />
       {effective === 'pay' && <PendingList />}
@@ -61,7 +58,7 @@ function PendingList() {
         onRetry={() => void pending.refetch()}
       >
         {pending.data?.length === 0 && (
-          <p className="text-ink-soft">Chưa có đơn nào chờ thanh toán.</p>
+          <EmptyState icon={Banknote}>Chưa có đơn nào chờ thanh toán.</EmptyState>
         )}
         <div className="grid gap-3 md:grid-cols-3">
           {pending.data?.map((o) => (

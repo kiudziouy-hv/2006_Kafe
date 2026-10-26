@@ -11,7 +11,7 @@ export interface RevenueSummary {
   transferRevenue: number
   refunded: number
   empty: boolean
-  daily: { date: string; revenue: number; invoices: number }[]
+  daily: { date: string; revenue: number; invoices: number; items: number }[]
   bestSellers: { name: string; quantity: number; revenue: number }[]
   byGroup: { group: string; quantity: number }[]
 }

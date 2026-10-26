@@ -29,6 +29,7 @@ export interface AdminTopping {
   status: CatalogStatus
   statusSource: 'SYSTEM' | 'OWNER_MANAGER' | null
   itemIds: number[]
+  imageUrl: string | null
 }
 
 export interface ItemInput {
@@ -74,6 +75,15 @@ export const menuApi = {
     form.append('file', file)
     return http
       .post<AdminItem>(`/admin/items/${id}/image`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then((r) => r.data)
+  },
+  uploadToppingImage: (id: number, file: File) => {
+    const form = new FormData()
+    form.append('file', file)
+    return http
+      .post<AdminTopping>(`/admin/toppings/${id}/image`, form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       .then((r) => r.data)

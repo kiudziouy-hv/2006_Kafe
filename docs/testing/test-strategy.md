@@ -1,26 +1,57 @@
 # Chiến lược kiểm thử
 
-| Tầng | Công cụ | Nội dung | Hiện có |
+Số liệu cập nhật 2026-10-26: **67 test backend** (0 lỗi), **16 test giao diện** (0 lỗi) và **35 kịch bản quy tắc CSDL** (35/35 đạt).
+
+## Backend (JUnit 5, `mvn -f backend/pom.xml test`)
+
+| Tầng | Công cụ | Nội dung | Số test |
 |---|---|---|---|
-| Đơn vị backend | JUnit 5 | `AuthService` (kho bộ nhớ): khóa sau 5 lần sai (BR-042), định dạng PIN, đặt lại bộ đếm; `NotificationBridge`: định tuyến kênh | 9 test |
-| Tích hợp backend | Spring Boot Test, MockMvc, `@RecordApplicationEvents` | 401 khi chưa đăng nhập, 403 sai vai trò, đăng xuất, thứ tự sự kiện gửi đơn → bắt đầu pha → hoàn thành | 4 test |
-| Tích hợp MySQL | Testcontainers (mysql:8.4), một container dùng chung | Flyway dựng 28 bảng/15 trigger/dữ liệu mẫu; đăng nhập từ bảng `account` (bcrypt, khóa tạm lưu CSDL) | 8 test (cần Docker) |
-| Nghiệp vụ trên MySQL | như trên, qua MockMvc | Bàn/thực đơn từ CSDL; gửi đơn ghi đủ order/batch/line/topping; gọi thêm; hủy theo vai trò; bánh trừ/hoàn kho; chuyển bàn; pha chế qua `sp_start_making` và thiếu nguyên liệu đánh dấu Hết hàng bền vững; chờ thanh toán → hóa đơn → bàn trống; mang đi tiền mặt/chuyển khoản/đơn nháp; chốt ca; trường JSON khớp mô hình; trigger vẫn chặn khi qua mặt service | 12 test (cần Docker) |
-| Hợp đồng sự kiện | Spring Test, không Mockito | Chỉ gửi sau commit, rollback không gửi, không có giao dịch thì gửi ngay | 3 test |
-| Đơn vị / thành phần giao diện | Vitest, React Testing Library | Bàn phím PIN, form đăng nhập (kiểm tra, sai PIN, bị khóa), `RequireRole`, định dạng tiền | 11 test |
-| Quy tắc dữ liệu | `database/run_tests.py` (cần MySQL) | 35 kịch bản trigger/ràng buộc | Chạy riêng, chưa tích hợp CI |
-| Thủ công | Trình duyệt + curl | Luồng Phục vụ ↔ Pha chế qua WebSocket | Đã chạy một lần |
+| Đơn vị | JUnit 5 | `AuthService` (kho bộ nhớ): khóa sau 5 lần sai (BR-042), định dạng PIN, đặt lại bộ đếm | 6 |
+| Đơn vị | JUnit 5 | `NotificationBridge`: định tuyến kênh thông báo | 3 |
+| Đơn vị | JUnit 5 | `PricingPolicy`: khuyến mãi, trần điểm 30%, làm tròn 500đ, tích điểm; so với công thức cũ trên miền giá trị rộng | 9 |
+| Sự kiện | Spring Test, không Mockito | Chỉ gửi thông báo sau commit, rollback không gửi, không có giao dịch thì gửi ngay | 3 |
+| Truy cập và thời gian thực | Spring Boot Test, MockMvc, `@RecordApplicationEvents` | 401 khi chưa đăng nhập, 403 sai vai trò, đăng xuất, thứ tự sự kiện gửi đơn → bắt đầu pha → hoàn thành | 4 |
+| Tích hợp MySQL: đăng nhập | Testcontainers (mysql:8.4), một container dùng chung | Flyway dựng 28 bảng, 15 trigger, dữ liệu mẫu; đăng nhập từ bảng `account` (bcrypt, khóa tạm lưu CSDL); tài khoản quầy dùng chung | 10 |
+| Tích hợp MySQL: gọi món đến thanh toán | như trên, qua MockMvc | Bàn và thực đơn từ CSDL; gửi đơn ghi đủ order/batch/line/topping; gọi thêm; hủy theo vai trò; bánh trừ/hoàn kho; chuyển bàn; pha chế qua `sp_start_making`; thiếu nguyên liệu đánh dấu Hết hàng bền vững; chờ thanh toán → hóa đơn → bàn trống; mang đi tiền mặt, chuyển khoản, đơn nháp; chốt ca; JSON khớp mô hình; trigger vẫn chặn khi qua mặt service | 14 |
+| Tích hợp MySQL: tính tiền | như trên | Khuyến mãi, điểm, làm tròn, hoàn một phần theo tỷ lệ, tiền lưu trên hóa đơn | 5 |
+| Tích hợp MySQL: quản trị | như trên | Thành viên, khuyến mãi, nhân viên và khóa tài khoản, chấm công và lịch sử chỉnh sửa, thực đơn/topping, kho (nhập, công thức, kiểm kê, tự bán lại), hao hụt, chốt ca/ngày, hủy hóa đơn và hoàn tiền, báo cáo | 11 |
+| Tích hợp MySQL: ảnh | như trên | Tải ảnh món và topping, phân quyền, không trùng khi cùng mã | 2 |
+
+Các test MySQL cần Docker đang chạy; không có Docker thì tự bỏ qua.
+
+## Giao diện (Vitest, React Testing Library, `npm --prefix frontend run test`)
+
+| Nội dung | Số test |
+|---|---|
+| Form đăng nhập: kiểm tra, sai PIN, bị khóa, chọn vai trò (`LoginPage`) | 5 |
+| Định dạng tiền và ngày (`format`) | 5 |
+| Chặn truy cập theo vai trò (`RequireRole`) | 3 |
+| Bảng dữ liệu (`DataTable`) | 2 |
+| Bàn phím PIN (`PinPad`) | 1 |
+
+Trước khi nộp còn chạy `npm run lint`, `npm run format:check` và `npm run typecheck`; CI chạy cùng bộ này cộng `npm run build` và kiểm tra tệp Flyway khớp `database/*.sql` (`scripts/sync-migrations.py --check`).
+
+## Quy tắc dữ liệu (`database/run_tests.py`)
+
+35 kịch bản trigger, ràng buộc CHECK và UNIQUE, mỗi kịch bản chạy trong giao dịch rồi hoàn tác. Đã chạy trên CSDL do Flyway dựng: **35/35 đạt**. Kịch bản đọc mật khẩu từ biến môi trường `MYSQL_PWD` và gọi `mysql` ở đường dẫn trong đầu tệp, nên cần chỉnh nếu MySQL cài ở chỗ khác hoặc chạy trong Docker. Chưa tích hợp CI.
+
+## Kiểm tra thủ công và bán tự động
+
+- Đã chạy bằng trình duyệt tự động (Playwright, không lưu trong kho) trên hệ thống thật cả bốn vai trò: đăng nhập, gọi món, gọi thêm, chuyển bàn, pha chế, thanh toán có điểm thành viên, đơn mang đi, mở hộp thoại ở mọi màn hình, chặn truy cập chéo vai trò. 21/21 bước đạt, không có lỗi console hay mạng ngoài các mã 401 và 404 dự kiến.
+- Đã thử bằng yêu cầu HTTP song song: 8 yêu cầu cùng gửi vào một bàn chỉ tạo một đơn; 5 bàn cùng đặt một phần bánh cuối chỉ một bàn thành công, tồn không âm; 4 yêu cầu cùng thanh toán một đơn chỉ sinh một hóa đơn.
+- Đã đối chiếu độc lập bằng SQL: tổng hóa đơn đúng công thức, điểm khách khớp lịch sử điểm, tiền mặt dự kiến của ca và doanh thu báo cáo khớp.
 
 ## Chưa có (nên làm tiếp)
-- Chạy `database/run_tests.py` (35 kịch bản trigger) trên CSDL do Flyway dựng.
-- Test đồng thời (hai Phục vụ gửi đơn cùng một bàn, hai Thu ngân thanh toán cùng một đơn) cho `JdbcOpsService`.
-- Test STOMP thật qua WebSocket với MySQL.
-- Test STOMP thật: từ chối đăng ký kênh sai vai trò.
-- Test giao diện cho bảng pha chế, trang thanh toán, trang bàn.
-- Kiểm thử đầu-cuối (Playwright) cho luồng gọi món → pha chế → thanh toán.
+- Đưa các kiểm tra tranh chấp (đồng thời) ở trên thành test tự động cho `JdbcOpsService`.
+- Đưa kịch bản đầu-cuối (Playwright) vào kho để chạy lại được: gọi món → pha chế → thanh toán.
+- Test STOMP thật qua WebSocket với MySQL, gồm từ chối đăng ký kênh sai vai trò.
+- Test giao diện cho bảng pha chế, trang thanh toán và trang bàn.
+- Tích hợp `database/run_tests.py` vào CI.
+- Nhật ký thao tác (Audit Log) và cảnh báo đơn chờ pha chế quá 10 phút chưa làm, nên chưa có test.
 
 ## Chạy
 ```bash
 mvn -f backend/pom.xml test
 npm --prefix frontend run test
+npm --prefix frontend run lint && npm --prefix frontend run typecheck
 ```

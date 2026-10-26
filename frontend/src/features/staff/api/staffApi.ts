@@ -12,6 +12,8 @@ export interface StaffMember {
   username: string
   role: StaffRole
   status: AccountStatus
+  /** Tài khoản quầy dùng chung, không chấm công. */
+  station?: boolean
 }
 
 export interface StaffInput {

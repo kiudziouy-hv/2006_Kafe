@@ -128,6 +128,4 @@ public class Db {
         } catch (NumberFormatException ignored) { /* rơi xuống lỗi bên dưới */ }
         throw new OpsException(422, "REQUIRED", label + " không hợp lệ.");
     }
-
-    public static int round500(long amount) { return (int) (Math.floorDiv(amount + 250, 500) * 500); }
 }

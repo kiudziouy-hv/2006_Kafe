@@ -1,3 +1,4 @@
+import { TabAction } from '@/components/ui/Tabs'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { QueryState } from '@/components/feedback/QueryState'
@@ -20,9 +21,9 @@ export function IngredientsTab() {
   const [editing, setEditing] = useState<Ingredient | 'new' | null>(null)
   return (
     <QueryState isPending={list.isPending} error={list.error} onRetry={() => void list.refetch()}>
-      <div className="mb-3 flex justify-end">
+      <TabAction>
         <Button onClick={() => setEditing('new')}>Thêm nguyên liệu</Button>
-      </div>
+      </TabAction>
       <DataTable
         rows={list.data ?? []}
         rowKey={(i) => i.id}

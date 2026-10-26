@@ -42,6 +42,18 @@ public class MenuAdminController {
                 .cacheControl(CacheControl.maxAge(java.time.Duration.ofDays(30)).cachePrivate()).body(img.getValue());
     }
 
+    @PostMapping(value = "/toppings/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Map<String, Object> uploadToppingImage(@PathVariable int id, @RequestParam("file") MultipartFile file, HttpSession s) throws java.io.IOException {
+        access.who(s); return menu.saveToppingImage(id, file.getContentType(), file.getBytes()); }
+    @GetMapping("/toppings/{id}/image")
+    public ResponseEntity<byte[]> toppingImage(@PathVariable int id, HttpSession s) {
+        access.who(s);
+        var img = menu.readToppingImage(id);
+        if (img == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType(img.getKey()))
+                .cacheControl(CacheControl.maxAge(java.time.Duration.ofDays(30)).cachePrivate()).body(img.getValue());
+    }
+
     @GetMapping("/toppings") public List<Map<String, Object>> toppings(HttpSession s) { access.who(s); return menu.toppings(); }
     @PostMapping("/toppings") public Map<String, Object> createTopping(@RequestBody Map<String, Object> b, HttpSession s) { access.who(s); return menu.createTopping(b); }
     @PutMapping("/toppings/{id}") public Map<String, Object> updateTopping(@PathVariable int id, @RequestBody Map<String, Object> b, HttpSession s) { access.who(s); return menu.updateTopping(id, b); }

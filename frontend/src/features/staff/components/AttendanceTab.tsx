@@ -1,3 +1,4 @@
+import { TabAction } from '@/components/ui/Tabs'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { QueryState } from '@/components/feedback/QueryState'
@@ -44,10 +45,10 @@ export function AttendanceTab() {
           onChange={(e) => setTo(e.target.value)}
         />
         <Button type="submit">Xem</Button>
-        <Button variant="secondary" onClick={() => setEditing('new')}>
-          Bổ sung chấm công
-        </Button>
       </form>
+      <TabAction>
+        <Button onClick={() => setEditing('new')}>Bổ sung chấm công</Button>
+      </TabAction>
       <QueryState isPending={list.isPending} error={list.error} onRetry={() => void list.refetch()}>
         <DataTable
           rows={list.data ?? []}
@@ -136,11 +137,13 @@ function AttendanceForm({
             onChange={(e) => setEmployeeId(e.target.value)}
           >
             <option value="">— Chọn —</option>
-            {(staff.data ?? []).map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.fullName}
-              </option>
-            ))}
+            {(staff.data ?? [])
+              .filter((s) => !s.station)
+              .map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.fullName}
+                </option>
+              ))}
           </SelectField>
         )}
         <SelectField label="Ca" value={shift} onChange={(e) => setShift(e.target.value)}>

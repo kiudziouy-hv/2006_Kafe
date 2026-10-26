@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import vn.vtph.coffee.auth.Account;
 import vn.vtph.coffee.ops.Model.*;
+import vn.vtph.coffee.shared.pricing.PricingPolicy;
 
 /**
  * Nghiệp vụ gọi món - pha chế - thanh toán, dữ liệu giả lập trong bộ nhớ (chế độ mặc định, không cần MySQL).
@@ -151,7 +152,7 @@ public class InMemoryOpsService implements OpsService {
 
     private void recalc(Order o) {
         o.total = o.lines.stream().filter(l -> !l.status.equals("CANCELLED")).mapToInt(Line::total).sum();
-        o.rounded = (int) (Math.floor(o.total / 500.0 + 0.5) * 500);
+        o.rounded = PricingPolicy.roundToNearest500(o.total);
     }
 
     // ---------- Phục vụ ----------

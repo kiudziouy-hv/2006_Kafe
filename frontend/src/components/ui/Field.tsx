@@ -7,7 +7,7 @@ import type {
 } from 'react'
 
 const control =
-  'min-h-11 w-full rounded-xl border border-line bg-white/70 px-3 py-2 outline-none focus:border-coffee-600'
+  'min-h-10 w-full rounded-xl border border-line bg-white px-3 py-2 outline-none transition focus:border-brass'
 
 function Wrap({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (

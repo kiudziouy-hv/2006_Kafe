@@ -1,5 +1,5 @@
 # Lệnh thường dùng. Windows không có make: xem docs/development/setup.md để chạy từng lệnh.
-.PHONY: backend frontend test lint build sync-migrations up down
+.PHONY: backend frontend test lint build sync-migrations check-sql up down
 
 backend:        ## Chạy backend (chế độ giả lập, không cần MySQL) ở cổng 8080
 	mvn -f backend/pom.xml spring-boot:run
@@ -23,8 +23,11 @@ build:          ## Đóng gói backend và giao diện
 sync-migrations: ## Sinh lại tệp Flyway từ database/*.sql
 	python3 scripts/sync-migrations.py
 
-up:             ## Chạy cả hệ thống bằng Docker
-	docker compose up --build
+check-sql:      ## Kiểm tra tệp Flyway khớp database/*.sql (không ghi)
+	python3 scripts/sync-migrations.py --check
 
-down:
-	docker compose down
+up:             ## Chạy MySQL (Docker) + backend + giao diện
+	scripts/dev-mysql.sh
+
+down:           ## Dừng container MySQL (dữ liệu giữ trong volume)
+	docker stop vtph-mysql

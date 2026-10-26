@@ -16,6 +16,8 @@ export interface StaffAccount {
   fullName: string
   role: Exclude<Role, 'OWNER'>
   locked: boolean
+  /** Tài khoản quầy dùng chung (thu ngân, pha chế): đăng nhập thao tác, không chấm công. */
+  station?: boolean
 }
 
 export interface ApiError {

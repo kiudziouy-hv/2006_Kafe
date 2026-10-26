@@ -28,4 +28,4 @@ Cách truy cập dữ liệu: bước 1 dùng `JdbcTemplate` (SQL rõ ràng, kh�
 Trigger của MySQL là lớp bảo vệ thứ hai; business rule vẫn phải kiểm tra ở service để báo lỗi rõ cho người dùng.
 
 ## ADR-007 Flyway sinh từ `database/*.sql`
-`database/` vẫn là nguồn chuẩn của Chương 5. `scripts/sync-migrations.py` sinh `db/migration` (V1 lược đồ, V2 trigger, V4 view/thủ tục) và `db/seed` (V3, V5 dữ liệu mẫu, chỉ nạp ở môi trường phát triển). CI chạy lại script và báo lỗi nếu tệp sinh ra khác bản đã commit.
+`database/` vẫn là nguồn chuẩn của Chương 5. `scripts/sync-migrations.py` sinh `db/migration` (V1 lược đồ, V2 trigger, V4 view/thủ tục) và `db/seed` (V3, V5 dữ liệu mẫu, chỉ nạp ở môi trường phát triển). CI chạy `python3 scripts/sync-migrations.py --check` (cũng chạy được ở máy: `make check-sql`) và báo lỗi nếu tệp Flyway khác nội dung sinh ra từ `database/`. Quy ước: **chỉ sửa `database/*.sql`, không sửa tay `backend/.../db/`**.

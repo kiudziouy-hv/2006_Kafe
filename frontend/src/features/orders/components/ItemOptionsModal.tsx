@@ -21,7 +21,7 @@ function Chip({
       aria-pressed={active}
       onClick={onClick}
       className={clsx(
-        'vt-hover-lift min-h-11 rounded-full border px-4 font-semibold',
+        'vt-hover-lift inline-flex min-h-11 items-center gap-2 rounded-full border px-4 font-semibold',
         active
           ? 'border-brass-dark bg-gradient-to-r from-coffee-900 to-coffee-700 text-ivory'
           : 'border-brass/50 bg-white/70 hover:border-brass hover:bg-coffee-100',
@@ -111,9 +111,16 @@ export function ItemOptionsModal({
                 ))}
               </div>
             </fieldset>
-            {temp === 'COLD' && (
-              <fieldset>
-                <legend className="mb-1 text-sm font-semibold">Mức đá</legend>
+            {canCold && (
+              // Luôn hiện để hộp thoại không đổi chiều cao khi chuyển Nóng/Lạnh; đồ nóng thì mờ đi, không chọn được.
+              <fieldset
+                disabled={temp === 'HOT'}
+                className={temp === 'HOT' ? 'opacity-40' : undefined}
+              >
+                <legend className="mb-1 text-sm font-semibold">
+                  Mức đá
+                  {temp === 'HOT' && <span className="font-normal"> (đồ nóng không dùng đá)</span>}
+                </legend>
                 <div className="flex flex-wrap gap-2">
                   {ICE_LEVELS.map((i) => (
                     <Chip key={i.value} active={ice === i.value} onClick={() => setIce(i.value)}>
@@ -137,6 +144,13 @@ export function ItemOptionsModal({
                         )
                       }
                     >
+                      {t.imageUrl && (
+                        <img
+                          src={t.imageUrl}
+                          alt=""
+                          className="-ml-2 h-7 w-7 rounded-full object-cover"
+                        />
+                      )}
                       {t.name} +{formatMoney(t.price)}
                     </Chip>
                   ))}

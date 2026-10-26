@@ -16,7 +16,7 @@ export function Receipt({ invoice, reprint }: { invoice: InvoiceDetail; reprint?
   return (
     <div className="print-area mx-auto w-[74mm] bg-[#fff] p-3 font-mono text-[12px] leading-snug text-black">
       <div className="text-center">
-        <p className="text-base font-bold">2006 KAFÉ</p>
+        <p className="font-display text-base font-semibold">2006 Kafé</p>
         <p>Hóa đơn bán hàng</p>
         {reprint && (
           <p className="my-1 border border-black px-2 font-bold tracking-widest">REPRINT</p>

@@ -26,6 +26,7 @@ export interface MenuTopping {
   name: string
   price: number
   status: 'ACTIVE' | 'OUT_OF_STOCK' | 'DISCONTINUED'
+  imageUrl?: string | null
 }
 
 export interface OpsMenu {

@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 @Profile("mysql")
 public class JdbcAccountStore implements AccountStore {
     private static final String SELECT = """
-            SELECT a.account_id, a.username, a.secret_hash, a.role, a.status, a.failed_attempts, a.locked_until, e.full_name
+            SELECT a.account_id, a.username, a.secret_hash, a.role, a.status, a.failed_attempts, a.locked_until, a.is_station, e.full_name
             FROM account a JOIN employee e ON e.employee_id = a.employee_id""";
 
     private final JdbcTemplate jdbc;
@@ -38,6 +38,7 @@ public class JdbcAccountStore implements AccountStore {
         LocalDateTime until = rs.getObject("locked_until", LocalDateTime.class);
         a.lockedUntil = until == null ? null : until.toInstant(ZoneOffset.UTC);
         a.permanentlyLocked = "LOCKED".equals(rs.getString("status"));
+        a.station = rs.getBoolean("is_station");
         return a;
     }
 

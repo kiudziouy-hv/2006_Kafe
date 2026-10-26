@@ -1,9 +1,9 @@
+import { TabAction } from '@/components/ui/Tabs'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { QueryState } from '@/components/feedback/QueryState'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
 import { DataTable } from '@/components/ui/DataTable'
 import { useAction } from '@/hooks/useAction'
 import { formatDateTime } from '@/utils/format'
@@ -60,11 +60,9 @@ export function WasteTab() {
   ]
   return (
     <>
-      <Card className="mb-4 flex items-center justify-end gap-3">
-        <Button variant="secondary" onClick={() => setAdding(true)}>
-          Lập phiếu hao hụt
-        </Button>
-      </Card>
+      <TabAction>
+        <Button onClick={() => setAdding(true)}>Lập phiếu hao hụt</Button>
+      </TabAction>
       <QueryState isPending={list.isPending} error={list.error} onRetry={() => void list.refetch()}>
         <DataTable
           rows={list.data ?? []}

@@ -11,7 +11,7 @@ jobs:
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 21, cache: maven }
       - name: Kiểm tra tệp Flyway khớp database/*.sql
-        run: python3 scripts/sync-migrations.py && git diff --exit-code backend/src/main/resources/db
+        run: python3 scripts/sync-migrations.py --check
       - run: mvn -B -f backend/pom.xml verify
 
   frontend:

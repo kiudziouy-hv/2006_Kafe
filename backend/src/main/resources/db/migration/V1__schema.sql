@@ -33,13 +33,14 @@ CREATE TABLE account (
   status          ENUM('ACTIVE','TEMP_LOCKED','LOCKED') NOT NULL DEFAULT 'ACTIVE',
   failed_attempts TINYINT UNSIGNED NOT NULL DEFAULT 0,
   locked_until    DATETIME NULL,
+  is_station      TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '1 = tài khoản dùng chung của máy thu ngân/màn hình pha chế: chỉ để đăng nhập thao tác, không chấm công',
   PRIMARY KEY (account_id),
   UNIQUE KEY uq_account_employee (employee_id),
   UNIQUE KEY uq_account_username (username),
   CONSTRAINT fk_account_employee FOREIGN KEY (employee_id) REFERENCES employee (employee_id),
   CONSTRAINT ck_account_attempts CHECK (failed_attempts <= 5),
   CONSTRAINT ck_account_lock CHECK (status <> 'TEMP_LOCKED' OR locked_until IS NOT NULL)
-) ENGINE=InnoDB COMMENT='Tài khoản đăng nhập; mỗi nhân viên một tài khoản (BR-042, ASM-13)';
+) ENGINE=InnoDB COMMENT='Tài khoản đăng nhập; mỗi nhân viên một tài khoản, cộng tài khoản quầy dùng chung (BR-042, ASM-13)';
 
 CREATE TABLE attendance (
   attendance_id  INT UNSIGNED NOT NULL AUTO_INCREMENT,

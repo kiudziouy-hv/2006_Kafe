@@ -28,7 +28,7 @@ export function Button({
       type="button"
       disabled={disabled || loading}
       className={clsx(
-        'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 font-semibold',
+        'inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-4 text-[15px] font-semibold',
         'disabled:cursor-not-allowed disabled:opacity-50',
         styles[variant],
         className,

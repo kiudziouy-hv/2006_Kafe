@@ -58,12 +58,14 @@ export default function AttendanceKioskPage() {
             onChange={(e) => setAccountId(e.target.value)}
           >
             <option value="">— Chọn tài khoản —</option>
-            {(staff.data ?? []).map((a) => (
-              <option key={a.id} value={a.id} disabled={a.locked}>
-                {a.fullName}
-                {a.locked ? ' (đang khóa)' : ''}
-              </option>
-            ))}
+            {(staff.data ?? [])
+              .filter((a) => !a.station)
+              .map((a) => (
+                <option key={a.id} value={a.id} disabled={a.locked}>
+                  {a.fullName}
+                  {a.locked ? ' (đang khóa)' : ''}
+                </option>
+              ))}
           </SelectField>
           <SelectField
             label="Ca làm việc (khi chấm công vào)"

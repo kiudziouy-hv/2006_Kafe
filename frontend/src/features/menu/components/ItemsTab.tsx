@@ -1,15 +1,15 @@
+import { TabAction } from '@/components/ui/Tabs'
 import { useQuery } from '@tanstack/react-query'
-import { LayoutGrid, List } from 'lucide-react'
+import { Coffee, Search } from 'lucide-react'
 import { useState } from 'react'
-import clsx from 'clsx'
 import { QueryState } from '@/components/feedback/QueryState'
-import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { DataTable } from '@/components/ui/DataTable'
 import { CheckField, NumberField, SelectField, TextField } from '@/components/ui/Field'
 import { Modal } from '@/components/ui/Modal'
 import { useAction } from '@/hooks/useAction'
 import { ItemGallery } from './ItemGallery'
+import { useMenuView, ViewToggle } from './ViewToggle'
 import { formatMoney, GROUP_LABEL } from '@/utils/format'
 import {
   menuApi,
@@ -21,28 +21,19 @@ import {
 
 const KEY = [['admin', 'items']]
 const STATUSES = Object.keys(STATUS_LABEL) as CatalogStatus[]
-const TONE = { SELLING: 'success', OUT_OF_STOCK: 'warning', STOPPED: 'neutral' } as const
+const STATUS_CLASS = {
+  SELLING: 'bg-success-bg text-success',
+  OUT_OF_STOCK: 'bg-warning-bg text-warning',
+  STOPPED: 'bg-coffee-100 text-coffee-900',
+} as const
 
 /** UC-05: quản lý món. Món đã phát sinh giao dịch không xóa mà chuyển Ngừng bán (BR-007). */
 export function ItemsTab() {
   const items = useQuery({ queryKey: ['admin', 'items'], queryFn: menuApi.items })
   const toppings = useQuery({ queryKey: ['admin', 'toppings'], queryFn: menuApi.toppings })
   const [editing, setEditing] = useState<AdminItem | 'new' | null>(null)
-  const [view, setView] = useState<'gallery' | 'list'>(() => {
-    try {
-      return localStorage.getItem('vt-menu-view') === 'list' ? 'list' : 'gallery'
-    } catch {
-      return 'gallery'
-    }
-  })
-  const chooseView = (v: 'gallery' | 'list') => {
-    setView(v)
-    try {
-      localStorage.setItem('vt-menu-view', v)
-    } catch {
-      /* không lưu được thì bỏ qua */
-    }
-  }
+  const [q, setQ] = useState('')
+  const [view, chooseView] = useMenuView()
   const itemStatus = useAction(
     (v: { id: number; status: CatalogStatus }) => menuApi.itemStatus(v.id, v.status),
     {
@@ -56,6 +47,10 @@ export function ItemsTab() {
     { invalidate: KEY, success: 'Đã cập nhật trạng thái kích thước' },
   )
 
+  const shown = (items.data ?? []).filter((i) =>
+    i.name.toLowerCase().includes(q.trim().toLowerCase()),
+  )
+
   return (
     <QueryState
       isPending={items.isPending}
@@ -63,43 +58,39 @@ export function ItemsTab() {
       onRetry={() => void items.refetch()}
     >
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div
-          role="group"
-          aria-label="Kiểu hiển thị"
-          className="inline-flex rounded-full border border-brass/50 bg-white/60 p-1"
-        >
-          {(
-            [
-              ['gallery', 'Ảnh', LayoutGrid],
-              ['list', 'Danh sách', List],
-            ] as const
-          ).map(([v, label, Icon]) => (
-            <button
-              key={v}
-              type="button"
-              aria-pressed={view === v}
-              onClick={() => chooseView(v)}
-              className={clsx(
-                'flex min-h-9 items-center gap-2 rounded-full px-4 text-sm font-semibold transition',
-                view === v
-                  ? 'bg-gradient-to-r from-coffee-900 to-coffee-700 text-ivory'
-                  : 'text-ink hover:bg-coffee-100',
-              )}
-            >
-              <Icon size={16} aria-hidden />
-              {label}
-            </button>
-          ))}
-        </div>
-        <Button onClick={() => setEditing('new')}>Thêm món</Button>
+        <ViewToggle value={view} onChange={chooseView} />
+        <label className="vt-field flex min-h-11 min-w-[200px] flex-1 items-center gap-2 rounded-full border border-line bg-white px-4 sm:max-w-xs">
+          <Search size={17} aria-hidden className="shrink-0 text-ink-soft" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Tìm món..."
+            aria-label="Tìm món"
+            className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-ink-soft"
+          />
+        </label>
       </div>
+      <TabAction>
+        <Button onClick={() => setEditing('new')}>Thêm món</Button>
+      </TabAction>
       {view === 'gallery' ? (
-        <ItemGallery items={items.data ?? []} onEdit={setEditing} />
+        <ItemGallery items={shown} onEdit={setEditing} />
       ) : (
         <DataTable
-          rows={items.data ?? []}
+          rows={shown}
           rowKey={(i) => i.id}
           columns={[
+            {
+              header: '',
+              cell: (i) =>
+                i.imageUrl ? (
+                  <img src={i.imageUrl} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                ) : (
+                  <span className="grid h-10 w-10 place-items-center rounded-lg bg-coffee-100 text-coffee-700">
+                    <Coffee size={18} aria-hidden />
+                  </span>
+                ),
+            },
             { header: 'Món', cell: (i) => <span className="font-semibold">{i.name}</span> },
             { header: 'Nhóm', cell: (i) => GROUP_LABEL[i.group] },
             {
@@ -149,23 +140,20 @@ export function ItemsTab() {
             {
               header: 'Trạng thái món',
               cell: (i) => (
-                <div className="flex items-center gap-2">
-                  <Badge tone={TONE[i.status]}>{STATUS_LABEL[i.status]}</Badge>
-                  <select
-                    aria-label={`Trạng thái của ${i.name}`}
-                    value={i.status}
-                    onChange={(e) =>
-                      itemStatus.mutate({ id: i.id, status: e.target.value as CatalogStatus })
-                    }
-                    className="rounded-lg border border-line bg-white/70 px-2 py-1"
-                  >
-                    {STATUSES.map((st) => (
-                      <option key={st} value={st}>
-                        {STATUS_LABEL[st]}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <select
+                  aria-label={`Trạng thái của ${i.name}`}
+                  value={i.status}
+                  onChange={(e) =>
+                    itemStatus.mutate({ id: i.id, status: e.target.value as CatalogStatus })
+                  }
+                  className={`rounded-full border border-current/20 px-3 py-1 text-sm font-semibold ${STATUS_CLASS[i.status]}`}
+                >
+                  {STATUSES.map((st) => (
+                    <option key={st} value={st}>
+                      {STATUS_LABEL[st]}
+                    </option>
+                  ))}
+                </select>
               ),
             },
             {
