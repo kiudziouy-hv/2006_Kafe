@@ -30,7 +30,7 @@ class MySqlAuthIntegrationTest extends AbstractMySqlIT {
         assertEquals(28, jdbc.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE' AND table_name <> 'flyway_schema_history'", Integer.class));
         assertEquals(15, jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.triggers WHERE trigger_schema = DATABASE()", Integer.class));
-        assertEquals(10, jdbc.queryForObject("SELECT COUNT(*) FROM account", Integer.class));
+        assertEquals(11, jdbc.queryForObject("SELECT COUNT(*) FROM account", Integer.class));
         assertEquals(5, jdbc.queryForObject("SELECT COUNT(*) FROM flyway_schema_history WHERE success = 1", Integer.class));
         assertEquals("utf8mb4_0900_as_ci", jdbc.queryForObject("SELECT @@collation_database", String.class));
     }
@@ -38,20 +38,31 @@ class MySqlAuthIntegrationTest extends AbstractMySqlIT {
     @Test
     void staffListComesFromTheDatabaseWithoutTheOwner() {
         List<Map<String, Object>> staff = auth.staffList();
-        assertEquals(9, staff.size()); // 7 nhân viên + 2 tài khoản quầy dùng chung
+        assertEquals(10, staff.size()); // 7 nhân viên + 3 tài khoản dùng chung (thu ngân, pha chế, phục vụ)
         assertTrue(staff.stream().noneMatch(m -> "OWNER".equals(m.get("role"))));
         assertTrue(staff.stream().anyMatch(m -> "Võ Tấn Phát".equals(m.get("fullName")) && "WAITER".equals(m.get("role"))));
     }
 
     @Test
-    void cashierAndBaristaCanLogInWithTheSharedStationPin() {
+    void everyRoleCanLogInWithItsSharedStationPin() {
         List<Map<String, Object>> stations = auth.staffList().stream().filter(m -> Boolean.TRUE.equals(m.get("station"))).toList();
-        assertEquals(List.of("CASHIER", "BARISTA"), stations.stream().map(m -> m.get("role")).toList());
+        assertEquals(List.of("CASHIER", "BARISTA", "WAITER"), stations.stream().map(m -> m.get("role")).toList());
         Account cashier = auth.loginStaff(9, "234567");
         assertEquals(Role.CASHIER, cashier.role);
         assertTrue(cashier.station);
         assertEquals(Role.BARISTA, auth.loginStaff(10, "345678").role);
+        Account waiter = auth.loginStaff(11, "123456");
+        assertEquals(Role.WAITER, waiter.role);
+        assertTrue(waiter.station);
         assertEquals("WRONG_SECRET", assertThrows(AuthException.class, () -> auth.loginStaff(9, "111111")).code);
+    }
+
+    @Test
+    void theSharedPinsOfTheThreeRolesAreDifferent() {
+        // Một PIN dùng chung cho cả ba vai trò sẽ cho người này vào tài khoản của vai trò khác (nâng quyền).
+        assertEquals("WRONG_SECRET", assertThrows(AuthException.class, () -> auth.loginStaff(11, "234567")).code); // PIN thu ngân vào tài khoản phục vụ
+        assertEquals("WRONG_SECRET", assertThrows(AuthException.class, () -> auth.loginStaff(9, "345678")).code); // PIN pha chế vào tài khoản thu ngân
+        assertEquals("WRONG_SECRET", assertThrows(AuthException.class, () -> auth.loginStaff(10, "123456")).code); // PIN phục vụ vào tài khoản pha chế
     }
 
     @Test
@@ -64,6 +75,8 @@ class MySqlAuthIntegrationTest extends AbstractMySqlIT {
 
     @Test
     void seedHashIsUpgradedToBcryptOnFirstSuccessfulLogin() {
+        // Container MySQL dùng chung giữa các lớp test: test khác có thể đã nâng hash tài khoản 4 lên bcrypt, nên đặt lại hash seed.
+        jdbc.update("UPDATE account SET secret_hash = SHA2(CONCAT('demo-','phucvu1','-','123456'),256) WHERE account_id = 4");
         assertEquals(64, jdbc.queryForObject("SELECT LENGTH(secret_hash) FROM account WHERE account_id = 4", Integer.class));
         assertEquals(Role.WAITER, auth.loginStaff(4, "123456").role);
         String hash = jdbc.queryForObject("SELECT secret_hash FROM account WHERE account_id = 4", String.class);
