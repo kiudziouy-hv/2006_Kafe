@@ -1,12 +1,4 @@
-import {
-  BarChart3,
-  BookOpen,
-  Crown,
-  Package,
-  Receipt,
-  Armchair,
-  UsersRound,
-} from 'lucide-react'
+import { BarChart3, BookOpen, Crown, Package, Receipt, Armchair, UsersRound } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { AppShell, type NavItem } from '@/components/layout/AppShell'
 import type { NotifExtra } from '@/components/layout/NotificationBell'
