@@ -1,0 +1,443 @@
+@import 'tailwindcss';
+
+/* Mã màu theo Figma "Mocha v5" (biến Color/Primitives): tông nâu #652410 → #fac697 */
+@theme {
+  --font-sans: 'Fraunces', ui-serif, Georgia, serif;
+  --font-display: 'Playfair Display', 'Fraunces', ui-serif, Georgia, serif;
+
+  /* Vintage café: giấy da, nâu espresso, đồng thau. Tên token giữ nguyên để mọi component tự đổi màu theo. */
+  --color-white: #fbf0d9; /* mọi "trắng" trong giao diện thành màu giấy kem */
+  --color-canvas: #efdcbc;
+  --color-ivory: #fff6e2;
+  --color-coffee-950: #20100a;
+  --color-coffee-900: #3a1a0e;
+  --color-coffee-700: #5e2a14;
+  --color-coffee-600: #86421f;
+  --color-coffee-300: #d9a86a;
+  --color-coffee-200: #ecc88f;
+  --color-coffee-100: #f3dcb2;
+  --color-coffee-50: #f8ebcf;
+  --color-brass: #b58437;
+  --color-brass-dark: #8a5f1e;
+  --color-brass-light: #e6c07a;
+  --color-ink: #2a140c;
+  --color-ink-soft: #6f4d38;
+  --color-ink-faint: #a08266;
+  --color-line: #d2b387;
+  --color-success: #2f6b46;
+  --color-success-bg: #dfe9cf;
+  --color-danger: #a8372f;
+  --color-danger-bg: #f4d9cc;
+  --color-warning: #7d5210;
+  --color-warning-bg: #f5e2b4;
+  --radius-card: 20px;
+  --shadow-card: 0 14px 30px rgb(58 26 14 / 0.16), 0 2px 0 rgb(255 246 226 / 0.7) inset;
+  --shadow-lift: 0 22px 40px rgb(58 26 14 / 0.26), 0 2px 0 rgb(255 246 226 / 0.8) inset;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+/* Nền giấy da: vầng sáng ở giữa, tối dần ra mép như tường quán cũ, phủ hạt giấy nhẹ */
+body {
+  margin: 0;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  background-color: var(--color-canvas);
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .35  0 0 0 0 .22  0 0 0 0 .1  0 0 0 .09 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),
+    radial-gradient(ellipse at 50% 0%, #fff4da 0%, rgb(255 244 218 / 0) 60%),
+    linear-gradient(160deg, #f4e4c4 0%, #e9d2a8 55%, #dcc08e 100%);
+  background-attachment: fixed;
+}
+
+::selection {
+  background: var(--color-brass-light);
+  color: var(--color-coffee-950);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  letter-spacing: 0.01em;
+}
+
+/* Tiêu đề trang có đường kẻ đồng thau như bảng hiệu cũ */
+h1::after {
+  content: '';
+  display: block;
+  width: min(12rem, 45%);
+  height: 3px;
+  margin-top: 0.45rem;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--color-brass), var(--color-brass-light) 60%, transparent);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-brass);
+  outline-offset: 2px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  box-shadow: 0 0 0 3px rgb(181 132 55 / 0.3);
+}
+
+/* Ô nhập có khung riêng: hiệu ứng nằm ở khung, không phải ở thẻ input bên trong */
+.vt-field input:focus,
+.vt-field input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+.vt-field {
+  position: relative;
+  overflow: hidden;
+  transition:
+    border-color 0.25s ease,
+    background-color 0.25s ease,
+    box-shadow 0.3s ease,
+    transform 0.25s ease;
+}
+.vt-field::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-brass),
+    var(--color-brass-light),
+    var(--color-brass),
+    transparent
+  );
+  transform: scaleX(0);
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.vt-field:hover {
+  border-color: var(--color-brass-light);
+}
+.vt-field:focus-within {
+  border-color: var(--color-brass);
+  background-color: rgb(255 248 230 / 0.85);
+  box-shadow:
+    0 0 0 4px rgb(181 132 55 / 0.18),
+    0 8px 20px -8px rgb(107 58 31 / 0.35),
+    inset 0 0 18px rgb(255 214 140 / 0.35);
+  transform: translateY(-1px);
+}
+.vt-field:focus-within::after {
+  transform: scaleX(1);
+}
+.vt-field svg {
+  transition:
+    color 0.25s ease,
+    transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.vt-field:focus-within svg {
+  color: var(--color-brass-dark);
+  transform: scale(1.18) rotate(-6deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .vt-field,
+  .vt-field::after,
+  .vt-field svg {
+    transition: none;
+  }
+}
+
+/* Thanh cuộn nâu đồng */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-brass) transparent;
+}
+
+/* ====== Thành phần vintage dùng chung ====== */
+@layer components {
+  /* Thẻ giấy da: viền đồng thau kép, đổ bóng, nhấc lên khi rê chuột */
+  .vt-card {
+    border: 1px solid rgb(181 132 55 / 0.55);
+    border-radius: var(--radius-card);
+    background: linear-gradient(145deg, #fff7e4 0%, #f6e6c6 100%);
+    box-shadow:
+      var(--shadow-card),
+      inset 0 0 0 4px rgb(255 246 226 / 0.55),
+      inset 0 0 0 5px rgb(181 132 55 / 0.22);
+    transition:
+      transform 0.25s ease,
+      box-shadow 0.25s ease,
+      border-color 0.25s ease;
+  }
+  .vt-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-brass);
+    box-shadow:
+      var(--shadow-lift),
+      inset 0 0 0 4px rgb(255 246 226 / 0.6),
+      inset 0 0 0 5px rgb(181 132 55 / 0.4);
+  }
+
+  /* Nút: gỗ espresso viền đồng; hover sáng lên và nổi, nhấn thì lún */
+  .vt-btn {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--color-brass-dark);
+    letter-spacing: 0.02em;
+    transition:
+      transform 0.18s ease,
+      box-shadow 0.18s ease,
+      background-position 0.35s ease,
+      filter 0.18s ease;
+    background-size: 200% 100%;
+  }
+  .vt-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 35%,
+      rgb(255 240 200 / 0.4) 50%,
+      transparent 65%
+    );
+    transform: translateX(-120%);
+    transition: transform 0.6s ease;
+    pointer-events: none;
+  }
+  .vt-btn:not(:disabled):hover {
+    transform: translateY(-2px);
+    background-position: 100% 0;
+  }
+  .vt-btn:not(:disabled):hover::after {
+    transform: translateX(120%);
+  }
+  .vt-btn:not(:disabled):active {
+    transform: translateY(1px);
+    filter: brightness(0.95);
+  }
+  .vt-btn-primary {
+    color: var(--color-ivory);
+    background-image: linear-gradient(95deg, #5e2a14 0%, #86421f 50%, #5e2a14 100%);
+    box-shadow:
+      0 4px 10px rgb(58 26 14 / 0.35),
+      inset 0 1px 0 rgb(255 226 170 / 0.4);
+  }
+  .vt-btn-primary:not(:disabled):hover {
+    box-shadow:
+      0 10px 20px rgb(58 26 14 / 0.4),
+      0 0 0 3px rgb(181 132 55 / 0.35),
+      inset 0 1px 0 rgb(255 226 170 / 0.5);
+  }
+  .vt-btn-secondary {
+    color: var(--color-coffee-900);
+    border-color: rgb(181 132 55 / 0.8);
+    background-image: linear-gradient(95deg, #fff3d6 0%, #f1dbae 50%, #fff3d6 100%);
+    box-shadow:
+      0 2px 6px rgb(58 26 14 / 0.15),
+      inset 0 1px 0 rgb(255 255 255 / 0.6);
+  }
+  .vt-btn-secondary:not(:disabled):hover {
+    border-color: var(--color-brass-dark);
+    box-shadow:
+      0 8px 16px rgb(58 26 14 / 0.22),
+      inset 0 1px 0 rgb(255 255 255 / 0.7);
+  }
+  .vt-btn-danger {
+    color: #fff3e6;
+    border-color: #6e211b;
+    background-image: linear-gradient(95deg, #8e2d26 0%, #b5453a 50%, #8e2d26 100%);
+    box-shadow: 0 4px 10px rgb(110 33 27 / 0.35);
+  }
+  .vt-btn-danger:not(:disabled):hover {
+    box-shadow:
+      0 10px 20px rgb(110 33 27 / 0.4),
+      0 0 0 3px rgb(168 55 47 / 0.3);
+  }
+  .vt-btn-ghost {
+    color: var(--color-coffee-700);
+    border-color: transparent;
+    background-image: linear-gradient(95deg, transparent, transparent);
+  }
+  .vt-btn-ghost:not(:disabled):hover {
+    background-image: linear-gradient(95deg, #f3dcb2, #ecc88f);
+    border-color: rgb(181 132 55 / 0.5);
+    transform: none;
+  }
+
+  /* Chip/ô chọn và bảng */
+  .vt-hover-lift {
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease,
+      background-color 0.2s ease;
+  }
+  .vt-hover-lift:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 22px rgb(58 26 14 / 0.22);
+  }
+
+  .vt-table thead {
+    background-image: linear-gradient(180deg, #e9cd96, #d9b878);
+    color: var(--color-coffee-950);
+    font-family: var(--font-display);
+    letter-spacing: 0.03em;
+  }
+  .vt-table tbody tr {
+    transition:
+      background-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+  .vt-table tbody tr:nth-child(even) {
+    background-color: rgb(233 205 150 / 0.22);
+  }
+  .vt-table tbody tr:hover {
+    background-color: rgb(230 192 122 / 0.45);
+    box-shadow: inset 4px 0 0 var(--color-brass);
+  }
+
+  /* Thanh bên tối như quầy gỗ; mục đang chọn là bảng đồng */
+  .vt-sidebar {
+    color: #f3dfb8;
+    background:
+      radial-gradient(ellipse at 0% 0%, rgb(181 132 55 / 0.28), transparent 55%),
+      linear-gradient(180deg, #3a1a0e 0%, #2a140c 60%, #20100a 100%);
+    border-right: 3px double rgb(181 132 55 / 0.55);
+  }
+  .vt-nav {
+    position: relative;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    transition:
+      background-color 0.2s ease,
+      transform 0.2s ease,
+      border-color 0.2s ease,
+      color 0.2s ease;
+  }
+  .vt-nav:hover {
+    background-color: rgb(230 192 122 / 0.14);
+    border-color: rgb(181 132 55 / 0.4);
+    color: #fff3d6;
+    transform: translateX(4px);
+  }
+  .vt-nav[aria-current='page'] {
+    color: var(--color-coffee-950);
+    border-color: var(--color-brass-light);
+    background-image: linear-gradient(95deg, #e6c07a, #c99a4c);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.35);
+  }
+
+  .vt-topbar {
+    border: 1px solid rgb(181 132 55 / 0.55);
+    border-radius: var(--radius-card);
+    background: linear-gradient(100deg, #fff7e4 0%, #f2dcaf 100%);
+    box-shadow:
+      var(--shadow-card),
+      inset 0 0 0 3px rgb(255 246 226 / 0.55);
+  }
+
+  .vt-tab {
+    border: 1px solid rgb(181 132 55 / 0.45);
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease,
+      background-color 0.2s ease;
+  }
+  .vt-tab:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgb(58 26 14 / 0.2);
+  }
+  .vt-tab[aria-selected='true'] {
+    color: var(--color-ivory);
+    border-color: var(--color-brass-dark);
+    background-image: linear-gradient(95deg, #3a1a0e, #5e2a14);
+    box-shadow:
+      0 4px 10px rgb(58 26 14 / 0.4),
+      inset 0 1px 0 rgb(255 226 170 / 0.35);
+  }
+
+  .vt-modal {
+    border: 1px solid var(--color-brass);
+    background: linear-gradient(160deg, #fff8e8, #f3e1bd);
+    box-shadow:
+      0 30px 60px rgb(32 16 10 / 0.5),
+      inset 0 0 0 4px rgb(255 246 226 / 0.6),
+      inset 0 0 0 5px rgb(181 132 55 / 0.35);
+  }
+  .vt-modal-head {
+    background-image: linear-gradient(95deg, #e9cd96, #f7e7c3 60%, #e9cd96);
+    border-bottom: 2px solid rgb(181 132 55 / 0.6);
+  }
+}
+
+@keyframes vt-ring {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  10%,
+  30% {
+    transform: rotate(14deg);
+  }
+  20%,
+  40% {
+    transform: rotate(-14deg);
+  }
+  50% {
+    transform: rotate(0);
+  }
+}
+
+@keyframes vt-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+main {
+  animation: vt-rise 0.35s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+/* In hóa đơn trên máy in nhiệt khổ 80 mm (UC-22, UC-23): chỉ in vùng .print-area */
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 3mm;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: fixed;
+    inset: 0 auto auto 0;
+    width: 74mm;
+    background: #fff;
+    color: #000;
+  }
+}

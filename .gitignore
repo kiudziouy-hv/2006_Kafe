@@ -1,0 +1,13 @@
+# Backend
+backend/target/
+*.iml
+.idea/
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/*.local
+# Môi trường: KHÔNG đưa mật khẩu lên kho mã nguồn
+.env
+!.env.example
+# Hệ điều hành
+.DS_Store

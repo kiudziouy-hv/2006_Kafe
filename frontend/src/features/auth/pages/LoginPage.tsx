@@ -1,0 +1,287 @@
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useQuery } from '@tanstack/react-query'
+import clsx from 'clsx'
+import { Lock, User } from 'lucide-react'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
+import { Button } from '@/components/ui/Button'
+import { Logo } from '@/components/shared/Logo'
+import { toApiError } from '@/lib/http'
+import type { Role, StaffAccount } from '@/types/api'
+import { authApi } from '../api/authApi'
+import { PinPad } from '../components/PinPad'
+import { HOME_BY_ROLE, useAuth } from '../hooks/useAuth'
+import { ownerLoginSchema, pinSchema, type OwnerLoginForm } from '../schemas/loginSchemas'
+
+type Mode = 'owner' | 'staff'
+type StaffRole = Exclude<Role, 'OWNER'>
+
+const ROLE_TILES: { role: StaffRole; label: string }[] = [
+  { role: 'WAITER', label: 'Phục vụ' },
+  { role: 'BARISTA', label: 'Pha chế' },
+  { role: 'CASHIER', label: 'Thu ngân' },
+]
+
+/** UC-01: một màn đăng nhập, hai chế độ: Quản lý (tên + mật khẩu) và Nhân viên (chọn vai trò + PIN 6 số). */
+export default function LoginPage() {
+  const { user, loading } = useAuth()
+  const [params] = useSearchParams()
+  const [mode, setMode] = useState<Mode>('owner')
+
+  if (!loading && user) return <Navigate to={HOME_BY_ROLE[user.role]} replace />
+
+  return (
+    <main className="grid min-h-full place-items-center bg-[#eadcc0] bg-[radial-gradient(ellipse_at_top,#f5e9cf,transparent_70%)] p-4 sm:p-8">
+      <div className="grid w-full max-w-[1040px] overflow-hidden rounded-[36px] border-2 border-double border-brass bg-gradient-to-br from-[#fbf0d9] to-[#f0dcb4] shadow-[0_30px_70px_-20px_rgba(60,30,10,0.5)] lg:grid-cols-[0.85fr_1fr]">
+        <aside className="relative hidden min-h-[640px] overflow-hidden lg:block" aria-hidden>
+          <img
+            src="/login-bg.jpg"
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover object-[40%_center] sepia-[0.25]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-coffee-950/40 via-transparent to-coffee-950/20" />
+          <div className="absolute inset-y-0 right-0 w-40 bg-gradient-to-l from-[#f8ebd0] via-[#f8ebd0]/60 to-transparent" />
+        </aside>
+
+        <section className="relative flex flex-col items-center justify-center gap-4 px-6 py-10 sm:px-12">
+          <img
+            src="/login-bg.jpg"
+            alt=""
+            aria-hidden
+            className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-20 sepia lg:hidden"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent to-brass/10" />
+          <header className="relative text-center">
+            <p className="text-xs font-semibold uppercase tracking-widest text-ink-soft">
+              Chào mừng bạn đến với
+            </p>
+            <Logo className="mx-auto mt-3 h-32 w-32 ring-4 ring-brass/60" />
+            <p className="mt-3 font-display text-sm tracking-[0.5em] text-brass-dark">✦ ❖ ✦</p>
+          </header>
+
+          {params.get('expired') && (
+            <p role="alert" className="rounded-2xl bg-warning-bg px-4 py-2 text-sm text-warning">
+              Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.
+            </p>
+          )}
+
+          <div
+            role="tablist"
+            aria-label="Chế độ đăng nhập"
+            className="relative grid w-full max-w-[400px] grid-cols-2 border-b-2 border-brass/40"
+          >
+            {(['owner', 'staff'] as const).map((m) => (
+              <button
+                key={m}
+                role="tab"
+                type="button"
+                aria-selected={mode === m}
+                onClick={() => setMode(m)}
+                className={clsx(
+                  '-mb-0.5 flex min-h-11 items-center justify-center gap-2 border-b-[3px] font-semibold transition',
+                  mode === m
+                    ? 'border-brass-dark text-coffee-900'
+                    : 'border-transparent text-ink-soft hover:border-brass/60 hover:text-coffee-900',
+                )}
+              >
+                <User size={18} aria-hidden />
+                {m === 'owner' ? 'Quản lý' : 'Nhân viên'}
+              </button>
+            ))}
+          </div>
+
+          <div className="relative w-full max-w-[400px] pt-2">
+            <div className="mb-4 text-center">
+              <h1 className="text-lg font-bold uppercase after:mx-auto after:bg-[linear-gradient(90deg,transparent,var(--color-brass),transparent)]">
+                {mode === 'owner' ? 'Đăng nhập quản lý' : 'Đăng nhập nhân viên'}
+              </h1>
+            </div>
+            {mode === 'owner' ? <OwnerForm /> : <StaffForm />}
+          </div>
+
+          <Link
+            to="/attendance"
+            className="relative text-sm font-semibold text-coffee-700 underline"
+          >
+            Chấm công vào / ra ca
+          </Link>
+        </section>
+      </div>
+    </main>
+  )
+}
+
+function OwnerForm() {
+  const { loginOwner } = useAuth()
+  const navigate = useNavigate()
+  const [serverError, setServerError] = useState<string | null>(null)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<OwnerLoginForm>({ resolver: zodResolver(ownerLoginSchema) })
+
+  const submit = handleSubmit(async (v) => {
+    setServerError(null)
+    try {
+      const u = await loginOwner(v.username, v.password)
+      navigate(HOME_BY_ROLE[u.role], { replace: true })
+    } catch (e) {
+      setServerError(describeAuthError(e))
+    }
+  })
+
+  return (
+    <form onSubmit={submit} className="flex flex-col gap-3" noValidate>
+      <label className="flex flex-col gap-1">
+        <span className="sr-only">Tên đăng nhập</span>
+        <span className="vt-field flex items-center gap-2 rounded-2xl border-2 border-white/90 bg-white/40 px-4">
+          <input
+            {...register('username')}
+            placeholder="Tên đăng nhập..."
+            autoComplete="username"
+            className="min-h-14 flex-1 bg-transparent outline-none placeholder:text-ink-soft"
+          />
+          <User size={18} aria-hidden />
+        </span>
+        {errors.username && (
+          <span role="alert" className="text-sm text-danger">
+            {errors.username.message}
+          </span>
+        )}
+      </label>
+      <label className="flex flex-col gap-1">
+        <span className="sr-only">Mật khẩu</span>
+        <span className="vt-field flex items-center gap-2 rounded-2xl border-2 border-white/90 bg-white/40 px-4">
+          <input
+            {...register('password')}
+            type="password"
+            placeholder="Mật khẩu..."
+            autoComplete="current-password"
+            className="min-h-14 flex-1 bg-transparent outline-none placeholder:text-ink-soft"
+          />
+          <Lock size={18} aria-hidden />
+        </span>
+        {errors.password && (
+          <span role="alert" className="text-sm text-danger">
+            {errors.password.message}
+          </span>
+        )}
+      </label>
+      {serverError && (
+        <p role="alert" className="text-sm text-danger">
+          {serverError}
+        </p>
+      )}
+      <Button type="submit" loading={isSubmitting} className="min-h-14">
+        Đăng nhập
+      </Button>
+    </form>
+  )
+}
+
+function StaffForm() {
+  const { loginStaff } = useAuth()
+  const navigate = useNavigate()
+  const staff = useQuery({ queryKey: ['auth', 'staff'], queryFn: authApi.staff })
+  const [role, setRole] = useState<StaffRole | null>(null)
+  const [accountId, setAccountId] = useState<number | null>(null)
+  const [pin, setPin] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const accounts: StaffAccount[] = (staff.data ?? []).filter((a) => a.role === role)
+  const selected = accounts.find((a) => a.id === accountId) ?? accounts[0]
+
+  const submit = async () => {
+    setError(null)
+    if (!selected) return setError('Chọn vai trò trước khi nhập PIN.')
+    const parsed = pinSchema.safeParse(pin)
+    if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? 'PIN không hợp lệ.')
+    setBusy(true)
+    try {
+      const u = await loginStaff(selected.id, pin)
+      navigate(HOME_BY_ROLE[u.role], { replace: true })
+    } catch (e) {
+      setPin('')
+      setError(describeAuthError(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div>
+        <p className="mb-2 text-center text-xs font-bold uppercase">Chọn vai trò</p>
+        <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Vai trò">
+          {ROLE_TILES.map((t) => (
+            <button
+              key={t.role}
+              type="button"
+              role="radio"
+              aria-checked={role === t.role}
+              onClick={() => {
+                setRole(t.role)
+                setAccountId(null)
+                setError(null)
+              }}
+              className={clsx(
+                'vt-hover-lift min-h-14 rounded-xl border font-semibold uppercase text-xs',
+                role === t.role
+                  ? 'border-brass-dark bg-gradient-to-r from-coffee-900 to-coffee-700 text-ivory'
+                  : 'border-brass/50 bg-white/70 hover:border-brass hover:bg-coffee-100',
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        {role && accounts.length > 1 && (
+          <select
+            aria-label="Tài khoản"
+            value={selected?.id}
+            onChange={(e) => setAccountId(Number(e.target.value))}
+            className="mt-2 min-h-11 w-full rounded-xl border border-line bg-white/70 px-3"
+          >
+            {accounts.map((a) => (
+              <option key={a.id} value={a.id} disabled={a.locked}>
+                {a.fullName}
+                {a.locked ? ' (đang khóa)' : ''}
+              </option>
+            ))}
+          </select>
+        )}
+        {role && accounts.length === 1 && (
+          <p className="mt-2 text-center text-sm text-ink-soft">{accounts[0]!.fullName}</p>
+        )}
+        {staff.isError && (
+          <p role="alert" className="mt-2 text-sm text-danger">
+            {toApiError(staff.error).message}
+          </p>
+        )}
+      </div>
+      <div>
+        <p className="mb-2 text-center text-xs font-bold uppercase">Nhập PIN</p>
+        <PinPad value={pin} onChange={setPin} onSubmit={submit} disabled={busy} />
+      </div>
+      {error && (
+        <p role="alert" className="text-center text-sm text-danger">
+          {error}
+        </p>
+      )}
+    </div>
+  )
+}
+
+/** Thông báo lỗi đăng nhập có số lần còn lại hoặc thời gian khóa (BR-042). */
+function describeAuthError(e: unknown): string {
+  const err = toApiError(e)
+  if (err.code === 'LOCKED') {
+    const mins = Math.max(1, Math.ceil((err.lockSeconds ?? 900) / 60))
+    return `${err.message} Thử lại sau khoảng ${mins} phút.`
+  }
+  if (err.attemptsLeft) return `${err.message} Còn ${err.attemptsLeft} lần thử.`
+  return err.message
+}

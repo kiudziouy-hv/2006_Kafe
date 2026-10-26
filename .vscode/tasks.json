@@ -1,0 +1,37 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Giao di\u1ec7n: ch\u1ea1y dev",
+      "type": "shell",
+      "command": "npm --prefix frontend run dev",
+      "problemMatcher": [],
+      "isBackground": true
+    },
+    {
+      "label": "Giao di\u1ec7n: c\u00e0i th\u01b0 vi\u1ec7n",
+      "type": "shell",
+      "command": "npm --prefix frontend install",
+      "problemMatcher": []
+    },
+    {
+      "label": "CSDL: b\u1eadt MySQL (Docker)",
+      "type": "shell",
+      "command": "docker compose up -d db",
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: ch\u1ea1y b\u1eb1ng Maven",
+      "type": "shell",
+      "command": "mvn -f backend/pom.xml spring-boot:run",
+      "problemMatcher": [],
+      "isBackground": true
+    },
+    {
+      "label": "Ki\u1ec3m th\u1eed to\u00e0n b\u1ed9",
+      "type": "shell",
+      "command": "make test",
+      "problemMatcher": []
+    }
+  ]
+}
