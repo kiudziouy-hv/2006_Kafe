@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: vtph-coffee
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/VTPH_Coffee?useUnicode=true&characterEncoding=utf8&connectionTimeZone=Asia/Ho_Chi_Minh}
+    username: ${DB_USER:vtph}
+    password: ${DB_PASSWORD:}
+  jackson:
+    default-property-inclusion: non_null
+
+server:
+  port: ${PORT:8080}
+
+vtph:
+  jwt:
+    # Bắt buộc đặt biến môi trường JWT_SECRET (tối thiểu 32 ký tự). Không có giá trị mặc định trong repo.
+    secret: ${JWT_SECRET:}
+    ttl-minutes: 600
+  auth:
+    # BR-042: sai 5 lần liên tiếp thì khóa 15 phút (cột failed_attempts trong DB chỉ cho phép <= 5)
+    max-failed-attempts: 5
+    lock-minutes: 15
+    # Chỉ bật ở dev: chấp nhận hash SHA2 demo trong 03_seed_master.sql và nâng lên BCrypt khi đăng nhập
+    accept-legacy-demo-hash: false
+  cors:
+    allowed-origins: http://localhost:5173

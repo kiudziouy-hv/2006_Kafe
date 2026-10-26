@@ -1,0 +1,4 @@
+# Chạy bằng: SPRING_PROFILES_ACTIVE=dev (chỉ dùng trên máy phát triển với dữ liệu mẫu)
+vtph:
+  auth:
+    accept-legacy-demo-hash: true
