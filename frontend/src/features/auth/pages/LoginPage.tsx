@@ -52,7 +52,7 @@ export default function LoginPage() {
               Chào mừng bạn đến với
             </p>
             <Logo className="mx-auto h-28 w-28 ring-2 ring-brass/50 lg:mt-4" />
-            <Wordmark className="mt-3 block text-[1.7rem] leading-none text-coffee-900" />
+            <Wordmark className="mx-auto mt-3 h-9" />
           </header>
 
           {params.get('expired') && (

@@ -98,7 +98,7 @@ export function AppShell({
           <div className="vt-sidebar flex h-full flex-col gap-1 overflow-y-auto overflow-x-hidden p-3">
             <div className={clsx('mb-2 flex items-center gap-2', collapsed ? 'flex-col' : 'px-1')}>
               <Logo className="h-10 w-10 shrink-0 !shadow-none ring-1 ring-brass/50" />
-              {!collapsed && <Wordmark className="min-w-0 flex-1 text-lg text-coffee-900" />}
+              {!collapsed && <Wordmark className="h-6 min-w-0 flex-1 object-left" />}
               <button
                 type="button"
                 onClick={toggleSidebar}
@@ -157,7 +157,7 @@ export function AppShell({
                 className="flex items-center gap-3"
               >
                 <Logo className="h-9 w-9 shrink-0" />
-                <Wordmark className="text-xl text-coffee-900 max-sm:hidden" />
+                <Wordmark className="h-7 max-sm:hidden" />
               </Link>
             )}
             {user && sidebar && (

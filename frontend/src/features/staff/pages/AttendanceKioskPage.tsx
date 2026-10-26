@@ -48,7 +48,7 @@ export default function AttendanceKioskPage() {
   return (
     <main className="flex min-h-full flex-col items-center justify-center gap-4 px-4 py-8">
       <Logo className="h-24 w-24" />
-      <Wordmark className="text-4xl" />
+      <Wordmark className="h-12" />
       <Card className="w-full max-w-[420px]">
         <h1 className="mb-1 text-center text-lg font-bold uppercase">Chấm công</h1>
         <div className="flex flex-col gap-3">

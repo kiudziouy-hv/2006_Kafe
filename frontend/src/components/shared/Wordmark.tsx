@@ -1,8 +1,13 @@
 import clsx from 'clsx'
 
-/** Tên quán "2006 Kafé" viết thống nhất ở mọi nơi: Playfair Display, đậm vừa. */
+/** Chữ "2006 Kafé" (public/wordmark.png) dùng thống nhất ở mọi nơi; chỉnh cỡ bằng chiều cao (h-*). */
 export function Wordmark({ className }: { className?: string }) {
   return (
-    <span className={clsx('font-display font-semibold tracking-wide', className)}>2006 Kafé</span>
+    <img
+      src="/wordmark.png"
+      alt="2006 Kafé"
+      draggable={false}
+      className={clsx('w-auto select-none object-contain', className)}
+    />
   )
 }
