@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { Logo } from '@/components/shared/Logo'
 import { Wordmark } from '@/components/shared/Wordmark'
 import { toApiError } from '@/lib/http'
-import type { Role, StaffAccount } from '@/types/api'
+import type { Role } from '@/types/api'
 import { authApi } from '../api/authApi'
 import { PinPad } from '../components/PinPad'
 import { HOME_BY_ROLE, useAuth } from '../hooks/useAuth'
@@ -179,25 +179,23 @@ function StaffForm() {
   const navigate = useNavigate()
   const staff = useQuery({ queryKey: ['auth', 'staff'], queryFn: authApi.staff })
   const [role, setRole] = useState<StaffRole | null>(null)
-  const [accountId, setAccountId] = useState<number | null>(null)
   const [pin, setPin] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Thu ngân và Pha chế dùng máy chung: chỉ cần PIN của quầy, không chọn tên. Chấm công mới dùng tài khoản cá nhân.
-  const ofRole = (staff.data ?? []).filter((a) => a.role === role)
-  const shared = ofRole.find((a) => a.station)
-  const accounts: StaffAccount[] = shared ? [shared] : ofRole
-  const selected = accounts.find((a) => a.id === accountId) ?? accounts[0]
+  // Đăng nhập nhân viên chỉ chọn vai trò rồi nhập PIN của vai trò đó (tài khoản dùng chung, mỗi vai trò một PIN khác nhau).
+  // Danh sách tên từng người chỉ hiện ở trang chấm công.
+  const station = (staff.data ?? []).find((a) => a.role === role && a.station)
 
   const submit = async () => {
     setError(null)
-    if (!selected) return setError('Chọn vai trò trước khi nhập PIN.')
+    if (!role) return setError('Chọn vai trò trước khi nhập PIN.')
+    if (!station) return setError('Vai trò này chưa có tài khoản đăng nhập. Hãy liên hệ Chủ quán.')
     const parsed = pinSchema.safeParse(pin)
     if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? 'PIN không hợp lệ.')
     setBusy(true)
     try {
-      const u = await loginStaff(selected.id, pin)
+      const u = await loginStaff(station.id, pin)
       navigate(HOME_BY_ROLE[u.role], { replace: true })
     } catch (e) {
       setPin('')
@@ -220,7 +218,6 @@ function StaffForm() {
               aria-checked={role === t.role}
               onClick={() => {
                 setRole(t.role)
-                setAccountId(null)
                 setError(null)
               }}
               className={clsx(
@@ -234,26 +231,6 @@ function StaffForm() {
             </button>
           ))}
         </div>
-        {role && accounts.length > 1 && (
-          <select
-            aria-label="Tài khoản"
-            value={selected?.id}
-            onChange={(e) => setAccountId(Number(e.target.value))}
-            className="mt-2 min-h-11 w-full rounded-xl border border-line bg-white/70 px-3"
-          >
-            {accounts.map((a) => (
-              <option key={a.id} value={a.id} disabled={a.locked}>
-                {a.fullName}
-                {a.locked ? ' (đang khóa)' : ''}
-              </option>
-            ))}
-          </select>
-        )}
-        {role && accounts.length === 1 && (
-          <p className="mt-2 text-center text-sm text-ink-soft">
-            {shared ? `${accounts[0]!.fullName} (dùng chung)` : accounts[0]!.fullName}
-          </p>
-        )}
         {staff.isError && (
           <p role="alert" className="mt-2 text-sm text-danger">
             {toApiError(staff.error).message}

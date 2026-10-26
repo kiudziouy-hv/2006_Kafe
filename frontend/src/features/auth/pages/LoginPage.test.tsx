@@ -33,9 +33,13 @@ function authError(status: number, data: object) {
 beforeEach(() => {
   vi.resetAllMocks()
   api.me.mockRejectedValue(authError(401, { code: 'NO_SESSION' }))
+  // Mỗi vai trò có một tài khoản dùng chung (station) và có thể có nhiều tài khoản cá nhân (chỉ dùng để chấm công).
   api.staff.mockResolvedValue([
-    { id: 2, fullName: 'Nhân viên mẫu A', role: 'WAITER', locked: false },
-    { id: 4, fullName: 'Nhân viên mẫu C', role: 'BARISTA', locked: false },
+    { id: 4, fullName: 'Võ Tấn Phát', role: 'WAITER', locked: false },
+    { id: 5, fullName: 'Võ Thị Em', role: 'WAITER', locked: false },
+    { id: 11, fullName: 'Điện thoại Phục vụ', role: 'WAITER', station: true, locked: false },
+    { id: 7, fullName: 'Trần Thanh Huy', role: 'BARISTA', locked: false },
+    { id: 10, fullName: 'Màn hình Pha chế', role: 'BARISTA', station: true, locked: false },
   ])
 })
 
@@ -70,7 +74,17 @@ describe('LoginPage', () => {
     for (const k of '123456') await user.click(screen.getByRole('button', { name: k }))
     await user.click(screen.getByRole('button', { name: 'OK' }))
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/service'))
-    expect(api.staffLogin).toHaveBeenCalledWith(2, '123456')
+    expect(api.staffLogin).toHaveBeenCalledWith(11, '123456')
+  })
+
+  it('Nhân viên: không hiện danh sách tài khoản dù vai trò có nhiều người (chỉ chấm công mới chọn tên)', async () => {
+    renderApp(<LoginPage />)
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('tab', { name: /Nhân viên/ }))
+    await user.click(await screen.findByRole('radio', { name: 'Phục vụ' }))
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
+    expect(screen.queryByText('Võ Tấn Phát')).not.toBeInTheDocument()
+    expect(screen.queryByText(/dùng chung/i)).not.toBeInTheDocument()
   })
 
   it('PIN thiếu số: không gọi API và báo lỗi', async () => {

@@ -20,7 +20,8 @@ INSERT INTO employee (employee_id, full_name, phone, email) VALUES
 (7,'Trần Thanh Huy','0901000007','thanhhuy@vtph.vn'),
 (8,'Đặng Thị Giang','0901000008','giang@vtph.vn'),
 (9,'Quầy Thu ngân',NULL,NULL),
-(10,'Màn hình Pha chế',NULL,NULL);
+(10,'Màn hình Pha chế',NULL,NULL),
+(11,'Điện thoại Phục vụ',NULL,NULL);
 INSERT INTO account (account_id, employee_id, username, secret_hash, role, is_station) VALUES
 (1,1,'owner',SHA2(CONCAT('demo-','owner','-','admin123'),256),'OWNER_MANAGER',0),
 (2,2,'thungan1',SHA2(CONCAT('demo-','thungan1','-','234567'),256),'CASHIER',0),
@@ -31,7 +32,8 @@ INSERT INTO account (account_id, employee_id, username, secret_hash, role, is_st
 (7,7,'phache1',SHA2(CONCAT('demo-','phache1','-','345678'),256),'BARISTA',0),
 (8,8,'phache2',SHA2(CONCAT('demo-','phache2','-','345678'),256),'BARISTA',0),
 (9,9,'quaythungan',SHA2(CONCAT('demo-','quaythungan','-','234567'),256),'CASHIER',1),
-(10,10,'quayphache',SHA2(CONCAT('demo-','quayphache','-','345678'),256),'BARISTA',1);
+(10,10,'quayphache',SHA2(CONCAT('demo-','quayphache','-','345678'),256),'BARISTA',1),
+(11,11,'quayphucvu',SHA2(CONCAT('demo-','quayphucvu','-','123456'),256),'WAITER',1);
 INSERT INTO dining_table (table_id, number, area) VALUES
 (1,1,'INDOOR'),
 (2,2,'INDOOR'),

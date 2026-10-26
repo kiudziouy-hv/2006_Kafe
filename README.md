@@ -160,12 +160,11 @@ scripts/dev-mysql.sh
 |---|---|---|---|
 | Chủ quán / Quản lý | Huỳnh Thị Kiều Vy | Tab **Quản lý** | `owner` / `admin123` |
 | Thu ngân | Dùng chung cho máy thu ngân (tài khoản "Quầy Thu ngân") | Tab **Nhân viên** → Thu ngân | PIN `234567`, không chọn tên |
-| Phục vụ | Võ Tấn Phát, Võ Thị Em, Đỗ Quang Huy | Tab **Nhân viên** → Phục vụ | PIN `123456` |
+| Phục vụ | Dùng chung cho các điện thoại phục vụ (tài khoản "Điện thoại Phục vụ") | Tab **Nhân viên** → Phục vụ | PIN `123456`, không chọn tên |
 | Pha chế | Dùng chung cho màn hình pha chế (tài khoản "Màn hình Pha chế") | Tab **Nhân viên** → Pha chế | PIN `345678`, không chọn tên |
 
-- **Thu ngân và Pha chế** dùng thiết bị chung nên đăng nhập theo vai trò: chọn vai trò rồi nhập PIN của quầy, không chọn tên. Mọi thao tác ở máy thu ngân hoặc màn hình pha chế ghi vào tài khoản quầy dùng chung, không biết đích danh ai bấm; muốn biết ai trực ca đó thì xem bảng chấm công. Tài khoản này không dùng để chấm công.
-- **Phục vụ** dùng điện thoại riêng nên vẫn chọn đúng tên rồi nhập PIN, nhờ đó biết ai ghi order.
-- **Chấm công** luôn dùng tài khoản cá nhân: ở trang `/attendance`, mỗi người chọn tên và nhập PIN riêng. Các tài khoản quầy dùng chung không xuất hiện ở đó. Nhân viên thu ngân và pha chế cá nhân (Hồ Quốc Tiến, Lê Hoàng Cường, Trần Thanh Huy, Đặng Thị Giang) có PIN riêng, trùng với PIN của vai trò ở dữ liệu mẫu (`234567`, `345678`).
+- **Đăng nhập nhân viên không hiện danh sách tên.** Cả ba vai trò (Thu ngân, Pha chế, Phục vụ) đăng nhập bằng cách chọn vai trò rồi nhập PIN của vai trò đó (tài khoản dùng chung). **Ba PIN phải khác nhau** (`123456`, `234567`, `345678` ở dữ liệu mẫu); nếu hai vai trò dùng chung một PIN thì người này có thể vào tài khoản của vai trò kia và nâng quyền. Mọi thao tác ghi vào tài khoản dùng chung của vai trò, không biết đích danh ai bấm; muốn biết ai trực ca đó thì xem bảng chấm công. Tài khoản dùng chung không dùng để chấm công.
+- **Chấm công** luôn dùng tài khoản cá nhân: ở trang `/attendance`, mỗi người chọn tên và nhập PIN riêng. Các tài khoản quầy dùng chung không xuất hiện ở đó. Tài khoản cá nhân (phục vụ: Võ Tấn Phát, Võ Thị Em, Đỗ Quang Huy; thu ngân: Hồ Quốc Tiến, Lê Hoàng Cường; pha chế: Trần Thanh Huy, Đặng Thị Giang) ở dữ liệu mẫu dùng PIN trùng với PIN của vai trò (`123456`, `234567`, `345678`); khi dùng thật Chủ quán đặt PIN riêng cho từng người.
 - Nhập sai PIN 5 lần thì tài khoản bị khóa 15 phút (với quầy dùng chung là khóa cả quầy).
 - Thu ngân và Pha chế tự đăng xuất sau 5 phút không thao tác.
 - **Chấm công vào/ra ca:** liên kết "Chấm công vào / ra ca" ở màn đăng nhập (đường dẫn `/attendance`).
