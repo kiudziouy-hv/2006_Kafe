@@ -17,13 +17,14 @@ import vn.vtph.coffee.common.BusinessException;
 import vn.vtph.coffee.config.AuthProperties;
 
 /**
- * Đăng nhập bằng tên tài khoản và mật khẩu/PIN (M01). BR-042: sai 5 lần liên tiếp thì khóa 15 phút.
+ * Xác thực bằng tên tài khoản và mật khẩu/PIN (M01). BR-042: sai 5 lần liên tiếp thì khóa 15 phút.
+ * Dùng chung cho đăng nhập và chấm công bằng PIN (FR-M10-002), nên cả hai cùng chịu quy tắc khóa.
  */
 @Service
 public class AuthService {
 
     public record AccountView(long accountId, long employeeId, String fullName, String username, Role role) {
-        static AccountView of(Account a) {
+        public static AccountView of(Account a) {
             return new AccountView(a.accountId(), a.employeeId(), a.fullName(), a.username(), a.role());
         }
     }
@@ -38,25 +39,35 @@ public class AuthService {
 
     private final AccountRepository accounts;
     private final PasswordEncoder encoder;
-    private final JwtService jwt;
+    private final TokenIssuer tokens;
     private final AuthProperties props;
     private final Clock clock;
 
-    public AuthService(AccountRepository accounts, PasswordEncoder encoder, JwtService jwt,
+    public AuthService(AccountRepository accounts, PasswordEncoder encoder, TokenIssuer tokens,
                        AuthProperties props, Clock clock) {
         this.accounts = accounts;
         this.encoder = encoder;
-        this.jwt = jwt;
+        this.tokens = tokens;
         this.props = props;
         this.clock = clock;
     }
 
-    /**
-     * noRollbackFor: các lỗi 401/423 được ném sau khi đã ghi bộ đếm nhập sai; nếu giao dịch rollback
-     * thì bộ đếm không bao giờ tăng và tài khoản không bao giờ bị khóa.
-     */
     @Transactional(noRollbackFor = BusinessException.class)
     public LoginResult login(String username, String secret) {
+        Account acc = verify(username, secret);
+        TokenIssuer.IssuedToken t = tokens.issue(acc);
+        return new LoginResult(t.token(), t.expiresAt(), AccountView.of(acc));
+    }
+
+    /**
+     * Kiểm tra mật khẩu/PIN và cập nhật bộ đếm nhập sai. Trả về tài khoản nếu đúng.
+     *
+     * <p>noRollbackFor: các lỗi 401/423 được ném sau khi đã ghi bộ đếm nhập sai; nếu giao dịch rollback
+     * thì bộ đếm không bao giờ tăng và tài khoản không bao giờ bị khóa. Nơi gọi hàm này trong giao dịch
+     * của chính nó cũng phải khai báo noRollbackFor = BusinessException.class.
+     */
+    @Transactional(noRollbackFor = BusinessException.class)
+    public Account verify(String username, String secret) {
         Account acc = accounts.findByUsernameForUpdate(username)
                 .orElseThrow(() -> new BusinessException(HttpStatus.UNAUTHORIZED, "BAD_CREDENTIALS", INVALID));
         LocalDateTime now = LocalDateTime.now(clock);
@@ -92,8 +103,7 @@ public class AuthService {
         if (match == Match.YES_LEGACY) {
             accounts.updateSecretHash(acc.accountId(), encoder.encode(secret));
         }
-        JwtService.IssuedToken t = jwt.issue(acc);
-        return new LoginResult(t.token(), t.expiresAt(), AccountView.of(acc));
+        return acc;
     }
 
     public List<AccountView> selectableStaff() {

@@ -22,11 +22,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import vn.vtph.coffee.common.BusinessException;
 import vn.vtph.coffee.config.AuthProperties;
-import vn.vtph.coffee.config.JwtProperties;
 
 class AuthServiceTest {
-
-    private static final String SECRET = "0123456789-0123456789-0123456789-xx";
 
     private final PasswordEncoder encoder = new BCryptPasswordEncoder(4);
     private MutableClock clock;
@@ -40,8 +37,8 @@ class AuthServiceTest {
 
     private AuthService service(boolean acceptLegacy) {
         AuthProperties props = new AuthProperties(5, 15, acceptLegacy);
-        JwtService jwt = new JwtService(new JwtProperties(SECRET, 600), clock);
-        return new AuthService(repo, encoder, jwt, props, clock);
+        TokenIssuer tokens = a -> new TokenIssuer.IssuedToken("token-" + a.username(), clock.instant().plusSeconds(600));
+        return new AuthService(repo, encoder, tokens, props, clock);
     }
 
     private void addAccount(String username, String secretHash, AccountStatus status) {

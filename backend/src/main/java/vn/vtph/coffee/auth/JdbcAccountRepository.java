@@ -2,7 +2,6 @@ package vn.vtph.coffee.auth;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -29,7 +28,6 @@ public class JdbcAccountRepository implements AccountRepository {
     }
 
     private static Account map(ResultSet rs, int rowNum) throws SQLException {
-        Timestamp lockedUntil = rs.getTimestamp("locked_until");
         return new Account(
                 rs.getLong("account_id"),
                 rs.getLong("employee_id"),
@@ -39,7 +37,7 @@ public class JdbcAccountRepository implements AccountRepository {
                 Role.valueOf(rs.getString("role")),
                 AccountStatus.valueOf(rs.getString("status")),
                 rs.getInt("failed_attempts"),
-                lockedUntil == null ? null : lockedUntil.toLocalDateTime());
+                rs.getObject("locked_until", LocalDateTime.class));
     }
 
     @Override
@@ -54,8 +52,9 @@ public class JdbcAccountRepository implements AccountRepository {
 
     @Override
     public void saveAttemptState(long accountId, int failedAttempts, AccountStatus status, LocalDateTime lockedUntil) {
+        // LocalDateTime truyền thẳng (không đổi qua Timestamp) để không phụ thuộc múi giờ của JVM.
         jdbc.update("UPDATE account SET failed_attempts = ?, status = ?, locked_until = ? WHERE account_id = ?",
-                failedAttempts, status.name(), lockedUntil == null ? null : Timestamp.valueOf(lockedUntil), accountId);
+                failedAttempts, status.name(), lockedUntil, accountId);
     }
 
     @Override

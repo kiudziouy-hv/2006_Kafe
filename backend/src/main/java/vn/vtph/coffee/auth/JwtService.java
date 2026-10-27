@@ -15,12 +15,9 @@ import org.springframework.stereotype.Service;
 import vn.vtph.coffee.config.JwtProperties;
 
 @Service
-public class JwtService {
+public class JwtService implements TokenIssuer {
 
     private static final int MIN_SECRET_BYTES = 32;
-
-    public record IssuedToken(String token, Instant expiresAt) {
-    }
 
     private final SecretKey key;
     private final Duration ttl;
@@ -37,6 +34,7 @@ public class JwtService {
         this.clock = clock;
     }
 
+    @Override
     public IssuedToken issue(Account account) {
         Instant now = clock.instant();
         Instant expires = now.plus(ttl);
