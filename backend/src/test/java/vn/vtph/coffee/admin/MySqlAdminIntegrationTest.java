@@ -220,7 +220,10 @@ class MySqlAdminIntegrationTest extends AbstractMySqlIT {
         int emp = created.get("id").asInt(), acc = created.get("accountId").asInt();
         send(new MockHttpSession(), "POST", "/api/auth/staff/login", "{\"accountId\":" + acc + ",\"pin\":\"654321\"}", 200);
 
+        MockHttpSession live = new MockHttpSession(); // phiên đã đăng nhập trước khi bị khóa
+        send(live, "POST", "/api/auth/staff/login", "{\"accountId\":" + acc + ",\"pin\":\"654321\"}", 200);
         ok(owner, "POST", "/api/staff/" + emp + "/lock", null);
+        rule(live, "GET", "/api/ops/tables", null, 401, "ACCOUNT_LOCKED");
         rule(new MockHttpSession(), "POST", "/api/auth/staff/login", "{\"accountId\":" + acc + ",\"pin\":\"654321\"}", 423, "ACCOUNT_LOCKED");
         ok(owner, "POST", "/api/staff/" + emp + "/secret", "{\"secret\":\"111222\"}");
         ok(owner, "POST", "/api/staff/" + emp + "/unlock", null);
