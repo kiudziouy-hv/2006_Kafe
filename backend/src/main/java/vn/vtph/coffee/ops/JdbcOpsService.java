@@ -580,14 +580,18 @@ public class JdbcOpsService implements OpsService {
     @Transactional(noRollbackFor = OpsException.class)
     public Map<String, Object> start(int lineId) {
         Map<String, Object> l = one("""
-                SELECT l.status, m.item_group, l.item_id, l.size, l.batch_id, m.name FROM order_line l JOIN menu_item m ON m.item_id = l.item_id
+                SELECT l.status, m.item_group, l.item_id, l.size, l.batch_id, m.name, o.status FROM order_line l JOIN menu_item m ON m.item_id = l.item_id
+                JOIN order_batch b ON b.batch_id = l.batch_id JOIN orders o ON o.order_id = b.order_id
                 WHERE l.line_id = ? FOR UPDATE""", (rs, n) -> {
             Map<String, Object> m = new HashMap<>();
             m.put("status", rs.getString(1)); m.put("group", rs.getString(2)); m.put("item", rs.getInt(3)); m.put("size", rs.getString(4)); m.put("batch", rs.getInt(5)); m.put("name", rs.getString(6));
+            m.put("orderStatus", rs.getString(7));
             return m;
         }, lineId);
         if (l == null) throw new OpsException(404, "NO_LINE", "Không tìm thấy dòng món.");
         if (!l.get("status").equals("NEW")) throw new OpsException(409, "BAD_STATE", "Món này không còn ở trạng thái Mới.");
+        // BR-004/BR-014: đơn nháp (chưa xác nhận thanh toán) hoặc đơn đã hủy không được chuyển món sang pha chế.
+        if (!"PROCESSING".equals(l.get("orderStatus"))) throw new OpsException(409, "ORDER_NOT_ACTIVE", "Đơn chưa được xác nhận hoặc đã hủy, không thể pha món này.");
         if (!"CAKE".equals(l.get("group"))) {
             List<String> lack = shortage(lineId);
             if (!lack.isEmpty()) {
