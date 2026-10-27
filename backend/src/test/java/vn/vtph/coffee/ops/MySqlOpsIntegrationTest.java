@@ -400,6 +400,21 @@ class MySqlOpsIntegrationTest extends AbstractMySqlIT {
         assertTrue(openShiftEvening().get("open").asBoolean());
     }
 
+    /** Đơn nháp (chờ xác nhận chuyển khoản) và đơn đã hủy không được đưa sang pha chế, kể cả khi gọi thẳng API. */
+    @Test
+    void draftOrAndCancelledOrderLinesCannotBeStartedByKitchenApi() throws Exception {
+        openShift();
+        JsonNode d = postJson(cashier, "/api/ops/takeaway", "{\"lines\":[" + line(2, 1, "M", "COLD", null) + "],\"method\":\"TRANSFER\"}");
+        int lineId = jdbc.queryForObject("SELECT l.line_id FROM order_line l JOIN order_batch b ON b.batch_id = l.batch_id WHERE b.order_id = ?",
+                Integer.class, d.get("id").asInt());
+        BigDecimal before = jdbc.queryForObject("SELECT SUM(current_stock) FROM ingredient", BigDecimal.class);
+        fail(barista, "/api/ops/kitchen/" + lineId + "/start", null, 409, "ORDER_NOT_ACTIVE");
+        assertEquals("NEW", jdbc.queryForObject("SELECT status FROM order_line WHERE line_id = ?", String.class, lineId));
+        assertEquals(0, before.compareTo(jdbc.queryForObject("SELECT SUM(current_stock) FROM ingredient", BigDecimal.class)));
+        postJson(cashier, "/api/ops/drafts/" + d.get("id").asInt() + "/cancel", null);
+        fail(barista, "/api/ops/kitchen/" + lineId + "/start", null, 409, "ORDER_NOT_ACTIVE");
+    }
+
     private JsonNode openShiftEvening() throws Exception { return postJson(cashier, "/api/ops/shift/open", "{\"type\":\"EVENING\",\"openingCash\":0}"); }
 
     // ---------- hợp đồng API và lớp bảo vệ CSDL ----------
