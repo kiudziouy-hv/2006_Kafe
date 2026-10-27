@@ -26,6 +26,11 @@ public class Account {
         this.secretHash = secretHash;
     }
 
+    /** Khóa hẳn (nhân viên nghỉ việc): phiên đang mở không còn hiệu lực. */
+    public boolean isPermanentlyLocked() {
+        return permanentlyLocked;
+    }
+
     boolean isLocked(Instant now) {
         return lockedUntil != null && now.isBefore(lockedUntil);
     }

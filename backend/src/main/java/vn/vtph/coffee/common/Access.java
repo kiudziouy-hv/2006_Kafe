@@ -19,6 +19,10 @@ public class Access {
         Object id = s.getAttribute("accountId");
         Account a = id instanceof Integer i ? auth.find(i) : null;
         if (a == null) throw new OpsException(401, "NO_SESSION", "Chưa đăng nhập hoặc phiên đã hết hạn.");
+        if (a.isPermanentlyLocked()) { // nhân viên bị khóa (nghỉ việc) thì phiên đang mở cũng mất hiệu lực ngay (BR-042)
+            s.invalidate();
+            throw new OpsException(401, "ACCOUNT_LOCKED", "Tài khoản đã bị khóa. Vui lòng liên hệ Chủ quán.");
+        }
         if (a.role != Role.OWNER && !List.of(allowed).contains(a.role))
             throw new OpsException(403, "FORBIDDEN", "Bạn không có quyền thực hiện thao tác này.");
         return a;

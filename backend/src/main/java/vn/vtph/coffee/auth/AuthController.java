@@ -61,6 +61,7 @@ public class AuthController {
     public ResponseEntity<Map<String, Object>> me(HttpSession session) {
         Object id = session.getAttribute(SESSION_KEY);
         Account a = id instanceof Integer i ? auth.find(i) : null;
+        if (a != null && a.permanentlyLocked) { session.invalidate(); a = null; }
         if (a == null) return ResponseEntity.status(401).body(Map.of("code", "NO_SESSION", "message", "Chưa đăng nhập hoặc phiên đã hết hạn."));
         return ResponseEntity.ok(view(a));
     }
