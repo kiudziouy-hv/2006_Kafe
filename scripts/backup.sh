@@ -5,6 +5,7 @@
 #   DB_NAME             tên CSDL                         (VTPH_Coffee)
 #   BACKUP_DIR          thư mục chứa bản sao lưu         (/var/backups/vtph)
 #   KEEP                số bản giữ lại, tối thiểu 30     (30)
+#   OFFSITE_DIR         (tùy chọn) thư mục ngoài máy chủ để chép thêm một bản: ổ USB, ổ mạng/NAS đã mount... Nên đặt.
 #   MYSQL_DEFAULTS_FILE file cấu hình chứa user/mật khẩu của tài khoản sao lưu (nên đặt, chmod 600)
 set -euo pipefail
 
@@ -47,3 +48,16 @@ echo "đã sao lưu: $final ($(du -h "$final" | cut -f1))"
 ls -1t "$BACKUP_DIR/${DB_NAME}_"*.sql.gz 2>/dev/null | tail -n +"$((KEEP + 1))" | while read -r old; do
   rm -f -- "$old" && echo "đã xóa bản cũ: $old"
 done
+
+# Chép thêm ra ngoài máy chủ (nếu đặt OFFSITE_DIR). Lỗi ở bước này báo ra nhưng không làm hỏng bản sao lưu đã có ở BACKUP_DIR.
+if [ -n "${OFFSITE_DIR:-}" ]; then
+  if mkdir -p "$OFFSITE_DIR" && cp -- "$final" "$OFFSITE_DIR/" && gzip -t "$OFFSITE_DIR/$(basename "$final")"; then
+    echo "đã chép ra ngoài: $OFFSITE_DIR/$(basename "$final")"
+    ls -1t "$OFFSITE_DIR/${DB_NAME}_"*.sql.gz 2>/dev/null | tail -n +"$((KEEP + 1))" | while read -r old; do
+      rm -f -- "$old" && echo "đã xóa bản cũ ngoài máy chủ: $old"
+    done
+  else
+    echo "CẢNH BÁO: không chép được ra $OFFSITE_DIR (ổ chưa mount hoặc đầy?)" >&2
+    exit 3
+  fi
+fi
