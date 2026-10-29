@@ -412,7 +412,7 @@ class MySqlOpsIntegrationTest extends AbstractMySqlIT {
         assertEquals("NEW", jdbc.queryForObject("SELECT status FROM order_line WHERE line_id = ?", String.class, lineId));
         assertEquals(0, before.compareTo(jdbc.queryForObject("SELECT SUM(current_stock) FROM ingredient", BigDecimal.class)));
         postJson(cashier, "/api/ops/drafts/" + d.get("id").asInt() + "/cancel", null);
-        fail(barista, "/api/ops/kitchen/" + lineId + "/start", null, 409, "ORDER_NOT_ACTIVE");
+        fail(barista, "/api/ops/kitchen/" + lineId + "/start", null, 409, "BAD_STATE"); // dòng đã bị hủy theo đơn
     }
 
     private JsonNode openShiftEvening() throws Exception { return postJson(cashier, "/api/ops/shift/open", "{\"type\":\"EVENING\",\"openingCash\":0}"); }
