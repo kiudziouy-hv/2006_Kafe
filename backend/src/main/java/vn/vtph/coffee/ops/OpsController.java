@@ -73,6 +73,7 @@ public class OpsController {
     @GetMapping("/drafts") public List<Model.Order> drafts(HttpSession s) { who(s, Role.CASHIER); return ops.drafts(); }
     @PostMapping("/drafts/{id}/confirm") public Model.Order confirm(@PathVariable int id, @RequestBody(required = false) Map<String, Object> b, HttpSession s) {
         Account a = who(s, Role.CASHIER); return ops.confirmDraft(id, a, b == null ? OpsService.Payer.NONE : payer(b)); }
+    @PostMapping("/drafts/{id}/requote") public Model.Order requote(@PathVariable int id, HttpSession s) { Account a = who(s, Role.CASHIER); return ops.requoteDraft(id, a); }
     @PostMapping("/drafts/{id}/cancel") public Model.Order cancelDraft(@PathVariable int id, HttpSession s) { Account a = who(s, Role.CASHIER); return ops.cancelDraft(id, a); }
 
     @ExceptionHandler(OpsException.class)

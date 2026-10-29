@@ -304,9 +304,13 @@ CREATE TABLE takeaway_order (
   queue_date     DATE NULL,
   queue_number   SMALLINT UNSIGNED NULL COMMENT 'Số thứ tự trong ngày từ 001; đơn nháp chưa có (ASM-04)',
   payment_method ENUM('CASH','TRANSFER_QR') NOT NULL,
+  quoted_total   BIGINT NULL COMMENT 'Số tiền đã báo khách khi tạo đơn nháp chuyển khoản/QR; so khớp lại lúc xác nhận (ASM-03)',
+  customer_id    INT UNSIGNED NULL COMMENT 'Thành viên dự định tích/dùng điểm cho đơn nháp',
+  points_to_use  INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Số điểm dự định dùng, đã tính trong quoted_total',
   PRIMARY KEY (order_id),
   UNIQUE KEY uq_takeaway_queue (queue_date, queue_number),
   CONSTRAINT fk_takeaway_order FOREIGN KEY (order_id) REFERENCES orders (order_id),
+  CONSTRAINT fk_takeaway_customer FOREIGN KEY (customer_id) REFERENCES customer (customer_id),
   CONSTRAINT ck_takeaway_queue CHECK ((queue_date IS NULL AND queue_number IS NULL) OR (queue_date IS NOT NULL AND queue_number >= 1))
 ) ENGINE=InnoDB COMMENT='Đơn mang đi: số thứ tự trong ngày, phương thức thanh toán (FR-M04-001..006)';
 
