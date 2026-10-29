@@ -33,11 +33,18 @@ gần nhất (NFR-013), và khôi phục được **trong vòng 4 giờ** (NFR-0
 
    Giờ thứ hai (22:30) giả định quán đóng cửa lúc 22:00 (ca tối kết thúc 22:00 theo BR-034); đổi nếu quán đóng khác giờ.
 
-## Sao lưu ra ngoài máy chủ (rất nên làm)
+## Sao lưu ra ngoài máy chủ
 
-Thư mục `/var/backups/vtph` nằm cùng ổ đĩa với CSDL: nếu ổ hỏng thì mất cả hai. RAD không yêu cầu dịch vụ bên ngoài,
-nên cách phù hợp là chép định kỳ sang ổ USB hoặc một máy khác trong mạng nội bộ của quán (ví dụ `rsync`). Script này
-**chưa làm việc đó**; nhóm cần quyết định nơi lưu.
+Thư mục `/var/backups/vtph` nằm cùng ổ đĩa với CSDL: nếu ổ hỏng thì mất cả hai. Nhóm đã chọn lưu ra một nơi ngoài máy chủ
+(ổ USB, ổ mạng/NAS hoặc máy khác trong mạng quán). Mount nơi đó vào máy chủ rồi đặt `OFFSITE_DIR`; script chép thêm một bản
+sau mỗi lần sao lưu và cũng giữ tối đa `KEEP` bản ở đó. Nếu không chép được (ổ chưa mount, đầy), script thoát mã 3 và ghi
+cảnh báo vào log; bản ở `BACKUP_DIR` vẫn còn nguyên.
+
+```cron
+OFFSITE_DIR=/mnt/vtph-backup
+```
+
+Đặt dòng trên cạnh `MYSQL_DEFAULTS_FILE` và `BACKUP_DIR` trong crontab. Định kỳ kiểm tra log `/var/log/vtph-backup.log`.
 
 ## Khôi phục
 
