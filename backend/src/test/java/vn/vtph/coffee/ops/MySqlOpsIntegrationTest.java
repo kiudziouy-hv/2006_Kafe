@@ -415,6 +415,30 @@ class MySqlOpsIntegrationTest extends AbstractMySqlIT {
         fail(barista, "/api/ops/kitchen/" + lineId + "/start", null, 409, "BAD_STATE"); // dòng đã bị hủy theo đơn
     }
 
+    /** ASM-03: đơn nháp chuyển khoản nhớ số tiền đã báo khách; lệch lúc xác nhận thì chặn, báo lại (requote) rồi mới xác nhận được. */
+    @Test
+    void draftConfirmationIsBlockedWhenTheQuotedAmountChanged() throws Exception {
+        openShift();
+        JsonNode d = postJson(cashier, "/api/ops/takeaway", "{\"lines\":[" + line(2, 1, "M", "COLD", null) + "],\"method\":\"TRANSFER\"}"); // 32.000đ
+        int id = d.get("id").asInt();
+        assertEquals(32000, jdbc.queryForObject("SELECT quoted_total FROM takeaway_order WHERE order_id = ?", Integer.class, id));
+        jdbc.update("INSERT INTO promotion (name, item_group, discount_percent, daily_start, daily_end, active, created_at) "
+                + "SELECT 'Test ASM-03', item_group, 50, '00:00:00', '23:59:59', 1, UTC_TIMESTAMP() FROM menu_item WHERE item_id = 2");
+        try {
+            JsonNode e = fail(cashier, "/api/ops/drafts/" + id + "/confirm", null, 409, "AMOUNT_CHANGED");
+            assertEquals(32000, e.get("quoted").asInt());
+            assertEquals(16000, e.get("current").asInt());
+            assertEquals("DRAFT", jdbc.queryForObject("SELECT status FROM orders WHERE order_id = ?", String.class, id)); // chưa phát hành hóa đơn
+            assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM invoice", Integer.class));
+            postJson(cashier, "/api/ops/drafts/" + id + "/requote", null);
+            assertEquals(16000, jdbc.queryForObject("SELECT quoted_total FROM takeaway_order WHERE order_id = ?", Integer.class, id));
+            assertEquals("PAID", postJson(cashier, "/api/ops/drafts/" + id + "/confirm", null).get("status").asText());
+            assertEquals(16000, jdbc.queryForObject("SELECT total FROM invoice WHERE order_id = ?", Integer.class, id));
+        } finally {
+            jdbc.update("DELETE FROM promotion WHERE name = 'Test ASM-03'");
+        }
+    }
+
     private JsonNode openShiftEvening() throws Exception { return postJson(cashier, "/api/ops/shift/open", "{\"type\":\"EVENING\",\"openingCash\":0}"); }
 
     // ---------- hợp đồng API và lớp bảo vệ CSDL ----------

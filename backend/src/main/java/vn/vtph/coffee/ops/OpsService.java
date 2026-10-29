@@ -50,4 +50,6 @@ public interface OpsService {
     Order confirmDraft(int id, Account by);
     default Order confirmDraft(int id, Account by, Payer payer) { return confirmDraft(id, by); }
     Order cancelDraft(int id, Account by);
+    /** ASM-03: báo lại số tiền hiện tại cho đơn nháp sau khi giá/khuyến mãi đổi (xác nhận bị chặn với AMOUNT_CHANGED). */
+    default Order requoteDraft(int id, Account by) { throw new OpsException(501, "NOT_SUPPORTED", "Chức năng này cần chạy với MySQL."); }
 }

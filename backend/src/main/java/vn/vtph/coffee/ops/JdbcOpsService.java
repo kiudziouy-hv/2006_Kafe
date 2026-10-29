@@ -861,7 +861,9 @@ public class JdbcOpsService implements OpsService {
         int emp = employeeId(by);
         if ("TRANSFER".equals(method)) {
             int id = insertId("INSERT INTO orders (order_type, status, created_at, created_by) VALUES ('TAKEAWAY', 'DRAFT', ?, ?)", nowUtc(), emp);
-            jdbc.update("INSERT INTO takeaway_order (order_id, payment_method) VALUES (?, 'TRANSFER_QR')", id);
+            Payer dp = payer == null ? Payer.NONE : payer;
+            jdbc.update("INSERT INTO takeaway_order (order_id, payment_method, quoted_total, customer_id, points_to_use) VALUES (?, 'TRANSFER_QR', ?, ?, ?)",
+                    id, quoteDraftTotal(lines, dp), dp.customerId(), dp.points());
             insertBatchWithLines(id, lines, false); // khuyến mãi chốt khi thu ngân xác nhận (BR-019)
             return loadOrder(id);
         }
@@ -875,6 +877,23 @@ public class JdbcOpsService implements OpsService {
         Order out = paidView(id, method, received, row);
         emit("ORDER_SENT", Map.of("orderId", id, "label", label(row.type, row.tableNo, row.queue), "lines", lines.size()));
         return out;
+    }
+
+    /** ASM-03: số tiền khách phải chuyển khoản tại thời điểm tạo đơn nháp (sau khuyến mãi, điểm và làm tròn 500đ). */
+    private int quoteDraftTotal(List<NewLine> lines, Payer p) {
+        if (p.points() < 0) throw new OpsException(422, "BAD_POINTS", "Số điểm dùng không hợp lệ.");
+        if (p.customerId() != null && one("SELECT customer_id FROM customer WHERE customer_id = ?", (rs, n) -> rs.getInt(1), p.customerId()) == null)
+            throw new OpsException(404, "NO_CUSTOMER", "Không tìm thấy thành viên.");
+        if (p.points() > 0 && p.customerId() == null) throw new OpsException(422, "NO_CUSTOMER", "Cần chọn thành viên để dùng điểm.");
+        long afterPromo = 0;
+        for (NewLine l : lines) {
+            PromotionService.Applied pr = promotionFor(l.item.group, true);
+            long value = (long) l.unitTotal() * l.qty;
+            afterPromo += value - (pr == null ? 0 : PricingPolicy.promotionDiscount(value, pr.percent()));
+        }
+        if (p.points() > PricingPolicy.maxRedeemablePoints((int) afterPromo))
+            throw new OpsException(422, "POINTS_LIMIT", "Chỉ được dùng tối đa " + PricingPolicy.maxRedeemablePoints((int) afterPromo) + " điểm (30% giá trị đơn sau khuyến mãi).");
+        return PricingPolicy.payableAfterPoints((int) afterPromo, p.points());
     }
 
     @Override
@@ -933,16 +952,39 @@ public class JdbcOpsService implements OpsService {
                 throw new OpsException(409, "ITEM_UNAVAILABLE", (m == null ? "Món" : m.name) + " không còn bán, không thể xác nhận đơn.");
             lines.add(new NewLine(m, sz, ((Number) l.get("quantity")).intValue(), null, null, null, List.of()));
         }
-        takeCakes(lines);
         applyPromotions(id);
+        // ASM-03: số tiền hiện tại phải bằng số tiền đã báo khách; lệch thì dừng, thu ngân báo lại khách (requote) hoặc hủy đơn nháp.
+        Map<String, Object> q = jdbc.queryForMap("SELECT quoted_total, customer_id, points_to_use FROM takeaway_order WHERE order_id = ?", id);
+        Payer eff = payer != null && (payer.customerId() != null || payer.points() > 0) ? payer
+                : new Payer(q.get("customer_id") == null ? null : ((Number) q.get("customer_id")).intValue(), ((Number) q.get("points_to_use")).intValue());
+        if (q.get("quoted_total") != null) {
+            int quoted = ((Number) q.get("quoted_total")).intValue();
+            int now = PricingPolicy.payableAfterPoints(amounts(id).afterPromo(), eff.points());
+            if (now != quoted)
+                throw new OpsException(409, "AMOUNT_CHANGED", "Số tiền đã thay đổi so với lúc báo khách: " + quoted + "đ → " + now + "đ. Hãy báo lại khách.",
+                        Map.of("quoted", quoted, "current", now));
+        }
+        takeCakes(lines);
         jdbc.update("UPDATE takeaway_order SET queue_date = ?, queue_number = ? WHERE order_id = ?", today(), nextQueue(), id);
         jdbc.update("UPDATE orders SET status = 'PROCESSING' WHERE order_id = ?", id);
         jdbc.update("UPDATE order_batch SET sent_at = ? WHERE order_id = ?", nowUtc(), id);
-        settle(id, s.id, "TRANSFER", null, by, payer);
+        settle(id, s.id, "TRANSFER", null, by, eff);
         OrderRow row = orderRow(id, false);
         Order out = paidView(id, "TRANSFER", null, row);
         emit("ORDER_SENT", Map.of("orderId", id, "label", label(row.type, row.tableNo, row.queue), "lines", lines.size()));
         return out;
+    }
+
+    /** ASM-03: cập nhật số tiền đã báo khách về số hiện tại (sau khi khuyến mãi/giá đổi) để xác nhận được tiếp. */
+    @Override
+    public Order requoteDraft(int id, Account by) {
+        OrderRow o = orderRow(id, true);
+        if (!o.status.equals("DRAFT")) throw new OpsException(409, "NOT_DRAFT", "Đơn không còn ở trạng thái nháp.");
+        applyPromotions(id);
+        int points = jdbc.queryForObject("SELECT points_to_use FROM takeaway_order WHERE order_id = ?", Integer.class, id);
+        int now = PricingPolicy.payableAfterPoints(amounts(id).afterPromo(), points);
+        jdbc.update("UPDATE takeaway_order SET quoted_total = ? WHERE order_id = ?", now, id);
+        return loadOrder(id);
     }
 
     @Override
