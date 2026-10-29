@@ -435,6 +435,8 @@ class MySqlOpsIntegrationTest extends AbstractMySqlIT {
             assertEquals("PAID", postJson(cashier, "/api/ops/drafts/" + id + "/confirm", null).get("status").asText());
             assertEquals(16000, jdbc.queryForObject("SELECT total FROM invoice WHERE order_id = ?", Integer.class, id));
         } finally {
+            // dòng món đã chốt khuyến mãi giữ khóa ngoại tới chương trình: gỡ trước khi xóa
+            jdbc.update("UPDATE order_line SET promotion_id = NULL WHERE promotion_id IN (SELECT promotion_id FROM promotion WHERE name = 'Test ASM-03')");
             jdbc.update("DELETE FROM promotion WHERE name = 'Test ASM-03'");
         }
     }
