@@ -31,7 +31,13 @@ public class NotificationBridge {
         Map<String, Object> msg = new LinkedHashMap<>(e.data());
         msg.put("type", e.type());
         msg.put("at", Instant.now().toString());
-        for (String topic : topicsFor(e.type())) broker.convertAndSend(topic, msg);
+        for (String topic : topicsFor(e.type(), e.data())) broker.convertAndSend(topic, msg);
+    }
+
+    /** Đơn mang đi xong món thì chỉ Thu ngân cần biết (Thu ngân là người giao đồ cho khách). */
+    static List<String> topicsFor(String type, Map<String, Object> data) {
+        if ("LINE_DONE".equals(type) && Boolean.TRUE.equals(data.get("takeaway"))) return List.of(CASHIER);
+        return topicsFor(type);
     }
 
     static List<String> topicsFor(String type) {
@@ -41,6 +47,7 @@ public class NotificationBridge {
             case "LINE_MAKING" -> List.of(SERVICE);
             case "LINE_DONE", "TABLE_WAITING_PAY" -> List.of(SERVICE, CASHIER);
             case "ORDER_PAID" -> List.of(SERVICE, CASHIER);
+            case "SHIFT_OPENED", "SHIFT_CLOSED" -> List.of(CASHIER); // mọi cửa sổ thu ngân (và Chủ quán) làm mới trạng thái ca ngay
             default -> List.of();
         };
     }

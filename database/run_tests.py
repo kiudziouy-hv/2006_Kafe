@@ -22,9 +22,9 @@ t('T07','BR-035 chỉ có một phiên ca thu ngân đang mở','error:uq_one_op
 t('T08','ISS-C4-10 còn đơn nháp thì không được chốt ca','error:ISS-C4-10',
   "UPDATE cashier_session SET status='CLOSED',closed_at=NOW(),closed_by=2,expected_cash=1000,actual_cash=1000,difference=0 WHERE session_id=1;")
 t('T09','Chốt ca thành công sau khi đã hủy đơn nháp','ok',
-  "UPDATE orders SET status='CANCELLED' WHERE order_id=3;UPDATE cashier_session SET status='CLOSED',closed_at=NOW(),closed_by=2,expected_cash=1000,actual_cash=1000,difference=0 WHERE session_id=1;")
+  "UPDATE orders SET status='CANCELLED' WHERE order_id=3;UPDATE takeaway_order SET handed_over_at=NOW() WHERE order_id=2;UPDATE cashier_session SET status='CLOSED',closed_at=NOW(),closed_by=2,expected_cash=1000,actual_cash=1000,difference=0 WHERE session_id=1;")
 t('T10','BR-035/ASM-15 không phát hành hóa đơn khi không có ca mở','error:phiên ca thu ngân đang mở',
-  "UPDATE orders SET status='CANCELLED' WHERE order_id=3;UPDATE cashier_session SET status='CLOSED',closed_at=NOW(),closed_by=2,expected_cash=1000,actual_cash=1000,difference=0 WHERE session_id=1;"
+  "UPDATE orders SET status='CANCELLED' WHERE order_id=3;UPDATE takeaway_order SET handed_over_at=NOW() WHERE order_id=2;UPDATE cashier_session SET status='CLOSED',closed_at=NOW(),closed_by=2,expected_cash=1000,actual_cash=1000,difference=0 WHERE session_id=1;"
   "INSERT INTO orders (order_id,order_type,status,created_by) VALUES (101,'TAKEAWAY','PROCESSING',2);INSERT INTO takeaway_order (order_id,queue_date,queue_number,payment_method) VALUES (101,CURDATE(),9,'CASH');"
   "INSERT INTO invoice (order_id,session_id,payment_method,subtotal,total,issued_by) VALUES (101,1,'CASH',1000,1000,2);")
 t('T11','BR-028 đơn tại quán còn món New/Making thì không thanh toán','error:BR-028',
@@ -67,7 +67,7 @@ t('T30','BR-031 không hủy hóa đơn khi đơn còn món Making','error:BR-03
 t('T31','BR-031 hủy hóa đơn khi ca chưa chốt và không còn món Making','ok',
   "UPDATE invoice SET status='CANCELLED',cancel_reason='khách yêu cầu',cancelled_by=1,cancelled_at=NOW() WHERE invoice_id=2;")
 t('T32','BR-031/BR-038 không hủy hóa đơn khi ca đã chốt','error:BR-031',
-  "UPDATE orders SET status='CANCELLED' WHERE order_id=3;UPDATE cashier_session SET status='CLOSED',closed_at=NOW(),closed_by=2,expected_cash=1000,actual_cash=1000,difference=0 WHERE session_id=1;"
+  "UPDATE orders SET status='CANCELLED' WHERE order_id=3;UPDATE takeaway_order SET handed_over_at=NOW() WHERE order_id=2;UPDATE cashier_session SET status='CLOSED',closed_at=NOW(),closed_by=2,expected_cash=1000,actual_cash=1000,difference=0 WHERE session_id=1;"
   "UPDATE invoice SET status='CANCELLED',cancel_reason='muộn',cancelled_by=1,cancelled_at=NOW() WHERE invoice_id=2;")
 t('T33','BR-030 hóa đơn đã hủy không đổi sang trạng thái khác','error:BR-030',
   "UPDATE invoice SET status='CANCELLED',cancel_reason='a',cancelled_by=1,cancelled_at=NOW() WHERE invoice_id=2;UPDATE invoice SET status='PAID' WHERE invoice_id=2;")
@@ -75,6 +75,8 @@ t('T34','BR-018 giá món/giá trị âm không hợp lệ','error:ck_line_price
   "INSERT INTO order_line (batch_id,item_id,size,quantity,unit_price) VALUES (1,1,'M',1,-1);")
 t('T35','NFR-010 hóa đơn in lại chỉ tăng bộ đếm in lại, không đổi nội dung','ok',
   "UPDATE invoice SET reprint_count=reprint_count+1 WHERE invoice_id=1;")
+t('T36','UC-31 còn đơn mang đi chưa giao khách thì không được chốt ca','error:chưa giao khách',
+  "UPDATE orders SET status='CANCELLED' WHERE order_id=3;UPDATE cashier_session SET status='CLOSED',closed_at=NOW(),closed_by=2,expected_cash=1000,actual_cash=1000,difference=0 WHERE session_id=1;")
 def run(sql):
     full="START TRANSACTION;"+sql+";ROLLBACK;"
     p=subprocess.run([MYSQL,'-u',USER,'--default-character-set=utf8mb4','--batch','-e',full,'VTPH_Coffee'],capture_output=True,text=True)

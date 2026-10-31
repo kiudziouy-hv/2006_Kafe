@@ -131,7 +131,7 @@ class MySqlOpsIntegrationTest extends AbstractMySqlIT {
         JsonNode menu = getJson(waiter, "/api/ops/menu");
         assertEquals(30, menu.get("items").size());
         assertEquals(5, menu.get("toppings").size());
-        assertEquals(List.of("Coffee", "Tea", "Smoothie", "Cake"), List.of(menu.get("groups").get(0).asText(), menu.get("groups").get(1).asText(), menu.get("groups").get(2).asText(), menu.get("groups").get(3).asText()));
+        assertEquals(List.of("Coffee", "Tea", "Sinh tố", "Cake"), List.of(menu.get("groups").get(0).asText(), menu.get("groups").get(1).asText(), menu.get("groups").get(2).asText(), menu.get("groups").get(3).asText()));
         JsonNode cappuccino = menu.get("items").get(5);
         assertEquals("Cappuccino", cappuccino.get("name").asText());
         assertTrue(cappuccino.get("hotOnly").asBoolean());
@@ -388,14 +388,30 @@ class MySqlOpsIntegrationTest extends AbstractMySqlIT {
         assertEquals("CANCELLED", cancelled.get("lines").get(0).get("status").asText());
         fail(cashier, "/api/ops/drafts/" + d2.get("id").asInt() + "/confirm", null, 409, "NOT_DRAFT");
 
+        fail(cashier, "/api/ops/shift/close", "{\"actualCash\":564000}", 409, "UNDELIVERED"); // 3 đơn mang đi chưa giao khách
+        for (int i = 0; i < 3; i++) {
+            int lid = firstKitchenLine("NEW");
+            postJson(barista, "/api/ops/kitchen/" + lid + "/start", null);
+            postJson(barista, "/api/ops/kitchen/" + lid + "/done", null);
+        }
+        for (JsonNode h : getJson(cashier, "/api/ops/takeaway/handovers")) postJson(cashier, "/api/ops/orders/" + h.get("id").asInt() + "/handover", null);
+
         fail(cashier, "/api/ops/shift/close", "{}", 422, "BAD_CASH");
         JsonNode closed = postJson(cashier, "/api/ops/shift/close", "{\"actualCash\":563000}"); // đầu ca 500.000 + 2 × 32.000 tiền mặt = 564.000
+        // mở và chốt ca đều phát sự kiện để mọi cửa sổ thu ngân làm mới trạng thái ca
+        assertEquals(1, events.stream(OpsEvent.class).filter(e -> e.type().equals("SHIFT_OPENED")).count());
+        assertEquals(1, events.stream(OpsEvent.class).filter(e -> e.type().equals("SHIFT_CLOSED") && "Ca sáng".equals(e.data().get("label"))).count());
         assertEquals(564000, closed.get("expectedCash").asInt());
         assertEquals(-1000, closed.get("diff").asInt());
         assertFalse(closed.get("open").asBoolean());
         JsonNode state = getJson(cashier, "/api/ops/shift");
         assertFalse(state.get("open").asBoolean());
         assertEquals(closed.get("id").asInt(), state.get("lastClosed").get("id").asInt());
+        JsonNode today = state.get("days").get(0); // hôm nay đứng đầu, có ca sáng vừa chốt cùng tổng ngày
+        assertEquals(closed.get("id").asInt(), today.get("shifts").get(0).get("id").asInt());
+        assertEquals(564000 - 500000, today.get("cashTotal").asInt());
+        assertEquals(32000, today.get("transferTotal").asInt());
+        assertEquals(3, today.get("invoiceCount").asInt());
         fail(cashier, "/api/ops/shift/open", "{\"type\":\"MORNING\",\"openingCash\":0}", 409, "SHIFT_EXISTS"); // mỗi ca một lần/ngày
         assertTrue(openShiftEvening().get("open").asBoolean());
     }
@@ -492,5 +508,63 @@ class MySqlOpsIntegrationTest extends AbstractMySqlIT {
         int order2 = jdbc.queryForObject("SELECT MAX(order_id) + 1 FROM orders", Integer.class);
         jdbc.update("INSERT INTO orders (order_id, order_type, status, created_by) VALUES (?, 'DINE_IN', 'PROCESSING', ?)", order2, staff);
         assertThrows(DataAccessException.class, () -> jdbc.update("INSERT INTO dine_in_order (order_id, table_id) VALUES (?, ?)", order2, table));
+    }
+
+    /** Đơn mang đi: Thu ngân giao khách sau khi pha chế xong; chuyển khoản được cộng riêng trong ca; hóa đơn ghi nhân viên đang chấm công. */
+    @Test
+    void takeawayHandoverTransferTotalsAndStaffOnDuty() throws Exception {
+        openShift();
+        String cash = "{\"lines\":[" + line(2, 1, "M", "COLD", null) + "],\"method\":\"CASH\",\"received\":50000";
+
+        // giao khách: chỉ giao được khi pha chế xong, và chỉ một lần
+        int id = postJson(cashier, "/api/ops/takeaway", cash + "}").get("id").asInt();
+        assertEquals(id, getJson(cashier, "/api/ops/takeaway/handovers").get(0).get("id").asInt());
+        fail(cashier, "/api/ops/orders/" + id + "/handover", null, 409, "NOT_READY");
+        fail(waiter, "/api/ops/orders/" + id + "/handover", null, 403, "FORBIDDEN");
+        int lineId = firstKitchenLine("NEW");
+        postJson(barista, "/api/ops/kitchen/" + lineId + "/start", null);
+        postJson(barista, "/api/ops/kitchen/" + lineId + "/done", null);
+        postJson(cashier, "/api/ops/orders/" + id + "/handover", null);
+        fail(cashier, "/api/ops/orders/" + id + "/handover", null, 409, "ALREADY_HANDED");
+        assertEquals(0, getJson(cashier, "/api/ops/takeaway/handovers").size());
+
+        // doanh thu chuyển khoản của ca chỉ để xem, không vào tiền mặt dự kiến
+        JsonNode draft = postJson(cashier, "/api/ops/takeaway", "{\"lines\":[" + line(2, 1, "M", "COLD", null) + "],\"method\":\"TRANSFER\"}");
+        postJson(cashier, "/api/ops/drafts/" + draft.get("id").asInt() + "/confirm", "{}");
+        JsonNode state = getJson(cashier, "/api/ops/shift");
+        assertEquals(32000, state.get("shift").get("transferSales").asInt());
+        assertEquals(1, state.get("shift").get("transferCount").asInt());
+        assertEquals(500000 + 32000, state.get("expected").asInt()); // tiền mặt: đầu ca + đơn tiền mặt, không có chuyển khoản
+
+        // nhân viên phụ trách: chỉ thu ngân đang chấm công
+        assertEquals(0, getJson(cashier, "/api/ops/on-duty").size());
+        fail(cashier, "/api/ops/takeaway", cash + ",\"staffId\":2}", 422, "NOT_ON_DUTY");
+        jdbc.update("INSERT INTO attendance (employee_id, shift, check_in_time) VALUES (2, 'MORNING', UTC_TIMESTAMP())");
+        try {
+            assertEquals(2, getJson(cashier, "/api/ops/on-duty").get(0).get("id").asInt());
+            int staffOrder = postJson(cashier, "/api/ops/takeaway", cash + ",\"staffId\":2}").get("id").asInt();
+            assertEquals(2, jdbc.queryForObject("SELECT issued_by FROM invoice WHERE order_id = ?", Integer.class, staffOrder));
+            assertEquals(2, jdbc.queryForObject("SELECT created_by FROM orders WHERE order_id = ?", Integer.class, staffOrder));
+            fail(cashier, "/api/ops/takeaway", cash + ",\"staffId\":3}", 422, "NOT_ON_DUTY"); // thu ngân khác chưa chấm công
+            fail(cashier, "/api/ops/takeaway", cash + ",\"staffId\":9}", 422, "NOT_ON_DUTY"); // tài khoản quầy không phải người
+        } finally {
+            jdbc.update("DELETE FROM attendance");
+        }
+    }
+
+    /** Chốt ca bị chặn khi còn đơn mang đi chưa giao khách, giống đơn nháp; giao xong mới chốt được. */
+    @Test
+    void undeliveredTakeawayBlocksClosingTheShift() throws Exception {
+        openShift();
+        int id = postJson(cashier, "/api/ops/takeaway", "{\"lines\":[" + line(2, 1, "M", "COLD", null) + "],\"method\":\"CASH\",\"received\":50000}").get("id").asInt();
+        assertEquals(1, getJson(cashier, "/api/ops/shift").get("undelivered").asInt());
+        fail(cashier, "/api/ops/shift/close", "{\"actualCash\":532000}", 409, "UNDELIVERED");
+        int lineId = firstKitchenLine("NEW");
+        postJson(barista, "/api/ops/kitchen/" + lineId + "/start", null);
+        postJson(barista, "/api/ops/kitchen/" + lineId + "/done", null);
+        fail(cashier, "/api/ops/shift/close", "{\"actualCash\":532000}", 409, "UNDELIVERED"); // pha xong vẫn chưa giao
+        postJson(cashier, "/api/ops/orders/" + id + "/handover", null);
+        assertEquals(0, getJson(cashier, "/api/ops/shift").get("undelivered").asInt());
+        postJson(cashier, "/api/ops/shift/close", "{\"actualCash\":532000}");
     }
 }

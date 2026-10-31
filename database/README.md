@@ -7,11 +7,11 @@ Cơ sở dữ liệu của đồ án "Hệ thống quản lý quán cà phê VTP
 | Tệp | Nội dung |
 |---|---|
 | `01_schema.sql` | 28 bảng, khóa chính/ngoại, khóa duy nhất, ràng buộc CHECK. **Xóa và tạo lại toàn bộ bảng** |
-| `02_triggers.sql` | 15 trigger thực thi quy tắc nghiệp vụ (BR-004, 017, 025, 028, 030, 031, 035, 037, NFR-010, ASM-01, ISS-C4-10) |
+| `02_triggers.sql` | 15 trigger thực thi quy tắc nghiệp vụ (BR-004, 017, 025, 028, 030, 031, 035, 037, NFR-010, ASM-01, ISS-C4-10, UC-31) |
 | `03_seed_master.sql` | Dữ liệu danh mục: nhân viên, tài khoản, 14 bàn, 30 món, topping, nguyên liệu, công thức, phiếu nhập, khuyến mãi, thành viên |
 | `04_views_procedures.sql` | 5 view báo cáo/tra cứu và thủ tục `sp_start_making` |
 | `05_seed_transactions.sql` | Dữ liệu giao dịch mẫu của ngày hôm nay (đơn, hóa đơn, điểm). Chạy lại được sau `03` |
-| `run_tests.py` | 35 kịch bản kiểm thử quy tắc nghiệp vụ, mỗi kịch bản chạy trong giao dịch rồi hoàn tác |
+| `run_tests.py` | 36 kịch bản kiểm thử quy tắc nghiệp vụ, mỗi kịch bản chạy trong giao dịch rồi hoàn tác |
 | `06_test_results.md` | Kết quả lần chạy kiểm thử gần nhất |
 
 ## Cách chạy

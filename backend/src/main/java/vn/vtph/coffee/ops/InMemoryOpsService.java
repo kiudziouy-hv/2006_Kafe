@@ -35,8 +35,8 @@ public class InMemoryOpsService implements OpsService {
         item(1, "Món mẫu 1", "Coffee", false, false, false, new Size("M", "M", 35000), new Size("L", "L", 40000)).recipe.putAll(Map.of("coffee", 18, "milk", 30, "cup", 1));
         item(2, "Món mẫu 2", "Coffee", true, false, false, new Size("M", "M", 45000)).recipe.putAll(Map.of("coffee", 20, "cup", 1));
         item(3, "Món mẫu 3", "Tea", false, false, false, new Size("M", "M", 30000), new Size("L", "L", 35000)).recipe.putAll(Map.of("tea", 8, "cup", 1));
-        item(4, "Món mẫu 4", "Smoothie", false, true, false, new Size("M", "M", 39000)).recipe.putAll(Map.of("fruit", 150, "cup", 1));
-        item(5, "Món mẫu 5", "Smoothie", false, true, false, new Size("M", "M", 42000), new Size("L", "L", 48000)).recipe.putAll(Map.of("fruit", 180, "cup", 1));
+        item(4, "Món mẫu 4", "Sinh tố", false, true, false, new Size("M", "M", 39000)).recipe.putAll(Map.of("fruit", 150, "cup", 1));
+        item(5, "Món mẫu 5", "Sinh tố", false, true, false, new Size("M", "M", 42000), new Size("L", "L", 48000)).recipe.putAll(Map.of("fruit", 180, "cup", 1));
         item(6, "Bánh mẫu 1", "Cake", false, false, true, new Size("1", "Phần", 30000)).recipe.put("cake1", 1);
         item(7, "Bánh mẫu 2", "Cake", false, false, true, new Size("1", "Phần", 32000)).recipe.put("cake2", 1);
         manualOut.add(4); // "Hết hàng" do Chủ quán đặt thủ công
@@ -79,7 +79,7 @@ public class InMemoryOpsService implements OpsService {
             o.put("sizes", m.sizes);
             items.add(o);
         }
-        return Map.of("items", items, "toppings", toppings.values(), "groups", List.of("Coffee", "Tea", "Smoothie", "Cake"));
+        return Map.of("items", items, "toppings", toppings.values(), "groups", List.of("Coffee", "Tea", "Sinh tố", "Cake"));
     }
 
     private Order openOrderAt(int table) {
@@ -120,7 +120,8 @@ public class InMemoryOpsService implements OpsService {
             String sugar = String.valueOf(in.getOrDefault("sugar", "50"));
             if (!List.of("0", "30", "50", "70", "100").contains(sugar)) throw new OpsException(422, "BAD_SUGAR", "Mức đường không hợp lệ.");
             String ice = temp.equals("HOT") ? "-" : String.valueOf(in.getOrDefault("ice", "NORMAL"));
-            if (!temp.equals("HOT") && !List.of("NONE", "LESS", "NORMAL").contains(ice)) throw new OpsException(422, "BAD_ICE", "Mức đá không hợp lệ.");
+            if (!temp.equals("HOT") && !List.of("NONE", "LESS", "NORMAL", "SEPARATE").contains(ice)) throw new OpsException(422, "BAD_ICE", "Mức đá không hợp lệ.");
+            if (ice.equals("SEPARATE") && !takeaway) throw new OpsException(422, "BAD_ICE", "Đá riêng chỉ dùng cho đơn mang đi.");
             l.temp = temp; l.sugar = sugar; l.ice = ice;
             Object tp = in.get("toppings");
             if (tp instanceof List<?> ids) for (Object o : ids) {
@@ -280,7 +281,7 @@ public class InMemoryOpsService implements OpsService {
         if (!l.status.equals("MAKING")) throw new OpsException(409, "BAD_STATE", "Chỉ hoàn thành được món đang pha.");
         l.status = "DONE";
         Order o = orders.get(l.orderId);
-        emit("LINE_DONE", Map.of("orderId", o.id, "lineId", l.id, "label", labelOf(o), "name", l.name, "qty", l.qty));
+        emit("LINE_DONE", Map.of("orderId", o.id, "lineId", l.id, "label", labelOf(o), "name", l.name, "qty", l.qty, "takeaway", o.type.equals("TAKEAWAY")));
         return Map.of("ok", true, "label", o.type.equals("DINE") ? "Bàn " + o.tableNo : String.format("#%03d", o.seq), "name", l.name);
     }
 
@@ -297,9 +298,23 @@ public class InMemoryOpsService implements OpsService {
         Shift s = openShift();
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("open", s != null); m.put("shift", s);
-        m.put("lastClosed", shifts.stream().filter(x -> !x.open).reduce((a, b) -> b).orElse(null));
-        if (s != null) { m.put("cashSales", cashSales(s)); m.put("expected", s.openingCash + cashSales(s)); m.put("drafts", drafts().size()); }
+        Shift last = shifts.stream().filter(x -> !x.open).reduce((a, b) -> b).orElse(null);
+        fillTransfer(s); fillTransfer(last);
+        m.put("lastClosed", last);
+        List<Shift> week = new ArrayList<>(shifts);
+        Collections.reverse(week);
+        week.forEach(this::fillTransfer);
+        m.put("days", ShiftDays.group(week, java.time.LocalDate.now().toString()));
+        if (s != null) { m.put("cashSales", cashSales(s)); m.put("expected", s.openingCash + cashSales(s)); m.put("drafts", drafts().size()); m.put("undelivered", handovers().size()); }
         return m;
+    }
+
+    private void fillTransfer(Shift s) {
+        if (s == null) return;
+        var paid = orders.values().stream().filter(o -> o.status.equals("PAID") && "TRANSFER".equals(o.payMethod) && Objects.equals(o.shiftId, s.id)).toList();
+        s.transferSales = paid.stream().mapToInt(o -> o.rounded).sum(); s.transferCount = paid.size();
+        s.cashSales = cashSales(s);
+        s.invoiceCount = (int) orders.values().stream().filter(o -> o.status.equals("PAID") && Objects.equals(o.shiftId, s.id)).count();
     }
 
     private int cashSales(Shift s) {
@@ -312,7 +327,8 @@ public class InMemoryOpsService implements OpsService {
         if (openShift() != null) throw new OpsException(409, "SHIFT_OPEN", "Đã có phiên ca đang mở, hãy chốt ca trước.");
         if (!List.of("MORNING", "EVENING").contains(type)) throw new OpsException(422, "BAD_TYPE", "Chọn ca sáng hoặc ca tối.");
         if (cash == null || cash < 0) throw new OpsException(422, "BAD_CASH", "Tiền mặt đầu ca không hợp lệ.");
-        Shift s = new Shift(); s.id = shifts.size() + 1; s.type = type; s.openingCash = cash; s.openedBy = by.fullName; shifts.add(s);
+        Shift s = new Shift(); s.id = shifts.size() + 1; s.type = type; s.openingCash = cash; s.openedBy = by.fullName; s.businessDate = java.time.LocalDate.now().toString(); shifts.add(s);
+        emit("SHIFT_OPENED", Map.of("shiftId", s.id, "label", type.equals("MORNING") ? "Ca sáng" : "Ca tối"));
         return s;
     }
 
@@ -323,9 +339,12 @@ public class InMemoryOpsService implements OpsService {
         if (s == null) throw new OpsException(409, "NO_SHIFT", "Chưa mở ca thu ngân.");
         int d = drafts().size();
         if (d > 0) throw new OpsException(409, "DRAFTS_PENDING", "Còn " + d + " đơn nháp, hãy xác nhận hoặc hủy trước khi chốt ca.");
+        int u = handovers().size();
+        if (u > 0) throw new OpsException(409, "UNDELIVERED", "Còn " + u + " đơn mang đi chưa giao khách, hãy giao xong trước khi chốt ca.");
         if (actual == null || actual < 0) throw new OpsException(422, "BAD_CASH", "Vui lòng nhập tiền mặt kiểm đếm thực tế.");
         s.expectedCash = s.openingCash + cashSales(s); s.actualCash = actual; s.diff = actual - s.expectedCash;
         s.open = false; s.closedAt = Instant.now();
+        emit("SHIFT_CLOSED", Map.of("shiftId", s.id, "label", s.type.equals("MORNING") ? "Ca sáng" : "Ca tối"));
         return s;
     }
 
@@ -386,6 +405,22 @@ public class InMemoryOpsService implements OpsService {
         o.id = ++orderSeq; o.seq = ++takeawaySeq; orders.put(o.id, o);
         for (Line l : lines) { l.id = ++lineSeq; l.orderId = o.id; l.tableLabel = String.format("#%03d", o.seq); takeCake(l); }
         emit("ORDER_SENT", Map.of("orderId", o.id, "label", labelOf(o), "lines", lines.size()));
+        return o;
+    }
+
+    @Override
+    public synchronized List<Order> handovers() {
+        return orders.values().stream().filter(o -> o.type.equals("TAKEAWAY") && o.status.equals("PAID") && o.handedOverAt == null)
+                .sorted(Comparator.comparingInt((Order o) -> o.id)).collect(Collectors.toList());
+    }
+
+    @Override
+    public synchronized Order handover(int orderId, Account by) {
+        Order o = order(orderId);
+        if (!o.type.equals("TAKEAWAY") || !o.status.equals("PAID")) throw new OpsException(409, "NOT_HANDOVER", "Chỉ giao được đơn mang đi đã thanh toán.");
+        if (o.handedOverAt != null) throw new OpsException(409, "ALREADY_HANDED", "Đơn đã giao cho khách.");
+        if (o.lines.stream().anyMatch(l -> l.status.equals("NEW") || l.status.equals("MAKING"))) throw new OpsException(409, "NOT_READY", "Pha chế chưa làm xong đơn này.");
+        o.handedOverAt = Instant.now();
         return o;
     }
 

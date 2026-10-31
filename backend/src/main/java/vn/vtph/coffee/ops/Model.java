@@ -38,12 +38,18 @@ public class Model {
         public int id; public String type; // DINE | TAKEAWAY
         public Integer tableNo; public Integer seq; public String status = "OPEN"; // OPEN | DRAFT | PAID | CANCELLED
         public boolean waitingPay; public String payMethod; public Integer received, change, shiftId; public String invoiceNo, createdBy;
-        public Instant createdAt = Instant.now(), paidAt; public int total, rounded;
+        public Instant createdAt = Instant.now(), paidAt;
+        /** Đơn mang đi: thời điểm Thu ngân giao đồ cho khách; null là chưa giao. */
+        public Instant handedOverAt; public int total, rounded;
         /** Giảm giá khuyến mãi, tiền sau khuyến mãi, điểm đã dùng/tích và số điểm tối đa dùng được (BR-020, BR-021, BR-023). */
         public int discount, afterPromo, pointsUsed, pointsEarned, maxPoints; public String customerName;
         public List<Line> lines = new ArrayList<>();
     }
 
     public static class Shift { public int id; public String type; public int openingCash; public Integer actualCash, expectedCash, diff;
-        public Instant openedAt = Instant.now(), closedAt; public boolean open = true; public String openedBy; }
+        public Instant openedAt = Instant.now(), closedAt; public boolean open = true; public String openedBy;
+        /** Chỉ để xem, không vào tiền mặt dự kiến: doanh thu chuyển khoản/QR của ca (đã trừ hoàn một phần) và số đơn, để đối chiếu app ngân hàng. */
+        public Integer transferSales, transferCount;
+        /** Ngày kinh doanh (yyyy-MM-dd), doanh thu tiền mặt và số hóa đơn của ca, để gom theo ngày. */
+        public String businessDate; public Integer cashSales, invoiceCount; }
 }
