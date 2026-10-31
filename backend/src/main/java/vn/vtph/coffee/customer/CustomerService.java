@@ -27,7 +27,7 @@ public class CustomerService {
     }
 
     public Map<String, Object> register(Map<String, Object> b) {
-        String name = Db.req(b, "fullName", "Họ tên");
+        String name = Db.req(b, "fullName", "Họ tên", 100);
         String phone = normalizePhone(Db.str(b, "phone"));
         if (!db.jdbc.queryForList("SELECT 1 FROM customer WHERE phone = ?", phone).isEmpty())
             throw new OpsException(409, "DUPLICATE_PHONE", "Số điện thoại này đã thuộc về một thành viên.");

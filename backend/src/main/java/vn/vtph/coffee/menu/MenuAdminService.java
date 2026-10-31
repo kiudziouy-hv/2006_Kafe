@@ -89,7 +89,7 @@ public class MenuAdminService {
             if (!size.equals("M") && !size.equals("L")) throw new OpsException(422, "BAD_SIZE", "Kích thước chỉ gồm M hoặc L.");
             if (!seen.add(size)) throw new OpsException(422, "BAD_SIZE", "Kích thước " + size + " bị lặp.");
             Object p = m.get("price");
-            if (!(p instanceof Number n) || n.longValue() < 0) throw new OpsException(422, "BAD_PRICE", "Giá bán không hợp lệ.");
+            if (!(p instanceof Number n) || n.longValue() < 0 || n.longValue() > 10_000_000) throw new OpsException(422, "BAD_PRICE", "Giá bán từ 0 đến 10.000.000đ.");
             out.add(new SizeIn(size, n.intValue()));
         }
         return out;
@@ -107,9 +107,9 @@ public class MenuAdminService {
     }
 
     public Map<String, Object> createItem(Map<String, Object> b) {
-        String name = Db.req(b, "name", "Tên món");
+        String name = Db.req(b, "name", "Tên món", 100);
         String group = Db.req(b, "group", "Nhóm món");
-        if (!GROUPS.contains(group)) throw new OpsException(422, "BAD_GROUP", "Nhóm món phải là Coffee, Tea, Smoothie hoặc Cake.");
+        if (!GROUPS.contains(group)) throw new OpsException(422, "BAD_GROUP", "Nhóm món phải là Coffee, Tea, Sinh tố hoặc Cake.");
         boolean hot = Boolean.TRUE.equals(b.get("allowHot")), cold = !Boolean.FALSE.equals(b.get("allowCold"));
         checkFlags(group, hot, cold);
         List<SizeIn> sizes = parseSizes(b);
@@ -131,7 +131,7 @@ public class MenuAdminService {
     /** Đổi giá chỉ ảnh hưởng dòng món gửi sau đó vì giá đã chốt trên order_line (BR-018). Kích thước bị bỏ: đã có giao dịch thì chuyển Ngừng bán. */
     public Map<String, Object> updateItem(int id, Map<String, Object> b) {
         Map<String, Object> cur = item(id);
-        String name = Db.req(b, "name", "Tên món");
+        String name = Db.req(b, "name", "Tên món", 100);
         String group = Db.req(b, "group", "Nhóm món");
         if (!GROUPS.contains(group)) throw new OpsException(422, "BAD_GROUP", "Nhóm món không hợp lệ.");
         boolean hot = Boolean.TRUE.equals(b.get("allowHot")), cold = !Boolean.FALSE.equals(b.get("allowCold"));
@@ -206,7 +206,7 @@ public class MenuAdminService {
     }
 
     private int surcharge(Map<String, Object> b) {
-        if (!(b.get("surcharge") instanceof Number n) || n.longValue() < 0) throw new OpsException(422, "BAD_PRICE", "Phụ phí không hợp lệ.");
+        if (!(b.get("surcharge") instanceof Number n) || n.longValue() < 0 || n.longValue() > 10_000_000) throw new OpsException(422, "BAD_PRICE", "Phụ phí từ 0 đến 10.000.000đ.");
         return n.intValue();
     }
 
@@ -221,14 +221,14 @@ public class MenuAdminService {
     }
 
     public Map<String, Object> createTopping(Map<String, Object> b) {
-        int id = db.insertId("INSERT INTO topping (name, surcharge) VALUES (?, ?)", Db.req(b, "name", "Tên topping"), surcharge(b));
+        int id = db.insertId("INSERT INTO topping (name, surcharge) VALUES (?, ?)", Db.req(b, "name", "Tên topping", 100), surcharge(b));
         setToppingItems(id, parseIds(b.get("itemIds")));
         return topping(id);
     }
 
     public Map<String, Object> updateTopping(int id, Map<String, Object> b) {
         topping(id);
-        db.jdbc.update("UPDATE topping SET name = ?, surcharge = ? WHERE topping_id = ?", Db.req(b, "name", "Tên topping"), surcharge(b), id);
+        db.jdbc.update("UPDATE topping SET name = ?, surcharge = ? WHERE topping_id = ?", Db.req(b, "name", "Tên topping", 100), surcharge(b), id);
         setToppingItems(id, parseIds(b.get("itemIds")));
         return topping(id);
     }

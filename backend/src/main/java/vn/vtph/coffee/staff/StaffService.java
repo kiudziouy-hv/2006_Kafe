@@ -40,8 +40,9 @@ public class StaffService {
     }
 
     private static void validateContact(String phone, String email) {
-        if (phone != null && !phone.isEmpty() && !phone.matches("0\\d{9,10}"))
-            throw new OpsException(422, "BAD_PHONE", "Số điện thoại gồm 10 hoặc 11 chữ số, bắt đầu bằng 0.");
+        if (phone != null && !phone.isEmpty() && !phone.matches("0\\d{9}"))
+            throw new OpsException(422, "BAD_PHONE", "Số điện thoại gồm 10 chữ số, bắt đầu bằng 0.");
+        if (email != null && email.length() > 120) throw new OpsException(422, "TOO_LONG", "Email tối đa 120 ký tự.");
         if (email != null && !email.isEmpty() && !email.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+"))
             throw new OpsException(422, "BAD_EMAIL", "Email không hợp lệ.");
     }
@@ -49,7 +50,7 @@ public class StaffService {
     private static String blankToNull(String s) { return s == null || s.isEmpty() ? null : s; }
 
     public Map<String, Object> updateMe(Account a, Map<String, Object> b) {
-        String name = Db.req(b, "fullName", "Họ tên");
+        String name = Db.req(b, "fullName", "Họ tên", 100);
         String phone = Db.str(b, "phone"), email = Db.str(b, "email");
         validateContact(phone, email);
         db.jdbc.update("UPDATE employee SET full_name = ?, phone = ?, email = ? WHERE employee_id = ?",
@@ -67,7 +68,7 @@ public class StaffService {
 
     /** Thêm nhân viên cùng tài khoản Hoạt động; tên đăng nhập sinh theo mã nhân viên (nhân viên đăng nhập bằng PIN nên không cần nhớ). */
     public Map<String, Object> create(Map<String, Object> b) {
-        String name = Db.req(b, "fullName", "Họ tên");
+        String name = Db.req(b, "fullName", "Họ tên", 100);
         String role = Db.req(b, "role", "Vai trò");
         if (!STAFF_ROLES.contains(role)) throw new OpsException(422, "BAD_ROLE", "Vai trò phải là Thu ngân, Phục vụ hoặc Pha chế.");
         String phone = Db.str(b, "phone"), email = Db.str(b, "email"), secret = Db.str(b, "secret");
@@ -85,7 +86,7 @@ public class StaffService {
 
     public Map<String, Object> update(int emp, Map<String, Object> b) {
         Map<String, Object> cur = byEmployee(emp);
-        String name = Db.req(b, "fullName", "Họ tên");
+        String name = Db.req(b, "fullName", "Họ tên", 100);
         String phone = Db.str(b, "phone"), email = Db.str(b, "email");
         validateContact(phone, email);
         db.jdbc.update("UPDATE employee SET full_name = ?, phone = ?, email = ? WHERE employee_id = ?", name, blankToNull(phone), blankToNull(email), emp);

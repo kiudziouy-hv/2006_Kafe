@@ -55,7 +55,7 @@ public class InvoiceService {
     @Transactional(readOnly = true)
     public List<Map<String, Object>> list(LocalDate from, LocalDate to, String status, String q) {
         LocalDate t = to == null ? db.today() : to, f = from == null ? t.minusDays(6) : from;
-        if (f.isAfter(t)) throw new OpsException(422, "BAD_RANGE", "Ngày bắt đầu không được sau ngày kết thúc.");
+        db.checkRange(f, t, 366);
         List<Object> args = new ArrayList<>(List.of(startUtc(f), startUtc(t.plusDays(1))));
         String sql = HEAD_SQL + " WHERE i.issued_at >= ? AND i.issued_at < ?";
         if (status != null && !status.isBlank()) { sql += " AND i.status = ?"; args.add(status); }
