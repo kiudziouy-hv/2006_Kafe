@@ -21,6 +21,8 @@ Mỗi lần chạy, hệ thống dựng lại cơ sở dữ liệu: có dữ li�
 
 Bố trí màn hình: C và D cạnh nhau (thấy đơn chạy từ phục vụ sang pha chế), A ở màn hình lớn để mở báo cáo.
 
+**PIN chấm công:** ở dữ liệu mẫu PIN theo vai trò, đồng bộ với đăng nhập: thu ngân `234567`, phục vụ `123456`, pha chế `345678`. Ở `/attendance` mỗi người chọn vai trò, chọn tên của mình trong danh sách vai trò đó rồi nhập PIN của vai trò đó.
+
 **Kiểm tra nhanh (2 phút):** đăng nhập đủ 4 cửa sổ, vào `/admin/tables` thấy 14 bàn Trống, vào `/admin/menu` thấy 30 món. Để chỉ chạy lại bước này khi lỗi: `Ctrl+C` rồi `scripts/dev-mysql.sh`.
 
 **Lưu ý trước khi bắt đầu**
@@ -36,6 +38,7 @@ Nói ngắn: quán 14 bàn, 1 chi nhánh, 4 vai trò, 4 loại thiết bị. H�
 
 ### Cảnh 2. Đăng nhập và phân quyền (UC-01, UC-02, BR-042) (2 phút)
 1. **Cửa sổ A:** màn đăng nhập, tab **Quản lý**, đăng nhập `owner` / `admin123`. Chỉ ra Chủ quán dùng tên và mật khẩu, nhân viên dùng PIN 6 số.
+1a. **Chấm công trước khi đăng nhập:** nhân viên chỉ vào được hệ thống khi đã chấm công. Chưa ai chấm công thì chọn vai trò Thu ngân, nhập đúng PIN vẫn bị chặn với thông báo **"Chưa có nhân viên nào chấm công vào ca"**. Mở `/attendance`, chấm công vào cho một thu ngân cá nhân (ví dụ **Hồ Quốc Tiến**, PIN `234567`), một phục vụ (**Võ Tấn Phát**, `123456`) và một pha chế (**Trần Thanh Huy**, `345678`) rồi mới đăng nhập các vai trò. Chủ quán không bị ràng buộc này.
 2. **Cửa sổ D:** chọn vai trò Thu ngân, nhập sai PIN `000000`. Thấy thông báo **"Mã PIN không đúng. Còn 4 lần thử."** Nói: sai 5 lần liên tiếp thì khóa 15 phút (không làm cho đến hết lần để khỏi mất thời gian). Sau đó nhập đúng `234567`.
 3. Chỉ ra phân quyền: mỗi vai trò vào một giao diện riêng (thu ngân không thấy kho, phục vụ không thấy báo cáo). Quyền thật nằm ở backend, ẩn nút ở giao diện chỉ để thân thiện (xem [api-permissions.md](../api/api-permissions.md)).
 4. Nhắc: thu ngân và pha chế tự đăng xuất sau 5 phút; mật khẩu và PIN lưu dạng băm bcrypt.
@@ -45,8 +48,8 @@ Nói ngắn: quán 14 bàn, 1 chi nhánh, 4 vai trò, 4 loại thiết bị. H�
 1. **Nhân sự & ca** → tab **Nhân viên**: danh sách nhân viên, trạng thái tài khoản; bấm **Thêm nhân viên** (Họ tên, Vai trò, **Mã PIN ban đầu**, Email, Số điện thoại) rồi **Lưu**. Chỉ ra **Khóa/Mở khóa** (nghỉ việc thì khóa, không xóa để giữ lịch sử, BR-042) và **Đặt lại PIN**.
 2. **Thực đơn** → tab **Món**: mở một món, chỉ ra kích cỡ M/L và giá từng cỡ, cấu hình nóng/lạnh (Cappuccino chỉ M và chỉ nóng), trạng thái **Đang bán / Hết hàng / Ngừng bán**. Bấm **Thêm món** tạo "Món thử demo" rồi **Xóa món** để chứng minh: món **chưa có giao dịch xóa được** (ASM-22); món đã bán chỉ chuyển Ngừng bán (BR-007).
 3. Tab **Topping**: topping và phụ phí (Trân châu đen +8.000đ).
-4. Tab **Khuyến mãi**: chỉ ra hai chương trình có sẵn, rồi **Tạo chương trình** "Demo giảm giá" giảm 20% nhóm **Smoothie** (nhóm này không dùng trong các cảnh sau nên không làm lệch số tiền mẫu), **Giờ bắt đầu mỗi ngày** là giờ hiện tại, **Giờ kết thúc** là 1 giờ sau, **Lưu và kích hoạt**. Nói: món trùng hai chương trình thì lấy mức cao hơn; giá và khuyến mãi chốt tại thời điểm gửi món. Muốn thấy giảm giá thật thì cho phục vụ gọi một Sinh tố ở Cảnh 5 và đọc số trên hộp thanh toán.
-5. **Chấm công:** chỉ ra trang `/attendance` (liên kết "Chấm công vào / ra ca" ở màn đăng nhập), chọn một nhân viên cá nhân (ví dụ Hồ Quốc Tiến), nhập PIN, chọn **Ca sáng (07:00 – 14:30)** hoặc **Ca tối (14:30 – 22:00)**. Chủ quán sửa chấm công ở **Nhân sự & ca → Chấm công → Chỉnh sửa**; mỗi lần sửa lưu người sửa, thời điểm, dữ liệu trước và sau.
+4. Tab **Khuyến mãi**: chỉ ra hai chương trình có sẵn, rồi **Tạo chương trình** "Demo giảm giá" giảm 20% nhóm **Sinh tố** (nhóm này không dùng trong các cảnh sau nên không làm lệch số tiền mẫu), **Giờ bắt đầu mỗi ngày** là giờ hiện tại, **Giờ kết thúc** là 1 giờ sau, **Lưu và kích hoạt**. Nói: món trùng hai chương trình thì lấy mức cao hơn; giá và khuyến mãi chốt tại thời điểm gửi món. Muốn thấy giảm giá thật thì cho phục vụ gọi một Sinh tố ở Cảnh 5 và đọc số trên hộp thanh toán.
+5. **Chấm công:** chỉ ra trang `/attendance` (liên kết "Chấm công vào / ra ca" ở màn đăng nhập), cùng khung giao diện với màn đăng nhập: bấm tab **Chấm công vào** (hoặc **Chấm công ra**), chọn **vai trò** (ví dụ Thu ngân), chọn tên trong danh sách của vai trò đó (ví dụ **Hồ Quốc Tiến**), chọn **Ca sáng (07:00 – 14:30)** hoặc **Ca tối (14:30 – 22:00)** (chỉ khi chấm công vào), rồi nhập PIN `234567` và bấm OK. Chủ quán sửa chấm công ở **Nhân sự & ca → Chấm công → Chỉnh sửa**; mỗi lần sửa lưu người sửa, thời điểm, dữ liệu trước và sau.
 
 ### Cảnh 4. Thu ngân mở ca (UC-30, ASM-15) (1 phút)
 **Cửa sổ D** (`/cashier`).
@@ -86,6 +89,8 @@ Nói ngắn: quán 14 bàn, 1 chi nhánh, 4 vai trò, 4 loại thiết bị. H�
 2. **Đơn chuyển khoản/QR:** chọn **Trà vải** M (42.000đ), phương thức Chuyển khoản/QR. Đơn là **Đơn nháp chờ chuyển khoản**: chưa hiện ở màn hình pha chế, chưa giữ nguyên liệu, chưa có hóa đơn. Nói: khách chuyển xong, thu ngân kiểm tra ứng dụng ngân hàng, tick **Đã nhận đủ tiền, xác nhận đơn**; đơn mới được xác nhận, nhận số **#002** và xuống pha chế. Cho thấy nút **Hủy** đơn nháp nếu muốn.
 3. **Chuẩn bị cho Cảnh 9:** tạo thêm một đơn mang đi **tiền mặt gồm 2 dòng** (Cà phê sữa M và Brownie), thanh toán xong nhưng **chưa cho pha chế làm**.
 4. **Cửa sổ C:** làm hai đơn #001 và #002 (Bắt đầu pha → Hoàn thành), để nguyên đơn thứ ba. Số thứ tự hiện để gọi khách.
+5. **Nhân viên phụ trách:** ở các cảnh thu tiền, ô **Nhân viên phụ trách** liệt kê thu ngân đang chấm công (cần chấm công bằng tài khoản cá nhân trước); chọn tên rồi mở hóa đơn sẽ thấy đúng tên đó ở "Nhân viên" và trên bản in. Chưa ai chấm công thì ô bị khóa và hóa đơn ghi "Quầy Thu ngân".
+6. **Giao khách:** pha chế xong, chỉ **Thu ngân** nhận thông báo "#001 xong, gọi khách nhận" (Phục vụ không nhận). Ở cửa sổ D, thẻ **Chờ giao khách** của tab **Đơn mang đi** hiện nút **Đã giao khách** cho đơn đã xong; đơn chưa xong thì nút bị khóa. Bấm để đơn rời danh sách.
 5. Nhắc: sang ngày mới, số thứ tự đánh lại từ 001; đơn nháp không chiếm số.
 
 ### Cảnh 9. Ngoại lệ do Chủ quán xử lý: hủy món, hủy hóa đơn, hoàn tiền (UC-15, 23, 24, 13; BR-012) (4 phút)
@@ -107,6 +112,7 @@ Nói ngắn: quán 14 bàn, 1 chi nhánh, 4 vai trò, 4 loại thiết bị. H�
 
 ### Cảnh 11. Chốt ca, chốt ngày (UC-31, 32; BR-037) (3 phút)
 1. **Cửa sổ D:** tạo nhanh một **đơn nháp chuyển khoản/QR** ở tab **Đơn mang đi** (chưa xác nhận), rồi bấm **Chốt ca**: hệ thống chặn, yêu cầu hủy hoặc xác nhận đơn nháp.
+   - Tương tự đơn nháp, **còn đơn mang đi chưa giao khách** cũng chặn chốt ca ("Còn N đơn mang đi chưa giao khách"). Ở tab **Đơn mang đi**, thẻ **Chờ giao khách**, bấm **Đã giao khách** cho từng đơn (đơn pha chế chưa xong thì nút bị khóa) rồi mới chốt được.
 2. Xử lý đơn nháp xong (hủy hoặc xác nhận) rồi bấm **Chốt ca**, nhập **Tiền mặt kiểm đếm thực tế (đồng)**. Hệ thống hiện **Doanh thu tiền mặt**, **Tiền mặt dự kiến** (đầu ca + doanh thu tiền mặt, trừ hóa đơn hủy và hoàn tiền một phần), **Tiền thực tế** và **Chênh lệch**. Nhập lệch cố ý (ví dụ thiếu 20.000đ) để thấy chênh lệch được ghi nhận cùng người chốt và thời gian.
 3. Sau khi chốt, hóa đơn của ca **không sửa được** (thử Hủy hóa đơn sẽ bị từ chối).
 4. **Ca tối là ca chốt ngày.** Nếu chốt ca tối khi còn đơn mở hoặc bàn chưa Trống, hệ thống chặn và **liệt kê từng đơn, từng bàn** cần xử lý (ASM-46). Ca sáng thì bàn giao đơn đang mở sang ca tối (ASM-35).

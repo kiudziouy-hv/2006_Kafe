@@ -67,6 +67,9 @@ Cập nhật 2026-10-31, lập từ mã nguồn các `*Controller` (89 API) và 
 | POST | `/api/ops/orders/{id}/pay` |  |  | ✓ | ✓ |
 | POST | `/api/ops/takeaway` |  |  | ✓ | ✓ |
 | POST | `/api/ops/takeaway/quote` |  |  | ✓ | ✓ |
+| GET | `/api/ops/on-duty` |  |  | ✓ | ✓ |
+| GET | `/api/ops/takeaway/handovers` |  |  | ✓ | ✓ |
+| POST | `/api/ops/orders/{id}/handover` |  |  | ✓ | ✓ |
 | GET | `/api/ops/drafts` |  |  | ✓ | ✓ |
 | POST | `/api/ops/drafts/{id}/confirm` |  |  | ✓ | ✓ |
 | POST | `/api/ops/drafts/{id}/requote` |  |  | ✓ | ✓ |

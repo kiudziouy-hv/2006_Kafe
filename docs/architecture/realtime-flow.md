@@ -6,8 +6,10 @@ Phục vụ gửi đơn ──REST POST /api/ops/tables/{no}/orders──▶ Ops
 
 Pha chế "Bắt đầu pha"  ──▶ LINE_MAKING  ──▶ /topic/service
 Pha chế "Hoàn thành"   ──▶ LINE_DONE    ──▶ /topic/service + /topic/cashier  (toast "Bàn 3 xong, cần mang ra")
+                                         đơn mang đi: chỉ /topic/cashier (toast "#001 xong, gọi khách nhận"); Thu ngân bấm "Đã giao khách"
 Phục vụ "Khách đã dùng xong" ──▶ TABLE_WAITING_PAY ──▶ /topic/service + /topic/cashier
 Thu ngân thanh toán    ──▶ ORDER_PAID   ──▶ /topic/service + /topic/cashier
+Thu ngân mở/chốt ca    ──▶ SHIFT_OPENED / SHIFT_CLOSED ──▶ /topic/cashier (mọi cửa sổ thu ngân và Chủ quán làm mới trạng thái ca ngay)
 ```
 
 ## Quy tắc

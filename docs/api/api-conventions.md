@@ -7,9 +7,10 @@
 |---|---|---|
 | Chưa đăng nhập / hết phiên | 401 | `NO_SESSION` |
 | Sai vai trò | 403 | `FORBIDDEN`, `OWNER_ONLY` |
+| Chưa chấm công nên không đăng nhập được | 403 | `NOT_CHECKED_IN` |
 | Không tìm thấy | 404 | `NO_TABLE`, `NO_ORDER`, `NO_LINE` |
-| Sai trạng thái nghiệp vụ | 409 | `BAD_STATE`, `SHORTAGE`, `LINES_PENDING`, `NO_SHIFT` |
-| Dữ liệu không hợp lệ | 400/422 | `INVALID_FORMAT`, `BAD_QTY`, `VALIDATION` (có `fields`) |
+| Sai trạng thái nghiệp vụ | 409 | `BAD_STATE`, `SHORTAGE`, `LINES_PENDING`, `NO_SHIFT`, `DRAFTS_PENDING`, `UNDELIVERED` (chốt ca), `NOT_READY`, `ALREADY_HANDED` (giao khách) |
+| Dữ liệu không hợp lệ | 400/422 | `INVALID_FORMAT`, `BAD_QTY`, `BAD_NUMBER` (tiền âm, thập phân hoặc quá lớn), `TOO_LONG`, `BAD_PHONE`, `BAD_RANGE` (khoảng ngày), `NOT_ON_DUTY`, `WRONG_ROLE` (chấm công sai vai trò), `VALIDATION` (có `fields`) |
 | Tài khoản khóa tạm | 423 | `LOCKED` (có `lockSeconds`) |
 | Sai PIN/mật khẩu | 401 | `WRONG_SECRET` (có `attemptsLeft`) |
 | Lỗi hệ thống | 500 | `INTERNAL` |
@@ -27,7 +28,7 @@
 | Gọi món | `POST /api/ops/tables/{no}/orders`, `POST /api/ops/orders/{id}/lines/{lid}/cancel`, `POST /api/ops/orders/{id}/move`, `POST /api/ops/orders/{id}/finish` | Phục vụ (hủy món: theo BR-025) |
 | Thực đơn | `GET /api/ops/menu` | Phục vụ, Thu ngân, Pha chế |
 | Pha chế | `GET /api/ops/kitchen`, `POST /api/ops/kitchen/{lid}/start`, `…/done` | Pha chế |
-| Thu ngân | `GET/POST /api/ops/shift`, `/shift/open`, `/shift/close`, `GET /api/ops/pending`, `POST /api/ops/orders/{id}/pay`, `POST /api/ops/takeaway`, `GET /api/ops/drafts`, `POST /api/ops/drafts/{id}/confirm|cancel` | Thu ngân |
+| Thu ngân | `GET/POST /api/ops/shift`, `/shift/open`, `/shift/close`, `GET /api/ops/pending`, `POST /api/ops/orders/{id}/pay`, `POST /api/ops/takeaway`, `GET /api/ops/drafts`, `POST /api/ops/drafts/{id}/confirm|cancel`, `GET /api/ops/takeaway/handovers`, `POST /api/ops/orders/{id}/handover` (giao khách), `GET /api/ops/on-duty` (thu ngân đang chấm công, để chọn nhân viên phụ trách) | Thu ngân |
 | Hệ thống | `GET /api/health` (công khai), `GET /api/menu` (đọc MySQL, 503 nếu chạy mock), `/actuator/health` | — |
 
 Chủ quán/Quản lý được phép gọi mọi điểm vào (kế thừa quyền).
