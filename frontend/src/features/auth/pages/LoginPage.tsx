@@ -6,24 +6,14 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
-import { Logo } from '@/components/shared/Logo'
-import { Wordmark } from '@/components/shared/Wordmark'
 import { toApiError } from '@/lib/http'
-import type { Role } from '@/types/api'
 import { authApi } from '../api/authApi'
+import { AuthShell, RoleTiles, type StaffRole } from '../components/AuthShell'
 import { PinPad } from '../components/PinPad'
 import { HOME_BY_ROLE, useAuth } from '../hooks/useAuth'
 import { ownerLoginSchema, pinSchema, type OwnerLoginForm } from '../schemas/loginSchemas'
 
 type Mode = 'owner' | 'staff'
-type StaffRole = Exclude<Role, 'OWNER'>
-
-const ROLE_TILES: { role: StaffRole; label: string }[] = [
-  { role: 'WAITER', label: 'Phục vụ' },
-  { role: 'BARISTA', label: 'Pha chế' },
-  { role: 'CASHIER', label: 'Thu ngân' },
-]
-
 /** UC-01: một màn đăng nhập, hai chế độ: Quản lý (tên + mật khẩu) và Nhân viên (chọn vai trò + PIN 6 số). */
 export default function LoginPage() {
   const { user, loading } = useAuth()
@@ -33,75 +23,49 @@ export default function LoginPage() {
   if (!loading && user) return <Navigate to={HOME_BY_ROLE[user.role]} replace />
 
   return (
-    <main className="grid min-h-full place-items-center bg-[#eadcc0] bg-[radial-gradient(ellipse_at_top,#f5e9cf,transparent_70%)] p-4 sm:p-8">
-      <div className="grid w-full max-w-[1040px] overflow-hidden rounded-[36px] border-2 border-double border-brass bg-gradient-to-br from-[#fbf0d9] to-[#f0dcb4] shadow-[0_30px_70px_-20px_rgba(60,30,10,0.5)] lg:grid-cols-[0.85fr_1fr]">
-        <aside className="relative h-52 overflow-hidden lg:h-auto lg:min-h-[640px]" aria-hidden>
-          <img
-            src="/login-bg.jpg"
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover object-[40%_center] sepia-[0.25]"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-coffee-950/40 via-transparent to-coffee-950/20" />
-          <div className="absolute inset-y-0 right-0 hidden w-40 bg-gradient-to-l from-[#f8ebd0] via-[#f8ebd0]/60 to-transparent lg:block" />
-          <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#f8ebd0] via-[#f8ebd0]/70 to-transparent lg:hidden" />
-        </aside>
+    <AuthShell>
+      {params.get('expired') && (
+        <p role="alert" className="rounded-2xl bg-warning-bg px-4 py-2 text-sm text-warning">
+          Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.
+        </p>
+      )}
 
-        <section className="relative flex flex-col items-center justify-center gap-4 px-6 pb-9 pt-0 sm:px-12 lg:py-10">
-          <header className="relative -mt-14 text-center lg:mt-0">
-            <p className="hidden text-xs font-semibold uppercase tracking-widest text-ink-soft lg:block">
-              Chào mừng bạn đến với
-            </p>
-            <Logo className="mx-auto h-28 w-28 ring-2 ring-brass/50 lg:mt-4" />
-            <Wordmark className="mx-auto mt-3 h-9" />
-          </header>
-
-          {params.get('expired') && (
-            <p role="alert" className="rounded-2xl bg-warning-bg px-4 py-2 text-sm text-warning">
-              Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.
-            </p>
-          )}
-
-          <div
-            role="tablist"
-            aria-label="Chế độ đăng nhập"
-            className="relative grid w-full max-w-[400px] grid-cols-2 border-b-2 border-brass/40"
+      <div
+        role="tablist"
+        aria-label="Chế độ đăng nhập"
+        className="relative grid w-full max-w-[400px] grid-cols-2 border-b-2 border-brass/40"
+      >
+        {(['owner', 'staff'] as const).map((m) => (
+          <button
+            key={m}
+            role="tab"
+            type="button"
+            aria-selected={mode === m}
+            onClick={() => setMode(m)}
+            className={clsx(
+              '-mb-0.5 flex min-h-11 items-center justify-center gap-2 border-b-[3px] font-semibold transition',
+              mode === m
+                ? 'border-brass-dark text-coffee-900'
+                : 'border-transparent text-ink-soft hover:border-brass/60 hover:text-coffee-900',
+            )}
           >
-            {(['owner', 'staff'] as const).map((m) => (
-              <button
-                key={m}
-                role="tab"
-                type="button"
-                aria-selected={mode === m}
-                onClick={() => setMode(m)}
-                className={clsx(
-                  '-mb-0.5 flex min-h-11 items-center justify-center gap-2 border-b-[3px] font-semibold transition',
-                  mode === m
-                    ? 'border-brass-dark text-coffee-900'
-                    : 'border-transparent text-ink-soft hover:border-brass/60 hover:text-coffee-900',
-                )}
-              >
-                <User size={18} aria-hidden />
-                {m === 'owner' ? 'Quản lý' : 'Nhân viên'}
-              </button>
-            ))}
-          </div>
-
-          <div className="relative w-full max-w-[400px]">
-            <h1 className="sr-only">
-              {mode === 'owner' ? 'Đăng nhập quản lý' : 'Đăng nhập nhân viên'}
-            </h1>
-            {mode === 'owner' ? <OwnerForm /> : <StaffForm />}
-          </div>
-
-          <Link
-            to="/attendance"
-            className="relative text-sm font-semibold text-coffee-700 underline"
-          >
-            Chấm công vào / ra ca
-          </Link>
-        </section>
+            <User size={18} aria-hidden />
+            {m === 'owner' ? 'Quản lý' : 'Nhân viên'}
+          </button>
+        ))}
       </div>
-    </main>
+
+      <div className="relative w-full max-w-[400px]">
+        <h1 className="sr-only">
+          {mode === 'owner' ? 'Đăng nhập quản lý' : 'Đăng nhập nhân viên'}
+        </h1>
+        {mode === 'owner' ? <OwnerForm /> : <StaffForm />}
+      </div>
+
+      <Link to="/attendance" className="relative text-sm font-semibold text-coffee-700 underline">
+        Chấm công vào / ra ca
+      </Link>
+    </AuthShell>
   )
 }
 
@@ -209,28 +173,13 @@ function StaffForm() {
     <div className="flex flex-col gap-4">
       <div>
         <p className="mb-2 text-center text-xs font-bold uppercase">Chọn vai trò</p>
-        <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Vai trò">
-          {ROLE_TILES.map((t) => (
-            <button
-              key={t.role}
-              type="button"
-              role="radio"
-              aria-checked={role === t.role}
-              onClick={() => {
-                setRole(t.role)
-                setError(null)
-              }}
-              className={clsx(
-                'vt-hover-lift min-h-14 rounded-xl border font-semibold uppercase text-xs',
-                role === t.role
-                  ? 'border-brass-dark bg-gradient-to-r from-coffee-900 to-coffee-700 text-ivory'
-                  : 'border-brass/50 bg-white/70 hover:border-brass hover:bg-coffee-100',
-              )}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+        <RoleTiles
+          value={role}
+          onChange={(r) => {
+            setRole(r)
+            setError(null)
+          }}
+        />
         {staff.isError && (
           <p role="alert" className="mt-2 text-sm text-danger">
             {toApiError(staff.error).message}
