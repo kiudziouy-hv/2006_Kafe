@@ -13,6 +13,7 @@ import { useAction } from '@/hooks/useAction'
 import { formatMoney } from '@/utils/format'
 import { paymentsApi, type PayOrder } from '../api/paymentsApi'
 import { PaidDialog, PayDialog } from './PayDialog'
+import { useStaffPicker } from './StaffPicker'
 
 const round500 = (n: number) => Math.floor(n / 500 + 0.5) * 500
 
@@ -25,8 +26,10 @@ export function TakeawayPanel() {
   const [received, setReceived] = useState('')
   const [done, setDone] = useState<OrderDetail | null>(null)
   const drafts = useQuery({ queryKey: ['ops', 'drafts'], queryFn: paymentsApi.drafts })
+  const handovers = useQuery({ queryKey: ['ops', 'handovers'], queryFn: paymentsApi.handovers })
   const [confirming, setConfirming] = useState<PayOrder | null>(null)
 
+  const staff = useStaffPicker()
   const lines = toNewLines(cart)
   const signature = JSON.stringify(lines)
   const quote = useQuery({
@@ -38,7 +41,7 @@ export function TakeawayPanel() {
   const total = quote.data?.total ?? cartTotal(cart)
   const afterPromo = quote.data?.afterPromo ?? total
   const maxPoints = member ? Math.min(quote.data?.maxPoints ?? 0, member.points) : 0
-  const usedPoints = method === 'CASH' ? Math.min(Number(points || 0), maxPoints) : 0
+  const usedPoints = Math.min(Number(points || 0), maxPoints)
   const payable = round500(afterPromo - usedPoints * 1000)
   const cashIn = received === '' ? payable : Number(received)
 
@@ -48,8 +51,9 @@ export function TakeawayPanel() {
         lines,
         method,
         received: method === 'CASH' ? cashIn : undefined,
-        customerId: method === 'CASH' ? member?.id : undefined,
+        customerId: member?.id,
         points: usedPoints,
+        staffId: staff.staffId,
       }),
     {
       invalidate: [['ops'], ['invoices'], ['customers']],
@@ -69,6 +73,11 @@ export function TakeawayPanel() {
   const cancelDraft = useAction((id: number) => paymentsApi.cancelDraft(id), {
     invalidate: [['ops']],
     success: 'Đã hủy đơn nháp',
+  })
+
+  const handover = useAction((id: number) => paymentsApi.handover(id), {
+    invalidate: [['ops']],
+    success: 'Đã giao đồ cho khách',
   })
 
   return (
@@ -111,30 +120,32 @@ export function TakeawayPanel() {
                   </Button>
                 ))}
               </div>
+              {staff.picker}
+              <MemberPicker
+                member={member}
+                onChange={(m) => {
+                  setMember(m)
+                  setPoints('0')
+                }}
+              />
+              {member && (
+                <NumberField
+                  label={`Số điểm dùng (tối đa ${maxPoints})`}
+                  value={points}
+                  onValueChange={(v) => setPoints(String(Math.min(Number(v || 0), maxPoints)))}
+                />
+              )}
+              <p className="flex justify-between text-lg font-bold">
+                <span>Khách phải trả</span>
+                <span>{formatMoney(payable)}</span>
+              </p>
               {method === 'CASH' && (
                 <>
-                  <MemberPicker
-                    member={member}
-                    onChange={(m) => {
-                      setMember(m)
-                      setPoints('0')
-                    }}
-                  />
-                  {member && (
-                    <NumberField
-                      label={`Số điểm dùng (tối đa ${maxPoints})`}
-                      value={points}
-                      onValueChange={(v) => setPoints(String(Math.min(Number(v || 0), maxPoints)))}
-                    />
-                  )}
-                  <p className="flex justify-between text-lg font-bold">
-                    <span>Khách phải trả</span>
-                    <span>{formatMoney(payable)}</span>
-                  </p>
                   <NumberField
                     label="Tiền khách đưa (đồng)"
                     value={received}
                     onValueChange={setReceived}
+                    maxLength={10}
                     hint={
                       cashIn >= payable ? `Tiền thối: ${formatMoney(cashIn - payable)}` : undefined
                     }
@@ -142,7 +153,7 @@ export function TakeawayPanel() {
                 </>
               )}
               <Button
-                disabled={method === 'CASH' && cashIn < payable}
+                disabled={!staff.ready || (method === 'CASH' && cashIn < payable)}
                 loading={submit.isPending}
                 onClick={() => submit.mutate(undefined)}
               >
@@ -150,6 +161,40 @@ export function TakeawayPanel() {
               </Button>
             </div>
           )}
+        </Card>
+        <Card>
+          <h2 className="mb-2 text-lg font-bold">Chờ giao khách</h2>
+          {(handovers.data ?? []).length === 0 && (
+            <p className="text-ink-soft">Không có đơn nào chờ giao.</p>
+          )}
+          <ul className="divide-y divide-line">
+            {(handovers.data ?? []).map((h) => {
+              const active = h.lines.filter((l) => l.status !== 'CANCELLED')
+              const ready = active.every((l) => l.status === 'DONE')
+              return (
+                <li key={h.id} className="flex items-center justify-between gap-2 py-2">
+                  <div>
+                    <p className="font-semibold">
+                      Đơn #{String(h.seq ?? h.id).padStart(3, '0')}{' '}
+                      <span className={ready ? 'text-success' : 'text-ink-soft'}>
+                        {ready ? '· Đã xong, gọi khách' : '· Pha chế đang làm'}
+                      </span>
+                    </p>
+                    <p className="text-sm text-ink-soft">
+                      {active.map((l) => `${l.qty}× ${l.name}`).join(', ')}
+                    </p>
+                  </div>
+                  <Button
+                    disabled={!ready}
+                    loading={handover.isPending}
+                    onClick={() => handover.mutate(h.id)}
+                  >
+                    Đã giao khách
+                  </Button>
+                </li>
+              )
+            })}
+          </ul>
         </Card>
         <Card>
           <h2 className="mb-2 text-lg font-bold">Đơn nháp chờ chuyển khoản</h2>

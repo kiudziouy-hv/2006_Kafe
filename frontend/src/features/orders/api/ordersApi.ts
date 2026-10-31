@@ -118,6 +118,7 @@ export const ordersApi = {
     received?: number
     customerId?: number
     points?: number
+    staffId?: number
   }) => http.post<OrderDetail>('/ops/takeaway', b).then((r) => r.data),
 }
 
@@ -126,6 +127,7 @@ export const ICE_LEVELS: { value: string; label: string }[] = [
   { value: 'NONE', label: 'Không đá' },
   { value: 'LESS', label: 'Ít đá' },
   { value: 'NORMAL', label: 'Đá bình thường' },
+  { value: 'SEPARATE', label: 'Đá riêng' }, // chỉ đơn mang đi: đá đựng riêng để đồ uống không loãng khi mang đi
 ]
 export const ICE_LABEL: Record<string, string> = Object.fromEntries(
   ICE_LEVELS.map((i) => [i.value, i.label]),

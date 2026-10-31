@@ -5,6 +5,7 @@ const opt = (l: InvoiceDetail['lines'][number]) =>
   [
     l.size === 'M' || l.size === 'L' ? `Cỡ ${l.size}` : null,
     l.temperature === 'HOT' ? 'Nóng' : l.temperature === 'COLD' ? 'Lạnh' : null,
+    l.ice === 'SEPARATE' ? 'Đá riêng' : null,
     ...l.toppings,
   ]
     .filter(Boolean)

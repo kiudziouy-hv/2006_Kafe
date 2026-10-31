@@ -11,6 +11,12 @@ export function describeOps(m: OpsMessage): {
 } {
   switch (m.type) {
     case 'LINE_DONE':
+      if (m.takeaway)
+        return {
+          tone: 'success',
+          title: `${m.label} xong, gọi khách nhận`,
+          description: `${m.name ?? 'Món'} đã sẵn sàng.`,
+        }
       return {
         tone: 'success',
         title: `${m.label} xong, cần mang ra`,
@@ -28,6 +34,10 @@ export function describeOps(m: OpsMessage): {
       }
     case 'ORDER_PAID':
       return { tone: 'success', title: `${m.label} đã thanh toán` }
+    case 'SHIFT_OPENED':
+      return { tone: 'info', title: `${m.label} đã mở` }
+    case 'SHIFT_CLOSED':
+      return { tone: 'info', title: `${m.label} đã chốt` }
     case 'LINE_CANCELLED':
       return { tone: 'info', title: `${m.label}: món đã hủy`, description: m.name }
     default:
@@ -46,13 +56,14 @@ export function useOpsNotifications(topic: string, silent = false) {
       refresh()
       const d = describeOps(m)
       notifications.add({
-        id: `${m.type}|${m.orderId}|${m.name ?? ''}|${m.at}`,
+        id: `${m.type}|${m.orderId ?? m.shiftId}|${m.name ?? ''}|${m.at}`,
         tone: d.tone,
         title: d.title,
         description: d.description,
         at: m.at,
       })
-      if (!silent) notify(d)
+      // Sự kiện ca: cửa sổ vừa mở/chốt ca đã có toast riêng, các cửa sổ khác chỉ cần làm mới trạng thái và ghi vào chuông
+      if (!silent && !m.type.startsWith('SHIFT_')) notify(d)
     },
     refresh,
   )

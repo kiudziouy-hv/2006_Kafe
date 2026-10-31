@@ -122,7 +122,7 @@ export function ItemOptionsModal({
                   {temp === 'HOT' && <span className="font-normal"> (đồ nóng không dùng đá)</span>}
                 </legend>
                 <div className="flex flex-wrap gap-2">
-                  {ICE_LEVELS.map((i) => (
+                  {ICE_LEVELS.filter((i) => takeaway || i.value !== 'SEPARATE').map((i) => (
                     <Chip key={i.value} active={ice === i.value} onClick={() => setIce(i.value)}>
                       {i.label}
                     </Chip>

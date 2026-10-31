@@ -7,17 +7,39 @@ export interface ShiftInfo {
   openingCash: number
   openedAt?: string
   openedBy?: string
+  transferSales?: number
+  transferCount?: number
+}
+
+/** Một ca trong ngày kinh doanh, kèm doanh thu của ca (tiền mặt và chuyển khoản/QR). */
+export type DayShift = ShiftInfo & {
+  open: boolean
+  businessDate: string
+  cashSales: number
+  invoiceCount: number
+  expectedCash: number | null
+  actualCash: number | null
+  diff: number | null
+  closedAt: string | null
+}
+
+export interface ShiftDay {
+  date: string
+  shifts: DayShift[]
+  cashTotal: number
+  transferTotal: number
+  invoiceCount: number
 }
 
 export interface ShiftState {
   open: boolean
   shift: ShiftInfo | null
-  lastClosed?:
-    | (ShiftInfo & { expectedCash: number; actualCash: number; diff: number; closedAt: string })
-    | null
+  /** 7 ngày gần nhất, hôm nay đứng đầu (luôn có, dù chưa mở ca nào). */
+  days?: ShiftDay[]
   cashSales?: number
   expected?: number
   drafts?: number
+  undelivered?: number
 }
 
 export type PayMethod = 'CASH' | 'TRANSFER'
@@ -25,6 +47,13 @@ export type PayMethod = 'CASH' | 'TRANSFER'
 export interface Payer {
   customerId?: number
   points?: number
+  /** Nhân viên phụ trách (thu ngân đang chấm công); không gửi thì ghi theo tài khoản quầy. */
+  staffId?: number
+}
+
+export interface OnDutyStaff {
+  id: number
+  name: string
 }
 
 /** Đơn kèm số liệu tính tiền (khuyến mãi, điểm) trả về từ các API thanh toán. */
@@ -44,5 +73,8 @@ export const paymentsApi = {
   drafts: () => http.get<PayOrder[]>('/ops/drafts').then((r) => r.data),
   confirmDraft: (id: number, payer: Payer) =>
     http.post<PayOrder>(`/ops/drafts/${id}/confirm`, payer).then((r) => r.data),
+  onDuty: () => http.get<OnDutyStaff[]>('/ops/on-duty').then((r) => r.data),
+  handovers: () => http.get<PayOrder[]>('/ops/takeaway/handovers').then((r) => r.data),
+  handover: (id: number) => http.post<PayOrder>(`/ops/orders/${id}/handover`).then((r) => r.data),
   cancelDraft: (id: number) => http.post<PayOrder>(`/ops/drafts/${id}/cancel`).then((r) => r.data),
 }

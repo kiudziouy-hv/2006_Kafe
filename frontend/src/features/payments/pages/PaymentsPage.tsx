@@ -10,7 +10,7 @@ import InvoicesPage from '@/features/invoices/pages/InvoicesPage'
 import { formatMoney } from '@/utils/format'
 import { paymentsApi, type PayOrder } from '../api/paymentsApi'
 import { PayDialog } from '../components/PayDialog'
-import { ShiftPanel } from '../components/ShiftPanel'
+import { OpenShiftDialog, ShiftPanel } from '../components/ShiftPanel'
 import { TakeawayPanel } from '../components/TakeawayPanel'
 
 type Tab = 'pay' | 'takeaway' | 'invoices' | 'shift'
@@ -19,8 +19,9 @@ type Tab = 'pay' | 'takeaway' | 'invoices' | 'shift'
 export default function PaymentsPage() {
   const shift = useQuery({ queryKey: ['ops', 'shift'], queryFn: paymentsApi.shift })
   const [tab, setTab] = useState<Tab>('pay')
+  const [opening, setOpening] = useState(false)
   const open = shift.data?.open === true
-  const effective: Tab = !open && (tab === 'pay' || tab === 'takeaway') ? 'shift' : tab
+  const needsShift = !open && (tab === 'pay' || tab === 'takeaway')
 
   return (
     <QueryState
@@ -29,7 +30,7 @@ export default function PaymentsPage() {
       onRetry={() => void shift.refetch()}
     >
       <Tabs
-        value={effective}
+        value={tab}
         onChange={setTab}
         tabs={[
           { id: 'pay', label: 'Chờ thanh toán', icon: Wallet },
@@ -38,10 +39,21 @@ export default function PaymentsPage() {
           { id: 'shift', label: 'Ca thu ngân', icon: Clock },
         ]}
       />
-      {effective === 'pay' && <PendingList />}
-      {effective === 'takeaway' && <TakeawayPanel />}
-      {effective === 'invoices' && <InvoicesPage />}
-      {effective === 'shift' && <ShiftPanel />}
+      {needsShift && (
+        <div className="flex flex-col items-center gap-3">
+          <EmptyState icon={Clock}>
+            {tab === 'takeaway'
+              ? 'Cần mở ca thu ngân mới tạo được đơn mang đi.'
+              : 'Chưa mở ca thu ngân, cần mở ca trước khi thu tiền.'}
+          </EmptyState>
+          <Button onClick={() => setOpening(true)}>Mở ca thu ngân</Button>
+        </div>
+      )}
+      {opening && <OpenShiftDialog onClose={() => setOpening(false)} />}
+      {!needsShift && tab === 'pay' && <PendingList />}
+      {!needsShift && tab === 'takeaway' && <TakeawayPanel />}
+      {tab === 'invoices' && <InvoicesPage />}
+      {tab === 'shift' && <ShiftPanel />}
     </QueryState>
   )
 }
