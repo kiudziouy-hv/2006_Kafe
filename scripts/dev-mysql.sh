@@ -2,6 +2,10 @@
 # Chạy đầy đủ chức năng: MySQL 8.4 (Docker) + backend profile "mysql" + giao diện. Nhấn Ctrl+C để dừng backend và giao diện
 # (container MySQL và dữ liệu vẫn giữ; dừng hẳn bằng: docker stop vtph-mysql).
 # Cổng có thể đổi bằng biến môi trường: DB_PORT (mặc định 3307), SERVER_PORT (mặc định 8080).
+# Mặc định chỉ nạp dữ liệu nền (thực đơn, kho, nhân viên, bàn...), KHÔNG nạp đơn mẫu để tự thao tác luồng từ đầu khi demo.
+# Muốn có sẵn đơn mẫu của ngày hôm nay: đặt SPRING_FLYWAY_TARGET=latest trên cơ sở dữ liệu trống
+# (xóa dữ liệu cũ: docker rm -f vtph-mysql && docker volume rm vtph_mysql_data).
+export SPRING_FLYWAY_TARGET="${SPRING_FLYWAY_TARGET:-4}"
 set -euo pipefail
 cd "$(dirname "$0")/.."
 DB_PORT="${DB_PORT:-3307}"
