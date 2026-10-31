@@ -26,7 +26,8 @@ public class MenuAdminController {
     @GetMapping("/items") public List<Map<String, Object>> items(HttpSession s) { access.who(s); return menu.items(); }
     @PostMapping("/items") public Map<String, Object> create(@RequestBody Map<String, Object> b, HttpSession s) { access.who(s); return menu.createItem(b); }
     @PutMapping("/items/{id}") public Map<String, Object> update(@PathVariable int id, @RequestBody Map<String, Object> b, HttpSession s) { access.who(s); return menu.updateItem(id, b); }
-    @PostMapping("/items/{id}/status") public Map<String, Object> itemStatus(@PathVariable int id, @RequestBody Map<String, Object> b, HttpSession s) { access.who(s); return menu.setItemStatus(id, status(b)); }
+    @DeleteMapping("/items/{id}") public ResponseEntity<Void> deleteItem(@PathVariable int id, HttpSession s) { access.who(s); menu.deleteItem(id); return ResponseEntity.noContent().build(); }
+    @PostMapping("/items/{id}/status")public Map<String, Object> itemStatus(@PathVariable int id, @RequestBody Map<String, Object> b, HttpSession s) { access.who(s); return menu.setItemStatus(id, status(b)); }
     @PostMapping("/items/{id}/sizes/{size}/status") public Map<String, Object> sizeStatus(@PathVariable int id, @PathVariable String size, @RequestBody Map<String, Object> b, HttpSession s) {
         access.who(s); return menu.setSizeStatus(id, size, status(b)); }
 

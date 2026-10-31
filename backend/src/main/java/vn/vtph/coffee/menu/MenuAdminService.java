@@ -154,6 +154,19 @@ public class MenuAdminService {
         return item(id);
     }
 
+    /** UC-05 (ASM-22): chỉ xóa món chưa từng phát sinh giao dịch; món đã có dòng món (kể cả đã hủy) phải chuyển Ngừng bán (BR-007). */
+    public void deleteItem(int id) {
+        item(id);
+        if (db.jdbc.queryForObject("SELECT COUNT(*) FROM order_line WHERE item_id = ?", Integer.class, id) > 0)
+            throw new OpsException(409, "ITEM_HAS_HISTORY", "Món đã từng phát sinh giao dịch nên không xóa được. Hãy chuyển món sang Ngừng bán.");
+        db.jdbc.update("DELETE FROM recipe_line WHERE recipe_id IN (SELECT recipe_id FROM recipe WHERE item_id = ?)", id);
+        db.jdbc.update("DELETE FROM recipe WHERE item_id = ?", id);
+        db.jdbc.update("DELETE FROM menu_item_topping WHERE item_id = ?", id);
+        db.jdbc.update("DELETE FROM item_size WHERE item_id = ?", id);
+        db.jdbc.update("DELETE FROM menu_item WHERE item_id = ?", id);
+        images.delete(MenuImageStore.Kind.ITEM, id);
+    }
+
     public Map<String, Object> setItemStatus(int id, String status) {
         item(id);
         if (!STATUSES.contains(status)) throw new OpsException(422, "BAD_STATUS", "Trạng thái không hợp lệ.");

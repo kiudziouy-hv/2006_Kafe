@@ -3,6 +3,7 @@ package vn.vtph.coffee.admin;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -89,6 +90,7 @@ class MySqlAdminIntegrationTest extends AbstractMySqlIT {
         MockHttpServletRequestBuilder b = switch (method) {
             case "POST" -> post(url).contentType(MediaType.APPLICATION_JSON).content(body == null ? "{}" : body);
             case "PUT" -> put(url).contentType(MediaType.APPLICATION_JSON).content(body == null ? "{}" : body);
+            case "DELETE" -> delete(url);
             default -> get(url);
         };
         String out = mvc.perform(b.session(s)).andExpect(status().is(expected)).andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
@@ -285,6 +287,27 @@ class MySqlAdminIntegrationTest extends AbstractMySqlIT {
         rule(owner, "POST", "/api/admin/toppings", "{\"name\":\"Topping thử nghiệm\",\"surcharge\":5000,\"itemIds\":[]}", 409, "DUPLICATE");
         jdbc.update("DELETE FROM menu_item_topping WHERE topping_id = ?", top.get("id").asInt());
         jdbc.update("DELETE FROM topping WHERE topping_id = ?", top.get("id").asInt());
+    }
+
+    /** ASM-22: chỉ xóa món chưa từng phát sinh giao dịch; món đã có dòng món phải chuyển Ngừng bán (BR-007). */
+    @Test
+    void anItemCanOnlyBeDeletedWhenItNeverHadTransactions() throws Exception {
+        String body = "{\"name\":\"Món xóa thử\",\"group\":\"COFFEE\",\"allowHot\":true,\"allowCold\":true,\"sizes\":[{\"size\":\"M\",\"price\":30000}],\"toppingIds\":[3]}";
+        int fresh = ok(owner, "POST", "/api/admin/items", body).get("id").asInt();
+        ok(owner, "PUT", "/api/inventory/recipe", "{\"itemId\":" + fresh + ",\"size\":\"M\",\"lines\":[{\"ingredientId\":1,\"quantity\":10}]}");
+        rule(waiter, "DELETE", "/api/admin/items/" + fresh, null, 403, "FORBIDDEN");
+        rule(owner, "DELETE", "/api/admin/items/9999", null, 404, "NO_ITEM");
+        send(owner, "DELETE", "/api/admin/items/" + fresh, null, 204);
+        for (String t : List.of("menu_item WHERE item_id", "item_size WHERE item_id", "menu_item_topping WHERE item_id", "recipe WHERE item_id"))
+            assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM " + t + " = ?", Integer.class, fresh), t);
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM recipe_line rl LEFT JOIN recipe r ON r.recipe_id = rl.recipe_id WHERE r.recipe_id IS NULL", Integer.class));
+
+        int used = ok(owner, "POST", "/api/admin/items", body).get("id").asInt();
+        openShift();
+        ok(waiter, "POST", "/api/ops/tables/5/orders", "{\"lines\":[" + line(used, 1, "M") + "]}");
+        rule(owner, "DELETE", "/api/admin/items/" + used, null, 409, "ITEM_HAS_HISTORY");
+        assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM menu_item WHERE item_id = ?", Integer.class, used));
+        assertEquals("STOPPED", ok(owner, "POST", "/api/admin/items/" + used + "/status", "{\"status\":\"STOPPED\"}").get("status").asText());
     }
 
     // ---------- kho ----------

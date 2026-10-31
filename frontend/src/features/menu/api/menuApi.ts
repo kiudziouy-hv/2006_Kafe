@@ -66,6 +66,7 @@ export const menuApi = {
   createItem: (b: ItemInput) => http.post<AdminItem>('/admin/items', b).then((r) => r.data),
   updateItem: (id: number, b: ItemInput) =>
     http.put<AdminItem>(`/admin/items/${id}`, b).then((r) => r.data),
+  deleteItem: (id: number) => http.delete(`/admin/items/${id}`).then(() => undefined),
   itemStatus: (id: number, status: CatalogStatus) =>
     http.post<AdminItem>(`/admin/items/${id}/status`, { status }).then((r) => r.data),
   sizeStatus: (id: number, size: string, status: CatalogStatus) =>
