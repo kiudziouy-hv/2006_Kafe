@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { QueryState } from '@/components/feedback/QueryState'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -98,10 +98,26 @@ export function InvoiceDetailModal({
                     </div>
                   ),
                 },
-                { header: 'SL', cell: (l) => l.quantity },
-                { header: 'Đơn giá', cell: (l) => formatMoney(l.unitPrice + l.toppingTotal) },
-                { header: 'KM', cell: (l) => (l.discountPercent ? `${l.discountPercent}%` : '—') },
-                { header: 'Trạng thái', cell: (l) => LINE_LABEL[l.status] },
+                {
+                  header: 'SL',
+                  className: 'whitespace-nowrap text-center',
+                  cell: (l) => l.quantity,
+                },
+                {
+                  header: 'Đơn giá',
+                  className: 'whitespace-nowrap text-right',
+                  cell: (l) => formatMoney(l.unitPrice + l.toppingTotal),
+                },
+                {
+                  header: 'KM',
+                  className: 'whitespace-nowrap text-center',
+                  cell: (l) => (l.discountPercent ? `${l.discountPercent}%` : '—'),
+                },
+                {
+                  header: 'Trạng thái',
+                  className: 'whitespace-nowrap',
+                  cell: (l) => LINE_LABEL[l.status],
+                },
                 {
                   header: '',
                   cell: (l) =>
@@ -195,35 +211,52 @@ export function InvoiceDetailModal({
   )
 }
 
+function Row({ label, children, tone }: { label: string; children: ReactNode; tone?: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 whitespace-nowrap">
+      <dt className="text-ink-soft">{label}</dt>
+      <dd className={tone ?? 'font-semibold'}>{children}</dd>
+    </div>
+  )
+}
+
 function Summary({ d }: { d: InvoiceDetail }) {
   return (
-    <div className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
-      <p>
-        <b>{d.invoiceNo}</b>{' '}
-        <Badge tone={d.status === 'PAID' ? 'success' : 'danger'}>
-          {d.status === 'PAID' ? 'Đã thanh toán' : 'Đã hủy'}
-        </Badge>
-      </p>
-      <p>
-        {orderLabel(d)} · {d.paymentMethod === 'CASH' ? 'Tiền mặt' : 'Chuyển khoản / QR'}
-      </p>
-      <p>
-        Phát hành: {formatDateTime(d.issuedAt)} · {d.issuedBy}
-      </p>
-      <p>In lại: {d.reprintCount} lần</p>
-      <p>Khuyến mãi: -{formatMoney(d.promotionDiscount)}</p>
-      <p>
-        Điểm đã dùng: {d.pointsUsed} (-{formatMoney(d.pointsUsed * 1000)})
-      </p>
-      <p className="text-lg font-bold">Thực trả: {formatMoney(d.total)}</p>
-      <p>Điểm tích mới: +{d.pointsEarned}</p>
-      {d.customerName && (
-        <p className="sm:col-span-2">
-          Thành viên: {d.customerName} · {d.customerPhone}
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 whitespace-nowrap">
+        <p className="flex items-center gap-3 text-xl font-bold">
+          {d.invoiceNo}
+          <Badge tone={d.status === 'PAID' ? 'success' : 'danger'}>
+            {d.status === 'PAID' ? 'Đã thanh toán' : 'Đã hủy'}
+          </Badge>
         </p>
-      )}
+        <p className="font-semibold">
+          {orderLabel(d)} · {d.paymentMethod === 'CASH' ? 'Tiền mặt' : 'Chuyển khoản / QR'}
+        </p>
+      </div>
+      <dl className="grid gap-x-10 gap-y-1.5 rounded-2xl border border-line px-4 py-3 sm:grid-cols-2">
+        <Row label="Phát hành">{formatDateTime(d.issuedAt)}</Row>
+        <Row label="Khuyến mãi">-{formatMoney(d.promotionDiscount)}</Row>
+        <Row label="Nhân viên">{d.issuedBy}</Row>
+        <Row label="Điểm đã dùng">
+          {d.pointsUsed} (-{formatMoney(d.pointsUsed * 1000)})
+        </Row>
+        <Row label="In lại">{d.reprintCount} lần</Row>
+        <Row label="Điểm tích mới">+{d.pointsEarned}</Row>
+        {d.customerName && (
+          <div className="sm:col-span-2">
+            <Row label="Thành viên">
+              {d.customerName} · {d.customerPhone}
+            </Row>
+          </div>
+        )}
+      </dl>
+      <p className="flex items-baseline justify-between gap-4 whitespace-nowrap text-xl font-bold">
+        <span>Thực trả</span>
+        <span>{formatMoney(d.total)}</span>
+      </p>
       {d.status === 'CANCELLED' && (
-        <p className="text-danger sm:col-span-2">
+        <p className="text-danger">
           Đã hủy: {d.cancelReason} — {d.cancelledBy}, {formatDateTime(d.cancelledAt)}
         </p>
       )}
