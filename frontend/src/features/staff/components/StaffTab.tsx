@@ -110,10 +110,20 @@ function StaffForm({ member, onClose }: { member: StaffMember | null; onClose: (
   return (
     <Modal title={member ? `Sửa: ${member.fullName}` : 'Thêm nhân viên'} onClose={onClose}>
       <div className="flex flex-col gap-3">
-        <TextField label="Họ tên" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+        <TextField
+          label="Họ tên"
+          maxLength={100}
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+        />
         <TextField
           label="Số điện thoại"
           inputMode="numeric"
+          maxLength={10}
+          hint={
+            phone !== '' && phone.length !== 10 ? 'Số điện thoại gồm đúng 10 chữ số.' : undefined
+          }
+          placeholder="10 chữ số, bắt đầu bằng 0"
           value={phone}
           onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
         />
@@ -143,7 +153,11 @@ function StaffForm({ member, onClose }: { member: StaffMember | null; onClose: (
             onChange={(e) => setSecret(e.target.value.replace(/\D/g, ''))}
           />
         )}
-        <Button loading={save.isPending} onClick={() => save.mutate(undefined)}>
+        <Button
+          disabled={!fullName.trim() || (phone !== '' && phone.length !== 10)}
+          loading={save.isPending}
+          onClick={() => save.mutate(undefined)}
+        >
           Lưu
         </Button>
       </div>

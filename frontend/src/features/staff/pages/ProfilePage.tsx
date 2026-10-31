@@ -68,6 +68,13 @@ function Form({ member }: { member: StaffMember }) {
             <TextField
               label="Số điện thoại"
               inputMode="numeric"
+              maxLength={10}
+              hint={
+                phone !== '' && phone.length !== 10
+                  ? 'Số điện thoại gồm đúng 10 chữ số.'
+                  : undefined
+              }
+              placeholder="10 chữ số, bắt đầu bằng 0"
               value={phone}
               onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
             />
@@ -81,7 +88,7 @@ function Form({ member }: { member: StaffMember }) {
           <div className="mt-6 flex justify-end">
             <Button
               className="w-full sm:w-auto sm:min-w-44"
-              disabled={!fullName.trim() || !changed}
+              disabled={!fullName.trim() || !changed || (phone !== '' && phone.length !== 10)}
               loading={save.isPending}
               onClick={() => save.mutate(undefined)}
             >

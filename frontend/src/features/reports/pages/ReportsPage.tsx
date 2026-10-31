@@ -89,6 +89,7 @@ export default function ReportsPage() {
             aria-label="Từ ngày"
             className={dateInput}
             value={custom[0]}
+            max={custom[1] || todayIso()}
             onChange={(e) => setCustom([e.target.value, custom[1]])}
           />
           <span className="text-ink-soft" aria-hidden>
@@ -99,6 +100,8 @@ export default function ReportsPage() {
             aria-label="Đến ngày"
             className={dateInput}
             value={custom[1]}
+            min={custom[0]}
+            max={todayIso()}
             onChange={(e) => setCustom([custom[0], e.target.value])}
           />
           <Button

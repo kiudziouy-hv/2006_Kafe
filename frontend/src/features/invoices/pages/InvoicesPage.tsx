@@ -46,12 +46,15 @@ export default function InvoicesPage() {
           label="Từ ngày"
           type="date"
           value={filter.from}
+          max={filter.to || todayIso()}
           onChange={(e) => setFilter({ ...filter, from: e.target.value })}
         />
         <TextField
           label="Đến ngày"
           type="date"
           value={filter.to}
+          min={filter.from}
+          max={todayIso()}
           onChange={(e) => setFilter({ ...filter, to: e.target.value })}
         />
         <SelectField
@@ -68,7 +71,11 @@ export default function InvoicesPage() {
           value={filter.q}
           onChange={(e) => setFilter({ ...filter, q: e.target.value })}
         />
-        <Button type="submit" className="self-end">
+        <Button
+          type="submit"
+          className="self-end"
+          disabled={filter.from !== '' && filter.to !== '' && filter.from > filter.to}
+        >
           Lọc
         </Button>
       </form>
