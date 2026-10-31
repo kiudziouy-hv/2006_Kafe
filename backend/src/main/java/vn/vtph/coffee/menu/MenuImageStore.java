@@ -55,6 +55,13 @@ public class MenuImageStore {
         } catch (IOException e) { throw new OpsException(500, "IMAGE_READ", "Không đọc được ảnh món."); }
     }
 
+    /** Xóa ảnh của món hoặc topping (nếu có). */
+    public void delete(Kind kind, int id) {
+        try {
+            for (String e : TYPES.values()) Files.deleteIfExists(dir(kind).resolve(id + "." + e));
+        } catch (IOException e) { throw new OpsException(500, "IMAGE_WRITE", "Không xóa được ảnh món."); }
+    }
+
     public void save(Kind kind, int id, String contentType, byte[] data) {
         Path dir = dir(kind);
         String ext = contentType == null ? null : TYPES.get(contentType.toLowerCase());
