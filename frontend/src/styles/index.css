@@ -373,3 +373,26 @@ main {
     color: #000;
   }
 }
+
+/* Khung đăng nhập / chấm công kiểu gọn: ảnh quán chỉ hiện khi đủ chỗ để form không phải cuộn */
+@layer components {
+  .vt-aside-compact {
+    display: none;
+  }
+  @media (min-width: 640px) and (min-height: 901px) {
+    .vt-aside-compact {
+      display: block;
+    }
+  }
+  @media (min-width: 1024px) {
+    .vt-aside-compact {
+      display: block;
+    }
+  }
+  /* Ảnh nằm trên form (máy tính bảng, màn cao): logo chồng lên mép ảnh */
+  @media (min-width: 640px) and (max-width: 1023px) and (min-height: 901px) {
+    .vt-header-overlap {
+      margin-top: -4.75rem;
+    }
+  }
+}

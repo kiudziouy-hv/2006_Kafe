@@ -51,7 +51,7 @@ export function PinPad({ value, length = 6, disabled, onChange, onSubmit }: Prop
             type="button"
             disabled={disabled}
             onClick={() => press(k)}
-            className="vt-hover-lift min-h-11 rounded-xl border border-brass/50 bg-gradient-to-b from-ivory to-coffee-100 font-semibold hover:border-brass disabled:opacity-50"
+            className="vt-hover-lift min-h-10 rounded-xl sm:min-h-11 border border-brass/50 bg-gradient-to-b from-ivory to-coffee-100 font-semibold hover:border-brass disabled:opacity-50"
           >
             {k}
           </button>

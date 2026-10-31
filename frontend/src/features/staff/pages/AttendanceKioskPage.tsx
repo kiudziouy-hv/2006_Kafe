@@ -1,34 +1,44 @@
 import { useQuery } from '@tanstack/react-query'
+import clsx from 'clsx'
+import { LogIn, LogOut } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Wordmark } from '@/components/shared/Wordmark'
-import { Logo } from '@/components/shared/Logo'
-import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
 import { SelectField } from '@/components/ui/Field'
 import { authApi } from '@/features/auth/api/authApi'
+import { AuthShell, RoleTiles, type StaffRole } from '@/features/auth/components/AuthShell'
 import { PinPad } from '@/features/auth/components/PinPad'
 import { toApiError } from '@/lib/http'
 import { staffApi } from '../api/staffApi'
 
+type Kind = 'in' | 'out'
+
+const TABS: { kind: Kind; label: string; icon: typeof LogIn }[] = [
+  { kind: 'in', label: 'Chấm công vào', icon: LogIn },
+  { kind: 'out', label: 'Chấm công ra', icon: LogOut },
+]
+
 /** UC-28: chấm công vào/ra bằng PIN trên máy tại quầy, không cần đăng nhập và không mở/đóng phiên ca thu ngân (ASM-17). */
 export default function AttendanceKioskPage() {
   const staff = useQuery({ queryKey: ['auth', 'staff'], queryFn: authApi.staff })
+  const [kind, setKind] = useState<Kind>('in')
+  const [role, setRole] = useState<StaffRole | null>(null)
   const [accountId, setAccountId] = useState('')
   const [shift, setShift] = useState('MORNING')
   const [pin, setPin] = useState('')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
 
-  const act = async (kind: 'in' | 'out') => {
-    if (!accountId) return setMessage({ ok: false, text: 'Vui lòng chọn tài khoản của bạn.' })
+  const act = async () => {
+    setMessage(null)
+    if (!role) return setMessage({ ok: false, text: 'Chọn vai trò trước khi nhập PIN.' })
+    if (!accountId) return setMessage({ ok: false, text: 'Vui lòng chọn tên của bạn.' })
     if (!/^\d{6}$/.test(pin)) return setMessage({ ok: false, text: 'Mã PIN gồm đúng 6 chữ số.' })
     setBusy(true)
     try {
       const r =
         kind === 'in'
-          ? await staffApi.checkIn(Number(accountId), pin, shift)
-          : await staffApi.checkOut(Number(accountId), pin)
+          ? await staffApi.checkIn(Number(accountId), pin, shift, role)
+          : await staffApi.checkOut(Number(accountId), pin, role)
       setMessage({
         ok: true,
         text: `${r.fullName}: đã chấm công ${kind === 'in' ? 'vào' : 'ra'} thành công.`,
@@ -46,20 +56,63 @@ export default function AttendanceKioskPage() {
   }
 
   return (
-    <main className="flex min-h-full flex-col items-center justify-center gap-4 px-4 py-8">
-      <Logo className="h-24 w-24" />
-      <Wordmark className="h-12" />
-      <Card className="w-full max-w-[420px]">
-        <h1 className="mb-1 text-center text-lg font-bold uppercase">Chấm công</h1>
-        <div className="flex flex-col gap-3">
+    <AuthShell compact>
+      <div
+        role="tablist"
+        aria-label="Chấm công vào hoặc ra"
+        className="relative grid w-full max-w-[400px] grid-cols-2 border-b-2 border-brass/40"
+      >
+        {TABS.map((t) => (
+          <button
+            key={t.kind}
+            role="tab"
+            type="button"
+            aria-selected={kind === t.kind}
+            onClick={() => {
+              setKind(t.kind)
+              setMessage(null)
+            }}
+            className={clsx(
+              '-mb-0.5 flex min-h-11 items-center justify-center gap-2 border-b-[3px] font-semibold transition',
+              kind === t.kind
+                ? 'border-brass-dark text-coffee-900'
+                : 'border-transparent text-ink-soft hover:border-brass/60 hover:text-coffee-900',
+            )}
+          >
+            <t.icon size={18} aria-hidden />
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="relative w-full max-w-[400px]">
+        <h1 className="sr-only">{kind === 'in' ? 'Chấm công vào ca' : 'Chấm công ra ca'}</h1>
+        <div className="flex flex-col gap-4">
+          <div>
+            <p className="mb-2 text-center text-xs font-bold uppercase">Chọn vai trò</p>
+            <RoleTiles
+              value={role}
+              onChange={(r) => {
+                setRole(r)
+                setAccountId('')
+                setMessage(null)
+              }}
+            />
+            {staff.isError && (
+              <p role="alert" className="mt-2 text-sm text-danger">
+                {toApiError(staff.error).message}
+              </p>
+            )}
+          </div>
           <SelectField
-            label="Nhân viên"
+            label="Tên nhân viên"
             value={accountId}
+            disabled={!role}
             onChange={(e) => setAccountId(e.target.value)}
           >
-            <option value="">— Chọn tài khoản —</option>
+            <option value="">{role ? '— Chọn tên của bạn —' : '— Chọn vai trò trước —'}</option>
             {(staff.data ?? [])
-              .filter((a) => !a.station)
+              .filter((a) => !a.station && a.role === role)
               .map((a) => (
                 <option key={a.id} value={a.id} disabled={a.locked}>
                   {a.fullName}
@@ -67,36 +120,34 @@ export default function AttendanceKioskPage() {
                 </option>
               ))}
           </SelectField>
-          <SelectField
-            label="Ca làm việc (khi chấm công vào)"
-            value={shift}
-            onChange={(e) => setShift(e.target.value)}
-          >
-            <option value="MORNING">Ca sáng (07:00 – 14:30)</option>
-            <option value="EVENING">Ca tối (14:30 – 22:00)</option>
-          </SelectField>
-          <PinPad value={pin} onChange={setPin} onSubmit={() => void act('in')} disabled={busy} />
-          <div className="grid grid-cols-2 gap-2">
-            <Button loading={busy} onClick={() => void act('in')}>
-              Chấm công vào
-            </Button>
-            <Button variant="secondary" loading={busy} onClick={() => void act('out')}>
-              Chấm công ra
-            </Button>
+          {kind === 'in' && (
+            <SelectField
+              label="Ca làm việc"
+              value={shift}
+              onChange={(e) => setShift(e.target.value)}
+            >
+              <option value="MORNING">Ca sáng (07:00 – 14:30)</option>
+              <option value="EVENING">Ca tối (14:30 – 22:00)</option>
+            </SelectField>
+          )}
+          <div>
+            <p className="mb-2 text-center text-xs font-bold uppercase">Nhập PIN</p>
+            <PinPad value={pin} onChange={setPin} onSubmit={() => void act()} disabled={busy} />
           </div>
           {message && (
             <p
-              role="status"
-              className={message.ok ? 'text-center text-success' : 'text-center text-danger'}
+              role={message.ok ? 'status' : 'alert'}
+              className={clsx('text-center text-sm', message.ok ? 'text-success' : 'text-danger')}
             >
               {message.text}
             </p>
           )}
         </div>
-      </Card>
-      <Link to="/login" className="text-sm text-coffee-700 underline">
+      </div>
+
+      <Link to="/login" className="relative text-sm font-semibold text-coffee-700 underline">
         Về trang đăng nhập
       </Link>
-    </main>
+    </AuthShell>
   )
 }

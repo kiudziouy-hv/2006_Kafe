@@ -94,12 +94,14 @@ export const staffApi = {
     checkIn: string
     checkOut: string | null
   }) => http.post<AttendanceRecord>('/attendance', b).then((r) => r.data),
-  checkIn: (accountId: number, pin: string, shift: string) =>
+  checkIn: (accountId: number, pin: string, shift: string, role?: string) =>
     http
-      .post<{ fullName: string }>('/auth/attendance/in', { accountId, pin, shift })
+      .post<{ fullName: string }>('/auth/attendance/in', { accountId, pin, shift, role })
       .then((r) => r.data),
-  checkOut: (accountId: number, pin: string) =>
-    http.post<{ fullName: string }>('/auth/attendance/out', { accountId, pin }).then((r) => r.data),
+  checkOut: (accountId: number, pin: string, role?: string) =>
+    http
+      .post<{ fullName: string }>('/auth/attendance/out', { accountId, pin, role })
+      .then((r) => r.data),
   day: () => http.get<DayState>('/shift/day').then((r) => r.data),
   closeDay: () => http.post<DayState>('/shift/day/close').then((r) => r.data),
 }
