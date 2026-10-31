@@ -18,8 +18,12 @@ import vn.vtph.coffee.ops.OpsException;
 @Transactional
 public class DayService {
     private final Db db;
+    private final OpenWork openWork;
 
-    public DayService(Db db) { this.db = db; }
+    public DayService(Db db, OpenWork openWork) {
+        this.db = db;
+        this.openWork = openWork;
+    }
 
     /** Ngày kinh doanh đang mở gần nhất, hoặc hôm nay nếu chưa có ngày nào mở. */
     private LocalDate currentDay() {
@@ -38,8 +42,8 @@ public class DayService {
                        (SELECT COALESCE(SUM(i.total), 0) FROM invoice i WHERE i.session_id = s.session_id AND i.status = 'PAID') AS revenue
                 FROM cashier_session s JOIN employee o ON o.employee_id = s.opened_by LEFT JOIN employee c ON c.employee_id = s.closed_by
                 WHERE s.business_date = ? ORDER BY s.session_id""", day);
-        List<Map<String, Object>> orders = openOrders();
-        List<Map<String, Object>> tables = db.rows("SELECT number, status FROM dining_table WHERE status <> 'EMPTY' ORDER BY number");
+        List<Map<String, Object>> orders = openWork.orders();
+        List<Map<String, Object>> tables = openWork.busyTables();
         boolean eveningClosed = sessions.stream().anyMatch(s -> "EVENING".equals(s.get("shift")) && "CLOSED".equals(s.get("status")));
         boolean anyOpen = sessions.stream().anyMatch(s -> "OPEN".equals(s.get("status")));
         Map<String, Object> m = new java.util.LinkedHashMap<>();
@@ -51,18 +55,6 @@ public class DayService {
         m.put("eveningClosed", eveningClosed);
         m.put("canClose", "OPEN".equals(status) && eveningClosed && !anyOpen && orders.isEmpty() && tables.isEmpty());
         return m;
-    }
-
-    /** Đơn mở (BR-037): chưa hủy hết, và (nháp, chưa thanh toán, hoặc còn dòng New/Making kể cả đơn mang đi đã thanh toán). */
-    private List<Map<String, Object>> openOrders() {
-        return db.rows("""
-                SELECT o.order_id AS id, CASE WHEN o.order_type = 'DINE_IN' THEN CONCAT('Bàn ', t.number)
-                       WHEN tk.queue_number IS NULL THEN 'Mang đi (nháp)' ELSE CONCAT('#', LPAD(tk.queue_number, 3, '0')) END AS label, o.status
-                FROM orders o LEFT JOIN dine_in_order d ON d.order_id = o.order_id LEFT JOIN dining_table t ON t.table_id = d.table_id
-                LEFT JOIN takeaway_order tk ON tk.order_id = o.order_id
-                WHERE o.status <> 'CANCELLED' AND (o.status = 'DRAFT' OR NOT EXISTS (SELECT 1 FROM invoice i WHERE i.order_id = o.order_id)
-                   OR EXISTS (SELECT 1 FROM order_line l JOIN order_batch b ON b.batch_id = l.batch_id WHERE b.order_id = o.order_id AND l.status IN ('NEW', 'MAKING')))
-                ORDER BY o.order_id""");
     }
 
     public Map<String, Object> close() {
