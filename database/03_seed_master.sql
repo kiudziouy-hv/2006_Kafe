@@ -218,22 +218,7 @@ INSERT INTO menu_item_topping (item_id, topping_id) VALUES
 (15,3),
 (16,1),
 (16,2),
-(16,3),
-(19,1),
-(19,2),
-(19,3),
-(20,1),
-(20,2),
-(20,3),
-(21,1),
-(21,2),
-(21,3),
-(22,1),
-(22,2),
-(22,3),
-(23,1),
-(23,2),
-(23,3);
+(16,3);
 INSERT INTO recipe (recipe_id, item_id, size, topping_id) VALUES
 (1,1,'M',NULL),
 (2,1,'L',NULL),

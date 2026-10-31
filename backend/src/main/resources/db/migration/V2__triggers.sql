@@ -1,7 +1,7 @@
 -- Sinh tự động từ database/02_triggers.sql bằng scripts/sync-migrations.py. Không sửa tay.
 -- =====================================================================
 -- VTPH Coffee - Trigger thực thi quy tắc nghiệp vụ mà CHECK/UNIQUE không diễn đạt được
--- (BR-004, BR-011, BR-017, BR-025, BR-028, BR-030, BR-031, BR-035, BR-037, NFR-010, ASM-01)
+-- (BR-004, BR-011, BR-017, BR-025, BR-028, BR-030, BR-031, BR-035, BR-037, NFR-010, ASM-01, UC-31)
 -- =====================================================================
 SET NAMES utf8mb4;
 
@@ -118,14 +118,23 @@ BEGIN
   END IF;
 END$$
 
--- Chốt ca: chặn khi còn đơn nháp (đã thống nhất với khách hàng, ISS-C4-10); lưu chênh lệch khớp
+-- Chốt ca: chặn khi còn đơn nháp (đã thống nhất với khách hàng, ISS-C4-10) hoặc còn đơn mang đi đã thanh toán trong ca mà chưa giao khách; lưu chênh lệch khớp
 CREATE TRIGGER trg_session_bu_close BEFORE UPDATE ON cashier_session FOR EACH ROW
 BEGIN
   DECLARE v_draft INT;
+  DECLARE v_undelivered INT;
   IF OLD.status = 'OPEN' AND NEW.status = 'CLOSED' THEN
     SELECT COUNT(*) INTO v_draft FROM orders WHERE status = 'DRAFT';
     IF v_draft > 0 THEN
       SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ISS-C4-10: còn đơn nháp chưa xác nhận hoặc chưa hủy, không được chốt ca';
+    END IF;
+    SELECT COUNT(*) INTO v_undelivered
+      FROM takeaway_order tk
+      JOIN orders o ON o.order_id = tk.order_id AND o.status IN ('PROCESSING','DONE')
+      JOIN invoice i ON i.order_id = o.order_id AND i.status = 'PAID' AND i.session_id = OLD.session_id
+     WHERE tk.handed_over_at IS NULL;
+    IF v_undelivered > 0 THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'UC-31: còn đơn mang đi chưa giao khách, không được chốt ca';
     END IF;
   END IF;
   IF OLD.status = 'CLOSED' THEN

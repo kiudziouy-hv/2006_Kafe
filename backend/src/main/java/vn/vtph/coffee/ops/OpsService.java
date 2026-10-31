@@ -13,9 +13,13 @@ import vn.vtph.coffee.ops.Model.Shift;
  */
 public interface OpsService {
     /** Thành viên và số điểm dùng khi thanh toán (BR-023); {@link #NONE} là khách không dùng điểm. */
-    record Payer(Integer customerId, int points) {
+    record Payer(Integer customerId, int points, Integer staffId) {
         public static final Payer NONE = new Payer(null, 0);
+        public Payer(Integer customerId, int points) { this(customerId, points, null); }
     }
+
+    /** Thu ngân đang chấm công (chưa có giờ ra) để chọn làm nhân viên phụ trách đơn/hóa đơn; tài khoản quầy dùng chung không nằm trong danh sách. */
+    default List<Map<String, Object>> onDuty() { return List.of(); }
 
     Map<String, Object> menu();
     List<Map<String, Object>> tables();
@@ -43,6 +47,10 @@ public interface OpsService {
     Order takeaway(List<Map<String, Object>> lines, String method, Integer received, Account by);
     default Order takeaway(List<Map<String, Object>> lines, String method, Integer received, Account by, Payer payer) { return takeaway(lines, method, received, by); }
     List<Order> drafts();
+    /** Đơn mang đi đã thanh toán trong ca đang mở mà chưa giao cho khách (Thu ngân giao); chốt ca bị chặn khi còn đơn như vậy. */
+    List<Order> handovers();
+    /** Thu ngân giao đồ cho khách; chỉ giao được khi mọi dòng món chưa hủy đã pha xong. */
+    Order handover(int orderId, Account by);
     /** Tính thử đơn mang đi (tạm tính, khuyến mãi áp dụng ngay lúc này, số điểm tối đa) để hiển thị trước khi xác nhận. */
     default Map<String, Object> quote(List<Map<String, Object>> lines) {
         throw new OpsException(501, "NOT_SUPPORTED", "Chức năng tính thử chỉ có ở chế độ MySQL.");

@@ -56,9 +56,9 @@ import vn.vtph.coffee.shared.pricing.PricingPolicy;
 @Profile("mysql")
 @Transactional
 public class JdbcOpsService implements OpsService {
-    private static final Map<String, String> GROUP_LABEL = Map.of("COFFEE", "Coffee", "TEA", "Tea", "SMOOTHIE", "Smoothie", "CAKE", "Cake");
+    private static final Map<String, String> GROUP_LABEL = Map.of("COFFEE", "Coffee", "TEA", "Tea", "SMOOTHIE", "Sinh tố", "CAKE", "Cake");
     private static final Set<String> SUGARS = Set.of("0", "30", "50", "70", "100");
-    private static final Set<String> ICES = Set.of("NONE", "LESS", "NORMAL");
+    private static final Set<String> ICES = Set.of("NONE", "LESS", "NORMAL", "SEPARATE");
 
     private final JdbcTemplate jdbc;
     private final ApplicationEventPublisher events;
@@ -107,6 +107,32 @@ public class JdbcOpsService implements OpsService {
         if (id == null) throw new OpsException(404, "NO_EMPLOYEE", "Không tìm thấy nhân viên.");
         return id;
     }
+
+    /**
+     * Nhân viên phụ trách đơn/hóa đơn: Thu ngân chọn người đang chấm công (tài khoản quầy dùng chung không biết ai bấm).
+     * Không chọn thì ghi theo tài khoản đang đăng nhập.
+     */
+    private int staffId(Account by, Payer p) {
+        if (p == null || p.staffId() == null) return employeeId(by);
+        Integer ok = one("""
+                SELECT e.employee_id FROM employee e JOIN account ac ON ac.employee_id = e.employee_id
+                WHERE e.employee_id = ? AND ac.role = 'CASHIER' AND ac.is_station = 0
+                  AND EXISTS (SELECT 1 FROM attendance a WHERE a.employee_id = e.employee_id AND a.check_out_time IS NULL)""", (rs, n) -> rs.getInt(1), p.staffId());
+        if (ok == null) throw new OpsException(422, "NOT_ON_DUTY", "Nhân viên này chưa chấm công hoặc không phải thu ngân.");
+        return ok;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> onDuty() {
+        return jdbc.query("""
+                SELECT DISTINCT e.employee_id, e.full_name FROM employee e JOIN account ac ON ac.employee_id = e.employee_id
+                JOIN attendance a ON a.employee_id = e.employee_id
+                WHERE ac.role = 'CASHIER' AND ac.is_station = 0 AND a.check_out_time IS NULL ORDER BY e.full_name""",
+                (rs, n) -> Map.<String, Object>of("id", rs.getInt(1), "name", rs.getString(2)));
+    }
+
+    private static final Map<String, String> SHIFT_NAME = Map.of("MORNING", "Ca sáng", "EVENING", "Ca tối");
 
     private void emit(String type, Map<String, Object> data) { events.publishEvent(new OpsEvent(type, data)); }
 
@@ -197,7 +223,7 @@ public class JdbcOpsService implements OpsService {
             x.imageUrl = tv == null ? null : "/api/ops/menu/toppings/" + t.id + "/image?v=" + tv;
             tops.add(x);
         }
-        return Map.of("items", out, "toppings", tops, "groups", List.of("Coffee", "Tea", "Smoothie", "Cake"));
+        return Map.of("items", out, "toppings", tops, "groups", List.of("Coffee", "Tea", "Sinh tố", "Cake"));
     }
 
     /** Tham chiếu hàm ánh xạ (tránh viết lambda dài ở nhiều nơi). */
@@ -252,6 +278,7 @@ public class JdbcOpsService implements OpsService {
         if (!SUGARS.contains(sugar)) throw new OpsException(422, "BAD_SUGAR", "Mức đường không hợp lệ.");
         String ice = temp.equals("HOT") ? null : String.valueOf(in.getOrDefault("ice", "NORMAL"));
         if (ice != null && !ICES.contains(ice)) throw new OpsException(422, "BAD_ICE", "Mức đá không hợp lệ.");
+        if ("SEPARATE".equals(ice) && !takeaway) throw new OpsException(422, "BAD_ICE", "Đá riêng chỉ dùng cho đơn mang đi.");
         List<ToppingRow> tops = new ArrayList<>();
         if (in.get("toppings") instanceof List<?> ids) {
             Set<Integer> allowed = new LinkedHashSet<>(jdbc.queryForList("SELECT topping_id FROM menu_item_topping WHERE item_id = ?", Integer.class, itemId));
@@ -395,6 +422,14 @@ public class JdbcOpsService implements OpsService {
         o.afterPromo = o.total - o.discount;
         o.rounded = PricingPolicy.roundToNearest500(o.afterPromo);
         o.maxPoints = PricingPolicy.maxRedeemablePoints(o.afterPromo);
+        if ("DRAFT".equals(r.status)) { // đơn nháp: hiển thị thành viên, điểm và số tiền đã báo khách lúc tạo đơn
+            jdbc.query("""
+                    SELECT tk.quoted_total, tk.points_to_use, c.full_name FROM takeaway_order tk
+                    LEFT JOIN customer c ON c.customer_id = tk.customer_id WHERE tk.order_id = ?""", rs -> {
+                int q = rs.getInt(1); if (!rs.wasNull()) o.rounded = q;
+                o.pointsUsed = rs.getInt(2); o.customerName = rs.getString(3);
+            }, r.id);
+        }
         if (r.invoiceId != null) { // đã thanh toán: lấy số liệu chốt trên hóa đơn
             jdbc.query("""
                     SELECT i.total, i.promotion_discount, i.points_used, i.points_earned, c.full_name FROM invoice i
@@ -614,7 +649,7 @@ public class JdbcOpsService implements OpsService {
         return Map.of("ok", true);
     }
 
-    private record OrderInfo(int id, String label) {}
+    private record OrderInfo(int id, String label, boolean takeaway) {}
 
     private OrderInfo orderOfBatch(int batchId) {
         return one("""
@@ -623,7 +658,7 @@ public class JdbcOpsService implements OpsService {
                 LEFT JOIN takeaway_order tk ON tk.order_id = o.order_id WHERE b.batch_id = ?""", (rs, n) -> {
             int tn = rs.getInt(3); Integer tableNo = rs.wasNull() ? null : tn;
             int q = rs.getInt(4); Integer queue = rs.wasNull() ? null : q;
-            return new OrderInfo(rs.getInt(1), label(rs.getString(2), tableNo, queue));
+            return new OrderInfo(rs.getInt(1), label(rs.getString(2), tableNo, queue), "TAKEAWAY".equals(rs.getString(2)));
         }, batchId);
     }
 
@@ -661,7 +696,7 @@ public class JdbcOpsService implements OpsService {
                 UPDATE orders o JOIN takeaway_order tk ON tk.order_id = o.order_id SET o.status = 'DONE'
                 WHERE o.order_id = ? AND o.status = 'PROCESSING' AND NOT EXISTS (
                   SELECT 1 FROM order_line l JOIN order_batch b ON b.batch_id = l.batch_id WHERE b.order_id = o.order_id AND l.status IN ('NEW','MAKING'))""", oi.id);
-        emit("LINE_DONE", Map.of("orderId", oi.id, "lineId", lineId, "label", oi.label, "name", l.get("name"), "qty", l.get("qty")));
+        emit("LINE_DONE", Map.of("orderId", oi.id, "lineId", lineId, "label", oi.label, "name", l.get("name"), "qty", l.get("qty"), "takeaway", oi.takeaway()));
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("ok", true); out.put("label", oi.label); out.put("name", l.get("name"));
         return out;
@@ -671,6 +706,7 @@ public class JdbcOpsService implements OpsService {
     private static Shift shift(ResultSet rs, int n) throws SQLException {
         Shift s = new Shift();
         s.id = rs.getInt("session_id"); s.type = rs.getString("shift"); s.openingCash = rs.getInt("opening_cash");
+        s.businessDate = rs.getDate("business_date").toLocalDate().toString();
         int a = rs.getInt("actual_cash"); s.actualCash = rs.wasNull() ? null : a;
         int e = rs.getInt("expected_cash"); s.expectedCash = rs.wasNull() ? null : e;
         int d = rs.getInt("difference"); s.diff = rs.wasNull() ? null : d;
@@ -693,6 +729,18 @@ public class JdbcOpsService implements OpsService {
                 FROM invoice WHERE session_id = ? AND payment_method = 'CASH' AND status = 'PAID'""", Integer.class, sessionId, sessionId);
     }
 
+    /** Doanh thu chuyển khoản/QR của ca (đã trừ hoàn một phần) và số hóa đơn; chỉ để đối chiếu, không dùng tính tiền mặt dự kiến. */
+    private void fillTransfer(Shift s) {
+        if (s == null) return;
+        s.transferSales = jdbc.queryForObject("""
+                SELECT COALESCE(SUM(total), 0) - COALESCE((SELECT SUM(r.cash_amount) FROM refund_record r JOIN invoice x ON x.invoice_id = r.invoice_id
+                  WHERE x.session_id = ? AND x.payment_method = 'TRANSFER_QR' AND x.status = 'PAID' AND r.type = 'PARTIAL'), 0)
+                FROM invoice WHERE session_id = ? AND payment_method = 'TRANSFER_QR' AND status = 'PAID'""", Integer.class, s.id, s.id);
+        s.transferCount = jdbc.queryForObject("SELECT COUNT(*) FROM invoice WHERE session_id = ? AND payment_method = 'TRANSFER_QR' AND status = 'PAID'", Integer.class, s.id);
+        s.cashSales = cashSales(s.id);
+        s.invoiceCount = jdbc.queryForObject("SELECT COUNT(*) FROM invoice WHERE session_id = ? AND status = 'PAID'", Integer.class, s.id);
+    }
+
     private int draftCount() {
         return jdbc.queryForObject("SELECT COUNT(*) FROM orders WHERE status = 'DRAFT'", Integer.class);
     }
@@ -704,10 +752,18 @@ public class JdbcOpsService implements OpsService {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("open", s != null);
         m.put("shift", s);
-        m.put("lastClosed", one(SHIFT_SQL + " WHERE s.status = 'CLOSED' ORDER BY s.closed_at DESC, s.session_id DESC LIMIT 1", JdbcOpsService::shift));
+        Shift last = one(SHIFT_SQL + " WHERE s.status = 'CLOSED' ORDER BY s.closed_at DESC, s.session_id DESC LIMIT 1", JdbcOpsService::shift);
+        fillTransfer(s);
+        fillTransfer(last);
+        m.put("lastClosed", last);
+        // 7 ngày gần nhất (kể cả hôm nay), mỗi ngày có ca sáng/ca tối kèm doanh thu và tổng ngày
+        List<Shift> week = jdbc.query(SHIFT_SQL + " WHERE s.business_date >= ? ORDER BY s.business_date DESC, s.opened_at", JdbcOpsService::shift, today().minusDays(6));
+        week.forEach(this::fillTransfer);
+        m.put("days", ShiftDays.group(week, today().toString()));
         if (s != null) {
             int cash = cashSales(s.id);
             m.put("cashSales", cash); m.put("expected", s.openingCash + cash); m.put("drafts", draftCount());
+            m.put("undelivered", undeliveredCount(s.id));
         }
         return m;
     }
@@ -727,6 +783,7 @@ public class JdbcOpsService implements OpsService {
             throw new OpsException(409, "SHIFT_EXISTS", "Ca này đã mở trong ngày.");
         int id = insertId("INSERT INTO cashier_session (business_date, shift, opening_cash, opened_at, opened_by) VALUES (?, ?, ?, ?, ?)",
                 day, type, cash, nowUtc(), employeeId(by));
+        emit("SHIFT_OPENED", Map.of("shiftId", id, "label", SHIFT_NAME.get(type)));
         return one(SHIFT_SQL + " WHERE s.session_id = ?", JdbcOpsService::shift, id);
     }
 
@@ -740,6 +797,8 @@ public class JdbcOpsService implements OpsService {
         if (s == null) throw new OpsException(409, "NO_SHIFT", "Chưa mở ca thu ngân.");
         int d = draftCount();
         if (d > 0) throw new OpsException(409, "DRAFTS_PENDING", "Còn " + d + " đơn nháp, hãy xác nhận hoặc hủy trước khi chốt ca.");
+        int u = undeliveredCount(s.id);
+        if (u > 0) throw new OpsException(409, "UNDELIVERED", "Còn " + u + " đơn mang đi chưa giao khách, hãy giao xong trước khi chốt ca.");
         if ("EVENING".equals(s.type)) {
             List<Map<String, Object>> orders = openWork.orders(), tables = openWork.busyTables();
             if (!orders.isEmpty() || !tables.isEmpty())
@@ -751,6 +810,7 @@ public class JdbcOpsService implements OpsService {
         jdbc.update("""
                 UPDATE cashier_session SET status = 'CLOSED', closed_at = ?, closed_by = ?, expected_cash = ?, actual_cash = ?, difference = ?
                 WHERE session_id = ? AND status = 'OPEN'""", nowUtc(), employeeId(by), expected, actual, actual - expected, s.id);
+        emit("SHIFT_CLOSED", Map.of("shiftId", s.id, "label", SHIFT_NAME.get(s.type)));
         return one(SHIFT_SQL + " WHERE s.session_id = ?", JdbcOpsService::shift, s.id);
     }
 
@@ -815,7 +875,7 @@ public class JdbcOpsService implements OpsService {
         int invoice = insertId("""
                 INSERT INTO invoice (order_id, session_id, customer_id, payment_method, subtotal, promotion_discount, points_used, total, points_earned, issued_at, issued_by)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", orderId, sessionId, m == null ? null : m.id(), "TRANSFER".equals(method) ? "TRANSFER_QR" : "CASH",
-                a.afterPromo(), a.discount(), p.points(), rounded, earned, nowUtc(), employeeId(by));
+                a.afterPromo(), a.discount(), p.points(), rounded, earned, nowUtc(), staffId(by, p));
         if (m != null) {
             if (p.points() > 0) jdbc.update("INSERT INTO point_transaction (customer_id, invoice_id, type, points, created_at) VALUES (?, ?, 'REDEEM', ?, ?)", m.id(), invoice, p.points(), nowUtc());
             if (earned > 0) jdbc.update("INSERT INTO point_transaction (customer_id, invoice_id, type, points, created_at) VALUES (?, ?, 'EARN', ?, ?)", m.id(), invoice, earned, nowUtc());
@@ -870,7 +930,7 @@ public class JdbcOpsService implements OpsService {
             if (mi != null && !mi.takeaway()) throw new OpsException(422, "TAKEAWAY_RULE", "Đơn mang đi chỉ bán đồ uống lạnh và bánh.");
             lines.add(buildLine(m, true));
         }
-        int emp = employeeId(by);
+        int emp = staffId(by, payer);
         if ("TRANSFER".equals(method)) {
             int id = insertId("INSERT INTO orders (order_type, status, created_at, created_by) VALUES ('TAKEAWAY', 'DRAFT', ?, ?)", nowUtc(), emp);
             Payer dp = payer == null ? Payer.NONE : payer;
@@ -934,6 +994,40 @@ public class JdbcOpsService implements OpsService {
         return jdbc.queryForList("SELECT order_id FROM orders WHERE status = 'DRAFT' ORDER BY order_id", Integer.class).stream().map(this::loadOrder).toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<Order> handovers() {
+        Shift s = openSession();
+        if (s == null) return List.of();
+        return jdbc.queryForList(UNDELIVERED_SQL + " ORDER BY o.order_id", Integer.class, s.id).stream().map(this::loadOrder).toList();
+    }
+
+    /**
+     * Đơn mang đi đã thanh toán trong ca đang mở mà chưa giao khách. Chốt ca bị chặn khi còn đơn như vậy nên đơn chưa giao
+     * luôn thuộc ca hiện tại; tính theo ca (không theo ngày) để dữ liệu cũ trước khi có cột handed_over_at không chặn nhầm.
+     */
+    private static final String UNDELIVERED_SQL = """
+            SELECT o.order_id FROM orders o JOIN takeaway_order tk ON tk.order_id = o.order_id
+            JOIN invoice i ON i.order_id = o.order_id AND i.status = 'PAID'
+            WHERE tk.handed_over_at IS NULL AND o.status IN ('PROCESSING', 'DONE') AND i.session_id = ?""";
+
+    private int undeliveredCount(int sessionId) {
+        return jdbc.queryForList(UNDELIVERED_SQL, Integer.class, sessionId).size();
+    }
+
+    @Override
+    public Order handover(int orderId, Account by) {
+        OrderRow r = orderRow(orderId, true);
+        if (!"TAKEAWAY".equals(r.type()) || !r.paid()) throw new OpsException(409, "NOT_HANDOVER", "Chỉ giao được đơn mang đi đã thanh toán.");
+        Integer pendingLines = jdbc.queryForObject("""
+                SELECT COUNT(*) FROM order_line l JOIN order_batch b ON b.batch_id = l.batch_id
+                WHERE b.order_id = ? AND l.status IN ('NEW','MAKING')""", Integer.class, orderId);
+        if (pendingLines != null && pendingLines > 0) throw new OpsException(409, "NOT_READY", "Pha chế chưa làm xong đơn này.");
+        int n = jdbc.update("UPDATE takeaway_order SET handed_over_at = ? WHERE order_id = ? AND handed_over_at IS NULL", nowUtc(), orderId);
+        if (n == 0) throw new OpsException(409, "ALREADY_HANDED", "Đơn đã giao cho khách.");
+        return loadOrder(orderId);
+    }
+
     /** Thu ngân tự kiểm tra đã nhận đủ tiền rồi xác nhận: kiểm tra lại món/nguyên liệu trước khi phát hành hóa đơn. */
     @Override
     public Order confirmDraft(int id, Account by) { return confirmDraft(id, by, Payer.NONE); }
@@ -968,7 +1062,7 @@ public class JdbcOpsService implements OpsService {
         // ASM-03: số tiền hiện tại phải bằng số tiền đã báo khách; lệch thì dừng, thu ngân báo lại khách (requote) hoặc hủy đơn nháp.
         Map<String, Object> q = jdbc.queryForMap("SELECT quoted_total, customer_id, points_to_use FROM takeaway_order WHERE order_id = ?", id);
         Payer eff = payer != null && (payer.customerId() != null || payer.points() > 0) ? payer
-                : new Payer(q.get("customer_id") == null ? null : ((Number) q.get("customer_id")).intValue(), ((Number) q.get("points_to_use")).intValue());
+                : new Payer(q.get("customer_id") == null ? null : ((Number) q.get("customer_id")).intValue(), ((Number) q.get("points_to_use")).intValue(), payer == null ? null : payer.staffId());
         if (q.get("quoted_total") != null) {
             int quoted = ((Number) q.get("quoted_total")).intValue();
             int now = PricingPolicy.payableAfterPoints(amounts(id).afterPromo(), eff.points());
