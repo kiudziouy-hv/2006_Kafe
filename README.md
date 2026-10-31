@@ -21,13 +21,13 @@ Theo bảng đối chiếu trong [docs/requirements/README.md](docs/requirements
 
 | Nhóm | Nội dung |
 |---|---|
-| Tài khoản | Đăng nhập (Quản lý bằng tên + mật khẩu, nhân viên bằng PIN 6 số), tự đăng xuất, hồ sơ cá nhân |
+| Tài khoản | Đăng nhập (Quản lý bằng tên + mật khẩu, nhân viên bằng PIN 6 số và phải chấm công trước), tự đăng xuất, hồ sơ cá nhân |
 | Nhân sự | Quản lý nhân viên và tài khoản, chấm công vào/ra, chỉnh sửa chấm công, mở/chốt ca, chốt ngày |
 | Thực đơn | Món theo kích cỡ (M/L), topping, ảnh món và topping, khuyến mãi theo nhóm món và khung giờ |
-| Bán hàng | Sơ đồ 14 bàn, gọi món, gọi thêm, chuyển bàn, hủy món, đơn mang đi (tiền mặt hoặc chuyển khoản/QR) |
+| Bán hàng | Sơ đồ 14 bàn, gọi món, gọi thêm, chuyển bàn, hủy món, đơn mang đi (tiền mặt hoặc chuyển khoản/QR, mức "Đá riêng", Thu ngân giao khách khi pha chế xong; chốt ca bị chặn khi còn đơn chưa giao) |
 | Pha chế | Bảng món chờ làm cập nhật tức thời, trừ nguyên liệu theo công thức |
 | Kho | Nguyên liệu, công thức, nhập kho, kiểm kê, hao hụt, cảnh báo sắp hết/hết hạn |
-| Thanh toán | Khuyến mãi → dùng điểm → làm tròn 500đ → tích điểm; in hóa đơn khổ 80 mm |
+| Thanh toán | Khuyến mãi → dùng điểm → làm tròn 500đ → tích điểm; Thu ngân chọn nhân viên phụ trách (người đang chấm công) ghi vào hóa đơn; ca hiện thêm doanh thu chuyển khoản để đối chiếu ngân hàng; in hóa đơn khổ 80 mm |
 | Hóa đơn | In lại, hủy, hoàn tiền một phần hoặc toàn bộ (Chủ quán xác nhận) |
 | Khách hàng | Đăng ký thành viên, tra cứu bằng số điện thoại, điểm tích lũy |
 | Báo cáo | Doanh thu, món bán chạy, danh sách hóa đơn |
@@ -39,9 +39,17 @@ Theo bảng đối chiếu trong [docs/requirements/README.md](docs/requirements
 3. Tổng tiền làm tròn đến **500đ**.
 4. Tích điểm cho lần mua này: **cứ 10.000đ được 1 điểm**, tính trên số tiền khách phải trả.
 
+**Quy tắc vận hành nổi bật** (đã làm, backend và trigger CSDL thực thi, giao diện chỉ hỗ trợ):
+- **Chấm công mới được đăng nhập.** Nhân viên (thu ngân, phục vụ, pha chế) chỉ đăng nhập được khi đã chấm công vào ca: tài khoản cá nhân thì chính người đó đang chấm công; tài khoản quầy dùng chung thì phải có ít nhất một nhân viên cùng vai trò đang chấm công. Chủ quán/Quản lý không bị ràng buộc. Trang `/attendance` luôn mở, và chỉ chặn lúc đăng nhập (phiên đang mở không bị ngắt khi chấm công ra). Chấm công chọn **vai trò rồi tên**, backend từ chối nếu tên không thuộc vai trò đã chọn.
+- **Nhân viên phụ trách.** Khi tạo đơn mang đi, xác nhận đơn nháp hoặc thanh toán đơn tại bàn, Thu ngân chọn người trong số thu ngân đang chấm công; tên được lưu vào hóa đơn (`issued_by`) và đơn mang đi (`created_by`), hiện trên hóa đơn in. Chưa ai chấm công thì không bắt chọn và ghi theo tài khoản quầy.
+- **Ca thu ngân.** Mỗi lúc một ca mở; mỗi ca (sáng, tối) chỉ mở một lần trong ngày; ngày đã chốt thì không mở thêm. Tab *Ca thu ngân* hiện hai ô ca sáng và ca tối của hôm nay (kèm tổng ngày) và 7 ngày gần nhất. Mở hoặc chốt ca được báo thời gian thực cho mọi cửa sổ thu ngân và Chủ quán. Hệ thống **không** ràng buộc theo giờ thật nên demo giờ nào cũng mở được ca.
+- **Đơn mang đi.** Có mức đá **Đá riêng** (chỉ đơn mang đi). Pha chế xong thì chỉ **Thu ngân** được báo và là người **giao khách** (nút *Đã giao khách* ở thẻ *Chờ giao khách*). **Chốt ca bị chặn** khi còn đơn nháp hoặc còn đơn mang đi chưa giao khách (cả backend lẫn trigger CSDL). Ca hiện thêm doanh thu chuyển khoản/QR để đối chiếu với app ngân hàng; số này không tính vào tiền mặt dự kiến.
+- **Thực đơn.** Nhóm *Sinh tố* không có topping; cà phê giữ Kem cheese, Shot espresso, Pudding (Cappuccino và Espresso chỉ Shot espresso).
+- **Ràng buộc nhập liệu.** Số điện thoại đúng 10 số bắt đầu bằng 0; tiền không âm, không thập phân, có trần (tiền đầu ca 100 triệu, tiền kiểm đếm và khách đưa 1 tỷ, giá bán và phụ phí 10 triệu); tên tối đa 100 ký tự, email 120, lý do 255; hạn sử dụng nguyên liệu không ở quá khứ và không quá 5 năm; bộ lọc ngày không chọn tương lai, không đảo ngược và tối đa 366 ngày.
+
 **Chưa làm** (mức mở rộng, Level 2):
 - Xuất Excel, dashboard, báo cáo theo khung giờ.
-- **Nhật ký thao tác (Audit Log): không làm.** Hệ thống chỉ có bảng chấm công (mục *Nhân sự & ca*) để biết ai trực ca nào, và các chỉnh sửa chấm công được ghi lại cùng lịch sử. Thao tác ở máy thu ngân, màn hình pha chế và điện thoại phục vụ dùng tài khoản dùng chung của vai trò nên không truy được từng người; nếu cần biết ai làm, đối chiếu giờ thao tác với bảng chấm công của ca đó. Việc truy vết sâu hơn do quán tự xử lý ngoài hệ thống: hỏi nhân viên trực ca và trích camera.
+- **Nhật ký thao tác (Audit Log): không làm.** Hệ thống chỉ có bảng chấm công (mục *Nhân sự & ca*) để biết ai trực ca nào, và các chỉnh sửa chấm công được ghi lại cùng lịch sử. Thao tác ở máy thu ngân, màn hình pha chế và điện thoại phục vụ dùng tài khoản dùng chung của vai trò nên không truy được từng người, trừ phần *nhân viên phụ trách* của hóa đơn và đơn mang đi nêu trên. Các thao tác khác (gửi món, pha chế...) muốn biết ai làm thì đối chiếu giờ thao tác với bảng chấm công của ca đó; việc truy vết sâu hơn do quán tự xử lý ngoài hệ thống: hỏi nhân viên trực ca và trích camera.
 - **Bắt đổi PIN lần đầu: không làm.** Nhân viên chỉ nhập PIN của vai trò và tài khoản vẫn dùng chung, nên PIN riêng không xác định được người thao tác; PIN chỉ là lớp bảo vệ đăng nhập.
 - **Điều chỉnh so với yêu cầu gốc:** yêu cầu gốc ghi mỗi nhân viên một tài khoản riêng, kể cả khi dùng máy chung, và mỗi thao tác ghi theo tài khoản đang đăng nhập. Nhóm chọn tài khoản dùng chung theo vai trò cho các thiết bị quầy vì giờ cao điểm 1 đến 2 người luân phiên trên cùng một màn hình, đổi tài khoản cho từng thao tác thì không kịp, và phiên tự hết sau 5 phút. Màn hình chỉ thể hiện vai trò (không hiện tên người). Người trực ca được biết qua chấm công bằng tài khoản cá nhân.
 - **Cảnh báo đơn chờ pha chế quá 10 phút:** chưa có.
@@ -50,13 +58,17 @@ Hoàn tiền không đi qua ngân hàng: Chủ quán trả tiền ngoài hệ th
 
 ---
 
-## 2. Công nghệ
+## 2. Công nghệ và ngôn ngữ
 
-| Phần | Công nghệ | Thư mục |
-|---|---|---|
-| Backend | Java 21, Spring Boot 3.3, Spring Security (phiên cookie), WebSocket/STOMP, Flyway, springdoc (Swagger) | `backend/` |
-| Giao diện | React 19, TypeScript, Vite, Tailwind 4, React Router, TanStack Query | `frontend/` |
-| Cơ sở dữ liệu | MySQL 8.4 (28 bảng, 15 trigger, 5 view, thủ tục) | `database/` |
+| Phần | Ngôn ngữ | Công nghệ | Thư mục |
+|---|---|---|---|
+| Backend | **Java 21** | Spring Boot 3.3.5, Spring Security (phiên cookie), WebSocket/STOMP, JDBC, Flyway, springdoc (Swagger), Maven | `backend/` |
+| Giao diện | **TypeScript** (React 19) | Vite 8, Tailwind CSS 4, React Router, TanStack Query, React Hook Form + Zod, Vitest | `frontend/` |
+| Cơ sở dữ liệu | **SQL** (MySQL 8.4) | 28 bảng, 15 trigger, 5 view, thủ tục; dữ liệu mẫu; Flyway sinh từ `database/*.sql` | `database/` |
+| Công cụ | **Python 3**, **shell** (Bash), batch (Windows) | `run_tests.py` (36 kịch bản CSDL), `sync-migrations.py`, `dev-mysql.sh`, sao lưu và khôi phục | `scripts/`, `database/` |
+| Cấu hình, tài liệu | JSON, properties, YAML, Markdown, Makefile | CI GitHub Actions, `docs/` | `.github/`, `docs/` |
+
+Backend và giao diện trao đổi bằng REST và WebSocket, dữ liệu JSON. **Ngôn ngữ hiển thị của hệ thống là tiếng Việt** (giao diện, thông báo lỗi của backend, tài liệu); tên biến, hàm và bảng dùng tiếng Anh, chú thích trong code viết tiếng Việt. Mọi quy tắc nghiệp vụ quan trọng nằm ở backend và trigger CSDL; giao diện chỉ hiển thị và kiểm tra nhập liệu cho dễ dùng.
 
 ---
 
@@ -126,16 +138,12 @@ Lần chạy đầu cần tải image và thư viện nên sẽ lâu hơn. Các 
 Dự án đã có sẵn ảnh cho 30 món và 5 topping. Chủ quán thêm ảnh ở **Thực đơn** → chế độ xem **Ảnh** → **Thêm ảnh** / **Đổi ảnh** (JPG, PNG hoặc WebP, dưới 5 MB, nên dùng ảnh ngang tỉ lệ 4:3). Ảnh là các tệp trong `backend/uploads/` (`menu/<mã món>.jpg`, `topping/<mã topping>.jpg`), **được commit cùng mã nguồn** nên ai tải dự án về và chạy `scripts/dev-mysql.sh` đều thấy ảnh. Đặt lại CSDL không xóa ảnh. Thêm hoặc đổi ảnh xong thì `git add backend/uploads` rồi commit.
 
 ### Dữ liệu có được giữ lại không?
-Có. Dữ liệu nằm trong MySQL và được lưu ở Docker volume `vtph_mysql_data`, nên tắt rồi chạy lại vẫn còn những gì bạn đã thêm, sửa, xóa. Vì vậy mỗi lần chạy lại có thể khác nhau nếu trước đó bạn đã thao tác (ví dụ điểm của khách đã bị dùng, ca đã chốt).
+**Mặc định là không.** Mỗi lần chạy `scripts/dev-mysql.sh`, cơ sở dữ liệu được dựng lại từ đầu: chỉ có dữ liệu nền (thực đơn, kho, nhân viên, bàn, khách mẫu), còn đơn, hóa đơn, ca thu ngân và chấm công **rỗng**, tồn kho về mức ban đầu. Nhờ đó lần nào cũng demo được từ trống. Chi tiết và các tùy chọn ở mục 4, phần *Chạy lại để test và demo*.
 
-**Đặt lại về dữ liệu mẫu ban đầu** (nên làm trước mỗi buổi demo; dừng hệ thống bằng `Ctrl+C` trước):
+- Muốn **giữ dữ liệu** lần chạy trước: `KEEP_DATA=1 scripts/dev-mysql.sh`.
+- Muốn **xóa hẳn** container và volume (ví dụ sau khi đổi lược đồ lớn): `docker rm -f vtph-mysql && docker volume rm vtph_mysql_data`, rồi `scripts/dev-mysql.sh`.
 
-```bash
-docker rm -f vtph-mysql && docker volume rm vtph_mysql_data
-scripts/dev-mysql.sh
-```
-
-**Lưu ý khi demo:** chốt ngày xong thì hôm đó không mở thêm ca được (cần đặt lại dữ liệu); đừng bấm *Chốt ngày* trước buổi trình bày. Nếu backend báo lỗi `checksum mismatch` của Flyway khi khởi động, nghĩa là CSDL cũ không khớp lược đồ mới, hãy đặt lại dữ liệu như trên.
+**Lưu ý khi demo:** chốt ngày xong thì hôm đó không mở thêm ca được (chạy lại script để dựng lại dữ liệu); đừng bấm *Chốt ngày* trước buổi trình bày. Nếu backend báo lỗi `checksum mismatch` của Flyway khi khởi động, nghĩa là CSDL cũ không khớp lược đồ mới, hãy xóa hẳn container và volume như trên. Nhớ **chấm công trước** khi đăng nhập các vai trò (mục 4).
 
 ### Các lệnh thường dùng
 
@@ -145,11 +153,12 @@ scripts/dev-mysql.sh
 | **Chạy hệ thống** (MySQL, backend, giao diện) | `scripts/dev-mysql.sh` rồi mở http://localhost:5173 |
 | Dừng backend và giao diện | `Ctrl+C` trong terminal đang chạy |
 | Dừng MySQL | `docker stop vtph-mysql` |
-| Đặt lại dữ liệu mẫu | `docker rm -f vtph-mysql && docker volume rm vtph_mysql_data`, rồi `scripts/dev-mysql.sh` |
-| Chạy test backend | `mvn -f backend/pom.xml test` |
+| Đặt lại dữ liệu mẫu | chạy lại `scripts/dev-mysql.sh` (tự dựng lại); xóa hẳn: `docker rm -f vtph-mysql && docker volume rm vtph_mysql_data` |
+| Chạy test backend | `mvn -f backend/pom.xml test` (test MySQL cần Docker đang chạy) |
 | Chạy test giao diện | `npm --prefix frontend run test` |
 | Kiểm tra mã giao diện | `npm --prefix frontend run lint && npm --prefix frontend run typecheck` |
 | Sau khi sửa `database/*.sql` | `python3 scripts/sync-migrations.py` (kiểm tra không ghi: thêm `--check`) |
+| Chạy 36 kịch bản quy tắc CSDL | `MYSQL_PWD='<mật khẩu>' python3 database/run_tests.py` (xem [database/README.md](database/README.md)) |
 | Lưu ảnh món mới vào git | `git add backend/uploads && git commit` |
 
 ---
@@ -166,19 +175,21 @@ scripts/dev-mysql.sh
 | Pha chế | Dùng chung cho màn hình pha chế (tài khoản "Màn hình Pha chế") | Tab **Nhân viên** → Pha chế | PIN `345678`, không chọn tên |
 
 - **Đăng nhập nhân viên không hiện danh sách tên.** Cả ba vai trò đăng nhập bằng cách chọn vai trò rồi nhập PIN của vai trò đó (tài khoản dùng chung). Màn hình chỉ thể hiện vai trò, không thể hiện tên người. **Ba PIN phải khác nhau** (`123456`, `234567`, `345678` ở dữ liệu mẫu); nếu hai vai trò dùng chung một PIN thì người này có thể vào tài khoản của vai trò kia và nâng quyền. Mọi thao tác ghi vào tài khoản dùng chung của vai trò, không biết đích danh ai bấm; muốn biết ai trực ca đó thì xem bảng chấm công. Tài khoản dùng chung không dùng để chấm công.
-- **Chấm công** luôn dùng tài khoản cá nhân: ở trang `/attendance`, mỗi người chọn tên và nhập PIN riêng. Các tài khoản quầy dùng chung không xuất hiện ở đó. Tài khoản cá nhân (phục vụ: Võ Tấn Phát, Võ Thị Em, Đỗ Quang Huy; thu ngân: Hồ Quốc Tiến, Lê Hoàng Cường; pha chế: Trần Thanh Huy, Đặng Thị Giang) ở dữ liệu mẫu dùng PIN trùng với PIN của vai trò (`123456`, `234567`, `345678`); khi dùng thật Chủ quán đặt PIN riêng cho từng người.
+- **Chấm công** luôn dùng tài khoản cá nhân: ở trang `/attendance`, mỗi người chọn **vai trò** (Thu ngân, Phục vụ, Pha chế), rồi chọn **tên** trong danh sách của vai trò đó và nhập PIN. Backend từ chối nếu tên không thuộc vai trò đã chọn (`WRONG_ROLE`). PIN ở dữ liệu mẫu **theo vai trò**, đồng bộ với đăng nhập: thu ngân `234567`, phục vụ `123456`, pha chế `345678`. Tài khoản cá nhân: phục vụ Võ Tấn Phát, Võ Thị Em, Đỗ Quang Huy; thu ngân Hồ Quốc Tiến, Lê Hoàng Cường; pha chế Trần Thanh Huy, Đặng Thị Giang. Các tài khoản quầy dùng chung không xuất hiện ở trang chấm công. Khi dùng thật, Chủ quán đặt PIN riêng cho từng người ở **Nhân sự & ca → Nhân viên**.
+- **Phải chấm công trước khi đăng nhập** (thu ngân, phục vụ, pha chế): tài khoản cá nhân thì chính người đó đang chấm công; quầy dùng chung thì phải có ít nhất một nhân viên cùng vai trò đang chấm công. Với dữ liệu mẫu mới dựng lại thì chưa ai chấm công, nên việc đầu tiên là vào `/attendance`. Chủ quán không bị ràng buộc.
+- **Ràng buộc nhập liệu:** số điện thoại đúng 10 số bắt đầu bằng 0; tiền không âm, không thập phân, có trần (tiền đầu ca 100 triệu, tiền kiểm đếm/khách đưa 1 tỷ, giá bán và phụ phí 10 triệu); tên tối đa 100 ký tự; hạn sử dụng nguyên liệu không ở quá khứ và không quá 5 năm; bộ lọc ngày không chọn tương lai, không đảo ngược, tối đa 366 ngày.
 - Nhập sai PIN 5 lần thì tài khoản bị khóa 15 phút (với quầy dùng chung là khóa cả quầy).
 - Thu ngân và Pha chế tự đăng xuất sau 5 phút không thao tác.
-- **Chấm công vào/ra ca:** liên kết "Chấm công vào / ra ca" ở màn đăng nhập (đường dẫn `/attendance`).
+- **Chấm công vào/ra ca:** liên kết "Chấm công vào / ra ca" ở màn đăng nhập (đường dẫn `/attendance`), cùng khung giao diện với màn đăng nhập và tự thu nhỏ cho vừa màn hình ở mọi kích thước.
 
 ### Dữ liệu có sẵn
 
 | Loại | Nội dung |
 |---|---|
 | **Bàn** | 14 bàn: bàn 1–8 trong nhà, bàn 9–14 ngoài trời |
-| **Thực đơn** | 30 món chia 4 nhóm: Cà phê (10), Trà (8), Sinh tố (5), Bánh (7). Mỗi món có kích cỡ M (và L với đa số đồ uống) |
+| **Thực đơn** | 30 món chia 4 nhóm: Cà phê (10), Trà (8), Sinh tố (5, không có topping), Bánh (7). Mỗi món có kích cỡ M (và L với đa số đồ uống) |
 | **Giá tham khảo** | Cà phê đen M 29.000đ · Cà phê sữa M 32.000đ · Latte M 45.000đ · Trà đào cam sả M 45.000đ · Tiramisu 45.000đ · Cheesecake 42.000đ |
-| **Topping** | Trân châu đen 8.000đ · Thạch dừa 7.000đ · Pudding 8.000đ · Kem cheese 12.000đ · Shot espresso 10.000đ |
+| **Topping** | Trân châu đen 8.000đ · Thạch dừa 7.000đ · Pudding 8.000đ · Kem cheese 12.000đ · Shot espresso 10.000đ (trà dùng trân châu, thạch dừa, pudding; cà phê dùng kem cheese, shot espresso, pudding) |
 | **Khuyến mãi** | **Tea Happy Hour**: giảm 15% nhóm Trà, 14:00–16:00 · **Cake Evening**: giảm 10% nhóm Bánh, 20:00–21:30 |
 | **Thành viên** | Nguyễn Thị Hoa `0912345678` (24 điểm) · Trần Quốc Khánh `0987654321` (0 điểm) · Lê Mai Anh `0933222111` (8 điểm) |
 | **Kho** | Nguyên liệu kèm định mức tối thiểu, công thức từng món, phiếu nhập kho (cà phê hạt, sữa, đường, trà, syrup, bánh...) |
@@ -186,18 +197,18 @@ scripts/dev-mysql.sh
 ### Luồng nghiệp vụ bắt đầu từ trống
 Mặc định `scripts/dev-mysql.sh` chỉ nạp **dữ liệu nền** ở trên. Hệ thống chưa có đơn, hóa đơn hay ca thu ngân nào, để bạn tự đi hết luồng khi demo. Mỗi bước ghi rõ ai làm, ở màn hình nào, bấm gì. Nên mở sẵn 3 cửa sổ trình duyệt (hoặc 3 thiết bị) cho Phục vụ, Pha chế và Thu ngân để thấy đơn chạy tức thời giữa các vai trò.
 
-**Bước 0. Chấm công (không bắt buộc, dùng khi muốn chứng minh "ai trực ca")**
-- Ở màn đăng nhập bấm **Chấm công vào / ra ca** (`/attendance`), chọn tên mình (ví dụ Hồ Quốc Tiến), nhập PIN cá nhân, chọn ca sáng hoặc ca tối.
+**Bước 0. Chấm công (bắt buộc trước khi đăng nhập nhân viên)**
+- Ở màn đăng nhập bấm **Chấm công vào / ra ca** (`/attendance`), bấm tab **Chấm công vào**, chọn **vai trò** (ví dụ Thu ngân), chọn **tên** (ví dụ Hồ Quốc Tiến), chọn ca sáng hoặc ca tối, nhập PIN (thu ngân `234567`) rồi bấm OK. Làm tương tự cho một phục vụ (`123456`) và một pha chế (`345678`). Chưa ai chấm công thì đăng nhập vai trò đó bị chặn.
 
 **Bước 1. Thu ngân mở ca** (`/cashier`)
 1. Tab **Nhân viên** → **Thu ngân** → PIN `234567`.
-2. Ở khung ca, bấm **Mở ca thu ngân**, nhập **Tiền mặt đầu ca (đồng)** (ví dụ 500000), bấm **Mở ca**.
-3. Chưa mở ca thì không thanh toán được; ca tối chỉ mở khi ca sáng đã chốt.
+2. Vào tab **Ca thu ngân**: ô **Ca sáng** hoặc **Ca tối** chưa mở có sẵn form; nhập **Tiền mặt đầu ca (đồng)** (ví dụ 500000), bấm **Mở ca**. Ở tab **Chờ thanh toán** hoặc **Đơn mang đi** khi chưa mở ca, nút **Mở ca thu ngân** mở popup mở ca ngay tại chỗ.
+3. Chưa mở ca thì không thanh toán và không tạo đơn mang đi được; mỗi lúc chỉ một ca mở, ca tối mở sau khi chốt ca sáng. Mở ca xong, mọi cửa sổ thu ngân tự cập nhật.
 
 **Bước 2. Phục vụ gọi món tại bàn** (`/service`)
 1. Đăng nhập tab **Nhân viên** → **Phục vụ** → PIN `123456` (dùng điện thoại hoặc cửa sổ thu nhỏ).
 2. Ở sơ đồ bàn chọn một **bàn trống** (bàn 1–8 trong nhà, 9–14 ngoài trời).
-3. Ở mục **Chọn món**, bấm một món; chọn **Kích thước**, **Nóng / lạnh**, **Mức đường**, mức đá, **Topping**, số lượng, rồi bấm **Thêm · giá**. Đồ nóng không có đá; bánh không có tùy chọn.
+3. Ở mục **Chọn món**, bấm một món; chọn **Kích thước**, **Nóng / lạnh**, **Mức đường**, mức đá, **Topping**, số lượng, rồi bấm **Thêm · giá**. Đồ nóng không có đá; bánh không có tùy chọn; sinh tố không có topping.
 4. Kiểm tra giỏ **Món đã chọn** rồi bấm **Gửi order**. Đơn xuống màn hình pha chế gần như ngay lập tức.
 5. Khách gọi thêm: vào lại bàn đó, chọn món rồi bấm **Gửi thêm món** (cùng một đơn, ghi nhận lượt gửi riêng).
 6. Thử thêm: **Chuyển bàn** sang bàn trống khác; hủy một món còn ở trạng thái Mới.
@@ -213,16 +224,17 @@ Mặc định `scripts/dev-mysql.sh` chỉ nạp **dữ liệu nền** ở trên
 
 **Bước 5. Thu ngân thanh toán đơn tại quán** (`/cashier`)
 1. Tab **Chờ thanh toán** hiện các bàn đã xong; bấm **Thanh toán** ở bàn cần tính.
-2. Nhập **số điện thoại** để nhận diện thành viên (hoặc đăng ký thành viên mới bằng số điện thoại và tên). Dùng điểm nếu muốn (1 điểm = 1.000đ, tối đa 30% đơn sau khuyến mãi).
+2. Chọn **Nhân viên phụ trách** (thu ngân đang chấm công; máy nhớ lựa chọn gần nhất). Nhập **số điện thoại** (đúng 10 số) để nhận diện thành viên (hoặc đăng ký thành viên mới bằng số điện thoại và tên). Dùng điểm nếu muốn (1 điểm = 1.000đ, tối đa 30% đơn sau khuyến mãi).
 3. Chọn **tiền mặt** hoặc **chuyển khoản/QR** (nhân viên tự kiểm tra tiền về, hệ thống không nối ngân hàng), bấm **Xác nhận thanh toán**.
 4. Hệ thống tính theo thứ tự: giá + topping → khuyến mãi → điểm → làm tròn 500đ → tích điểm (10.000đ = 1 điểm). Thông báo **Thanh toán thành công**, bấm **In hóa đơn** (khổ 80 mm). Bàn về **Trống**.
 5. Thử khuyến mãi: **Tea Happy Hour** (giảm 15% trà, 14:00–16:00) và **Cake Evening** (giảm 10% bánh, 20:00–21:30) chỉ áp dụng cho dòng món được gửi trong khung giờ đó.
 
 **Bước 6. Đơn mang đi** (`/cashier`)
-1. Tab **Đơn mang đi**; chọn món (chỉ đồ uống lạnh và bánh), số lượng, tùy chọn.
+1. Tab **Đơn mang đi**; chọn món (chỉ đồ uống lạnh và bánh), số lượng, tùy chọn (mức đá có thêm **Đá riêng**). Chọn **Nhân viên phụ trách** và thành viên (nếu có, dùng được cho cả tiền mặt lẫn chuyển khoản).
 2. **Tiền mặt:** bấm **Thanh toán và gửi pha chế**; đơn nhận số thứ tự trong ngày (001, 002...) và xuống màn hình pha chế ngay.
 3. **Chuyển khoản/QR:** đơn là **đơn nháp** (chưa hiện ở pha chế, chưa giữ nguyên liệu, chưa có hóa đơn). Chỉ sau khi thu ngân xác nhận đã nhận đủ tiền thì đơn mới được xác nhận và gửi pha chế; có thể hủy đơn nháp.
 4. Pha chế làm món như Bước 3; số thứ tự hiện để gọi khách.
+5. **Giao khách:** pha chế xong thì chỉ **Thu ngân** nhận thông báo "#001 xong, gọi khách nhận". Ở thẻ **Chờ giao khách**, bấm **Đã giao khách** (nút khóa nếu pha chế chưa xong). Còn đơn nháp hoặc đơn chưa giao thì không chốt ca được.
 
 **Bước 7. Chủ quán xử lý ngoại lệ** (`/admin`, tab **Quản lý**: `owner` / `admin123`)
 - **Hóa đơn:** xem, in lại (có dấu Reprint), **hủy hóa đơn** kèm lý do (chỉ khi ca chưa chốt và không còn món đang làm), hoàn tiền một phần hoặc toàn bộ rồi xác nhận đã trả tiền.
@@ -231,7 +243,7 @@ Mặc định `scripts/dev-mysql.sh` chỉ nạp **dữ liệu nền** ở trên
 - **Thực đơn/khuyến mãi/nhân viên/khách hàng:** thêm, sửa, tắt bán, khóa hoặc mở khóa tài khoản.
 
 **Bước 8. Chốt ca và chốt ngày**
-1. Thu ngân bấm **Chốt ca**, nhập tiền mặt kiểm đếm thực tế; hệ thống tính tiền dự kiến (tiền đầu ca + tiền mặt thu, trừ hóa đơn hủy và hoàn tiền) và ghi **chênh lệch**. Sau khi chốt, hóa đơn của ca không sửa được. Nếu thu ngân quên, Chủ quán chốt thay.
+1. Thu ngân bấm **Chốt ca** ở ô ca đang mở, nhập tiền mặt kiểm đếm thực tế; hệ thống tính tiền dự kiến (tiền đầu ca + tiền mặt thu, trừ hóa đơn hủy và hoàn tiền) và ghi **chênh lệch**. Doanh thu chuyển khoản/QR hiện riêng để đối chiếu ngân hàng. Chốt bị chặn khi còn đơn nháp hoặc đơn mang đi chưa giao. Sau khi chốt, hóa đơn của ca không sửa được; ô ca chuyển sang **Đã chốt** kèm nhãn Khớp tiền hoặc số tiền lệch. Chủ quán cũng chốt được ca.
 2. Chủ quán vào **Nhân sự và ca** → tab **Ca & chốt ngày**, bấm **Chốt ngày kinh doanh**. Chỉ chốt được khi không còn đơn mở và mọi bàn đều Trống; ca tối là ca chốt ngày.
 
 **Bước 9. Xem báo cáo** (`/admin`, trang đầu)
@@ -247,7 +259,7 @@ Dùng ở thư mục gốc dự án. **Mỗi lần chạy `scripts/dev-mysql.sh`
 |---|---|
 | **Test/demo từ trống** (mặc định) | `Ctrl+C` ở terminal đang chạy, rồi `scripts/dev-mysql.sh`; mở http://localhost:5173 |
 | **Giữ dữ liệu lần chạy trước** | `KEEP_DATA=1 scripts/dev-mysql.sh` |
-| **Có sẵn đơn mẫu** (ca tối đang mở, 3 đơn mẫu, 1 phiếu hao hụt để xem ngay) | `SPRING_FLYWAY_TARGET=latest scripts/dev-mysql.sh` |
+| **Có sẵn đơn mẫu** (ca đang mở, 3 đơn mẫu, 1 phiếu hao hụt để xem ngay; đơn mang đi mẫu chưa giao nên phải giao khách và xử lý đơn nháp trước khi chốt ca) | `SPRING_FLYWAY_TARGET=latest scripts/dev-mysql.sh` |
 
 - Phải tắt bản đang chạy (`Ctrl+C`) trước khi chạy lại, vì bản cũ giữ cổng 8080 và 5173.
 - Dữ liệu cũ bị xóa mỗi lần chạy. Cần giữ thì sao lưu trước: `docker exec vtph-mysql mysqldump -uroot -prootpw --single-transaction --routines --triggers VTPH_Coffee | gzip > vtph_truoc_khi_xoa.sql.gz`.
@@ -263,7 +275,8 @@ Mỗi vai trò dùng một trình duyệt hoặc cửa sổ ẩn danh riêng đ�
 
 ### Kịch bản gợi ý: một ly nước đi từ đầu đến cuối
 
-1. **Phục vụ** (tab Nhân viên → Phục vụ, chọn tên, PIN `123456`): vào *Sơ đồ bàn*, chọn một bàn trống. Thực đơn nằm bên trái: bấm món, chọn kích cỡ, nóng/lạnh, đường, đá, topping rồi *Thêm*. Món vừa chọn hiện ở khối *Món đã chọn* bên phải (bấm biểu tượng thùng rác để bỏ), bấm *Gửi order* thì chỉ hiện thông báo và món chuyển xuống quầy pha chế.
+0. **Chấm công trước** (`/attendance`): chọn vai trò, chọn tên, nhập PIN, cho ít nhất một thu ngân, một phục vụ và một pha chế. Không có bước này thì không đăng nhập được các vai trò nhân viên.
+1. **Phục vụ** (tab Nhân viên → Phục vụ, PIN `123456`, không chọn tên): vào *Sơ đồ bàn*, chọn một bàn trống. Thực đơn nằm bên trái: bấm món, chọn kích cỡ, nóng/lạnh, đường, đá, topping rồi *Thêm*. Món vừa chọn hiện ở khối *Món đã chọn* bên phải (bấm biểu tượng thùng rác để bỏ), bấm *Gửi order* thì chỉ hiện thông báo và món chuyển xuống quầy pha chế.
 2. **Pha chế** (chọn vai trò Pha chế, PIN `345678`, không chọn tên): món mới hiện trên bảng, bấm *Bắt đầu pha* (nguyên liệu trong kho được trừ theo công thức; nếu thiếu nguyên liệu nút báo "Thiếu nguyên liệu"), pha xong bấm *Hoàn thành* để báo Phục vụ và Thu ngân.
 3. **Thu ngân** (chọn vai trò Thu ngân, PIN `234567`, không chọn tên): chọn bàn đang chờ thanh toán. Nhập số điện thoại thành viên (ví dụ `0912345678`) để dùng điểm, chọn phương thức rồi thanh toán và in hóa đơn.
 4. **Chủ quán** (`owner` / `admin123`): xem *Báo cáo* (doanh thu, món bán chạy), *Hóa đơn* (in lại, hủy, hoàn tiền), *Kho* (cảnh báo sắp hết, xác nhận hao hụt). Avatar ở cuối thanh bên mở menu *Thông tin cá nhân* và *Đăng xuất*.
@@ -271,12 +284,13 @@ Mỗi vai trò dùng một trình duyệt hoặc cửa sổ ẩn danh riêng đ�
 
 ### Các thao tác khác nên thử
 - **Gọi thêm / chuyển bàn / hủy món:** trên màn hình đơn của một bàn đang phục vụ.
-- **Đơn mang đi:** màn Thu ngân, chọn tiền mặt hoặc chuyển khoản/QR (QR sẽ ở dạng đơn nháp đến khi nhận đủ tiền).
+- **Đơn mang đi:** màn Thu ngân, chọn tiền mặt hoặc chuyển khoản/QR (QR sẽ ở dạng đơn nháp đến khi nhận đủ tiền); pha chế xong thì Thu ngân bấm *Đã giao khách*.
+- **Ca thu ngân:** xem hai ô ca sáng, ca tối của hôm nay và 7 ngày gần nhất; mở hai cửa sổ thu ngân để thấy mở/chốt ca cập nhật ngay.
 - **Thêm món, sửa giá, tạo khuyến mãi:** Chủ quán, mục *Thực đơn*.
 - **Nhập kho, kiểm kê:** Chủ quán, mục *Kho*.
 - **Thêm nhân viên, đặt lại PIN, xem và sửa chấm công, chốt ca/ngày:** Chủ quán, mục *Nhân sự & ca*.
 - **Đăng ký và tra cứu thành viên:** Chủ quán, mục *Thành viên*.
-- **Chấm công vào/ra:** trang `/attendance`, mỗi người dùng tài khoản và PIN cá nhân.
+- **Chấm công vào/ra:** trang `/attendance`, mỗi người chọn vai trò, tên và dùng PIN cá nhân.
 
 ---
 
@@ -289,7 +303,7 @@ mvn -f backend/pom.xml spring-boot:run
 npm --prefix frontend run dev
 ```
 
-Chế độ này chỉ có luồng gọi món → pha chế → thanh toán cơ bản; các màn quản trị (thực đơn, kho, hóa đơn, nhân sự, báo cáo...) không dùng được, và dữ liệu **mất hết** khi tắt backend. Tài khoản: `chuquan` / `Quan@2026`, PIN Phục vụ `123456`, Thu ngân `234567`, Pha chế `345678`.
+Chế độ này chỉ có luồng gọi món → pha chế → thanh toán cơ bản; các màn quản trị (thực đơn, kho, hóa đơn, nhân sự, báo cáo...) không dùng được, và dữ liệu **mất hết** khi tắt backend. Tài khoản: `chuquan` / `Quan@2026`, PIN Phục vụ `123456`, Thu ngân `234567`, Pha chế `345678`. Chế độ này không có chấm công và không có CSDL nên **không áp dụng** ràng buộc chấm công mới được đăng nhập, nhân viên phụ trách và các trigger.
 
 ---
 
@@ -301,7 +315,7 @@ npm --prefix frontend run test     # test giao diện
 npm --prefix frontend run lint && npm --prefix frontend run typecheck
 ```
 
-Hiện có **72 test backend**, **17 test giao diện** và **35 kịch bản quy tắc CSDL** (`database/run_tests.py`, xem [database/README.md](database/README.md)); tất cả đều đạt. Chi tiết ở [chiến lược kiểm thử](docs/testing/test-strategy.md).
+Hiện có **86 test backend** (gồm test chạy trên MySQL thật), **18 test giao diện** và **36 kịch bản quy tắc CSDL** (`database/run_tests.py`, xem [database/README.md](database/README.md)); tất cả đều đạt. Chi tiết ở [chiến lược kiểm thử](docs/testing/test-strategy.md).
 
 ---
 
@@ -311,14 +325,15 @@ Hiện có **72 test backend**, **17 test giao diện** và **35 kịch bản qu
 backend/    Spring Boot (API, nghiệp vụ, bảo mật, WebSocket); backend/uploads là ảnh món và topping
 frontend/   React (giao diện theo vai trò)
 database/   Lược đồ, trigger, view, dữ liệu mẫu MySQL
-scripts/    Script chạy và kiểm tra môi trường
+scripts/    Script chạy, sao lưu, khôi phục, kiểm tra môi trường và đồng bộ migration
 docs/       Tài liệu kỹ thuật
 ```
 
 - Yêu cầu và use case: [docs/requirements/README.md](docs/requirements/README.md)
 - Kiến trúc: [tổng quan](docs/architecture/system-overview.md), [quyết định kiến trúc](docs/architecture/architecture-decisions.md), [luồng thời gian thực](docs/architecture/realtime-flow.md)
 - Cơ sở dữ liệu: [từ điển dữ liệu](docs/database/data-dictionary.md), [README CSDL](database/README.md)
-- API: [quy ước API](docs/api/api-conventions.md)
+- API: [quy ước API](docs/api/api-conventions.md), [bảng phân quyền theo từng API](docs/api/api-permissions.md)
+- Demo: [kịch bản demo](docs/demo/kich-ban-demo.md)
 - Phát triển: [cài đặt chi tiết và xử lý sự cố](docs/development/setup.md), [quy ước mã nguồn](docs/development/coding-conventions.md), [quy trình nhóm](docs/development/team-workflow.md), [chiến lược kiểm thử](docs/testing/test-strategy.md)
 - Refactor backend: [nhật ký](docs/refactor/REFACTOR_LOG.md), [kiến trúc hiện tại](docs/refactor/CURRENT_ARCHITECTURE.md), [nợ kỹ thuật](docs/refactor/TECHNICAL_DEBT.md)
 

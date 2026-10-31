@@ -1,20 +1,22 @@
 # Chiến lược kiểm thử
 
-Số liệu cập nhật 2026-10-31: **72 test backend** (0 lỗi), **17 test giao diện** (0 lỗi) và **35 kịch bản quy tắc CSDL** (35/35 đạt).
+Số liệu cập nhật 2026-11-01: **86 test backend** (0 lỗi), **18 test giao diện** (0 lỗi) và **36 kịch bản quy tắc CSDL** (36/36 đạt).
 
 ## Backend (JUnit 5, `mvn -f backend/pom.xml test`)
 
 | Tầng | Công cụ | Nội dung | Số test |
 |---|---|---|---|
-| Đơn vị | JUnit 5 | `AuthService` (kho bộ nhớ): khóa sau 5 lần sai (BR-042), định dạng PIN, đặt lại bộ đếm | 6 |
-| Đơn vị | JUnit 5 | `NotificationBridge`: định tuyến kênh thông báo | 3 |
+| Đơn vị | JUnit 5 | `AuthService` (kho bộ nhớ): khóa sau 5 lần sai (BR-042), định dạng PIN, đặt lại bộ đếm, ràng buộc chấm công mới được đăng nhập | 9 |
+| Đơn vị | JUnit 5 | `NotificationBridge`: định tuyến kênh thông báo (đơn mang đi xong chỉ báo Thu ngân) | 5 |
 | Đơn vị | JUnit 5 | `PricingPolicy`: khuyến mãi, trần điểm 30%, làm tròn 500đ, tích điểm; so với công thức cũ trên miền giá trị rộng | 9 |
 | Sự kiện | Spring Test, không Mockito | Chỉ gửi thông báo sau commit, rollback không gửi, không có giao dịch thì gửi ngay | 3 |
 | Truy cập và thời gian thực | Spring Boot Test, MockMvc, `@RecordApplicationEvents` | 401 khi chưa đăng nhập, 403 sai vai trò, đăng xuất, thứ tự sự kiện gửi đơn → bắt đầu pha → hoàn thành | 4 |
-| Tích hợp MySQL: đăng nhập | Testcontainers (mysql:8.4), một container dùng chung | Flyway dựng 28 bảng, 15 trigger, dữ liệu mẫu; đăng nhập từ bảng `account` (bcrypt, khóa tạm lưu CSDL); tài khoản quầy dùng chung | 10 |
-| Tích hợp MySQL: gọi món đến thanh toán | như trên, qua MockMvc | Bàn và thực đơn từ CSDL; gửi đơn ghi đủ order/batch/line/topping; gọi thêm; hủy theo vai trò; bánh trừ/hoàn kho; chuyển bàn; pha chế qua `sp_start_making`; thiếu nguyên liệu đánh dấu Hết hàng bền vững; chờ thanh toán → hóa đơn → bàn trống; mang đi tiền mặt, chuyển khoản, đơn nháp; chốt ca; JSON khớp mô hình; trigger vẫn chặn khi qua mặt service | 14 |
+| Tích hợp MySQL: đăng nhập | Testcontainers (mysql:8.4), một container dùng chung | Flyway dựng 28 bảng, 15 trigger, dữ liệu mẫu; đăng nhập từ bảng `account` (bcrypt, khóa tạm lưu CSDL); tài khoản quầy dùng chung | 11 |
+| Tích hợp MySQL: gọi món đến thanh toán | như trên, qua MockMvc | Bàn và thực đơn từ CSDL; gửi đơn ghi đủ order/batch/line/topping; gọi thêm; hủy theo vai trò; bánh trừ/hoàn kho; chuyển bàn; pha chế qua `sp_start_making`; thiếu nguyên liệu đánh dấu Hết hàng bền vững; chờ thanh toán → hóa đơn → bàn trống; mang đi tiền mặt, chuyển khoản, đơn nháp; chốt ca; JSON khớp mô hình; trigger vẫn chặn khi qua mặt service; giao khách đơn mang đi, doanh thu chuyển khoản trong ca, nhân viên phụ trách đang chấm công, chốt ca bị chặn khi còn đơn chưa giao | 19 |
 | Tích hợp MySQL: tính tiền | như trên | Khuyến mãi, điểm, làm tròn, hoàn một phần theo tỷ lệ, tiền lưu trên hóa đơn | 5 |
 | Tích hợp MySQL: quản trị | như trên | Thành viên, khuyến mãi, nhân viên và khóa tài khoản, chấm công và lịch sử chỉnh sửa, thực đơn/topping, kho (nhập, công thức, kiểm kê, tự bán lại), hao hụt, chốt ca/ngày, hủy hóa đơn và hoàn tiền, báo cáo | 11 |
+| Tích hợp MySQL: chấm công mới được đăng nhập | như trên, bật `vtph.auth.require-attendance` | Chưa chấm công thì tài khoản cá nhân và quầy bị chặn; chấm công vai trò nào mở cửa vai trò đó; chấm công ra thì chặn lại; Chủ quán không bị ràng buộc | 2 |
+| Đơn vị | JUnit 5 | `Db`: số tiền không âm/không thập phân/không quá trần, chuỗi không vượt độ dài cột, số nguyên quá dài | 4 |
 | Tích hợp MySQL: ảnh | như trên | Tải ảnh món và topping, phân quyền, không trùng khi cùng mã | 2 |
 
 Các test MySQL cần Docker đang chạy; không có Docker thì tự bỏ qua.
@@ -28,12 +30,13 @@ Các test MySQL cần Docker đang chạy; không có Docker thì tự bỏ qua.
 | Chặn truy cập theo vai trò (`RequireRole`) | 3 |
 | Bảng dữ liệu (`DataTable`) | 2 |
 | Bàn phím PIN (`PinPad`) | 1 |
+| Màn thu ngân: mở ca ở tab Ca thu ngân thì Chờ thanh toán và Đơn mang đi mở khóa ngay (`PaymentsPage`) | 1 |
 
 Trước khi nộp còn chạy `npm run lint`, `npm run format:check` và `npm run typecheck`; CI chạy cùng bộ này cộng `npm run build` và kiểm tra tệp Flyway khớp `database/*.sql` (`scripts/sync-migrations.py --check`).
 
 ## Quy tắc dữ liệu (`database/run_tests.py`)
 
-35 kịch bản trigger, ràng buộc CHECK và UNIQUE, mỗi kịch bản chạy trong giao dịch rồi hoàn tác. Đã chạy trên CSDL do Flyway dựng: **35/35 đạt**. Kịch bản đọc mật khẩu từ biến môi trường `MYSQL_PWD` và gọi `mysql` ở đường dẫn trong đầu tệp, nên cần chỉnh nếu MySQL cài ở chỗ khác hoặc chạy trong Docker. Chưa tích hợp CI.
+36 kịch bản trigger, ràng buộc CHECK và UNIQUE, mỗi kịch bản chạy trong giao dịch rồi hoàn tác. Đã chạy trên MySQL 8.4 nạp từ `database/*.sql`: **36/36 đạt**. Kịch bản đọc mật khẩu từ biến môi trường `MYSQL_PWD` và gọi `mysql` ở đường dẫn trong đầu tệp, nên cần chỉnh nếu MySQL cài ở chỗ khác hoặc chạy trong Docker. Chưa tích hợp CI.
 
 ## Kiểm tra thủ công và bán tự động
 
