@@ -36,15 +36,20 @@ export function AttendanceTab() {
           label="Từ ngày"
           type="date"
           value={from}
+          max={to || todayIso()}
           onChange={(e) => setFrom(e.target.value)}
         />
         <TextField
           label="Đến ngày"
           type="date"
           value={to}
+          min={from}
+          max={todayIso()}
           onChange={(e) => setTo(e.target.value)}
         />
-        <Button type="submit">Xem</Button>
+        <Button type="submit" disabled={from > to}>
+          Xem
+        </Button>
       </form>
       <TabAction>
         <Button onClick={() => setEditing('new')}>Bổ sung chấm công</Button>

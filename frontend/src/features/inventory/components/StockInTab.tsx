@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/Card'
 import { DataTable } from '@/components/ui/DataTable'
 import { NumberField, SelectField, TextField } from '@/components/ui/Field'
 import { useAction } from '@/hooks/useAction'
-import { formatDate, formatDateTime } from '@/utils/format'
+import { formatDate, formatDateTime, todayIso } from '@/utils/format'
 import { inventoryApi, num, type ReceiptLineInput } from '../api/inventoryApi'
 
 const KEYS = [['inventory']]
@@ -78,10 +78,20 @@ export function StockInTab() {
                 label="Hạn sử dụng (bắt buộc)"
                 type="date"
                 value={expiry}
+                min={todayIso()}
+                max={todayIso(365 * 5)}
                 onChange={(e) => setExpiry(e.target.value)}
               />
             )}
-            <Button variant="secondary" disabled={!picked || !quantity} onClick={add}>
+            <Button
+              variant="secondary"
+              disabled={
+                !picked ||
+                !quantity ||
+                (picked.trackExpiry && (expiry < todayIso() || expiry > todayIso(365 * 5)))
+              }
+              onClick={add}
+            >
               Thêm vào phiếu
             </Button>
           </div>
