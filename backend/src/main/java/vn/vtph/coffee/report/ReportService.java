@@ -31,8 +31,7 @@ public class ReportService {
 
     public Map<String, Object> summary(LocalDate from, LocalDate to) {
         LocalDate t = to == null ? db.today() : to, f = from == null ? t : from;
-        if (f.isAfter(t)) throw new OpsException(422, "BAD_RANGE", "Ngày bắt đầu không được sau ngày kết thúc.");
-        if (java.time.temporal.ChronoUnit.DAYS.between(f, t) > 366) throw new OpsException(422, "BAD_RANGE", "Khoảng thời gian tối đa 366 ngày.");
+        db.checkRange(f, t, 366);
         var lo = startUtc(f);
         var hi = startUtc(t.plusDays(1));
 

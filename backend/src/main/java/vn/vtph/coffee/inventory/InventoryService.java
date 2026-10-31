@@ -58,7 +58,7 @@ public class InventoryService {
 
     public Map<String, Object> createIngredient(Map<String, Object> b) {
         int id = db.insertId("INSERT INTO ingredient (name, unit, min_stock, track_expiry) VALUES (?, ?, ?, ?)",
-                Db.req(b, "name", "Tên nguyên liệu"), Db.req(b, "unit", "Đơn vị tính"), nonNegative(b, "minStock", "Mức tồn tối thiểu"),
+                Db.req(b, "name", "Tên nguyên liệu", 100), Db.req(b, "unit", "Đơn vị tính", 20), nonNegative(b, "minStock", "Mức tồn tối thiểu"),
                 Boolean.TRUE.equals(b.get("trackExpiry")));
         return ingredient(id);
     }
@@ -66,7 +66,7 @@ public class InventoryService {
     public Map<String, Object> updateIngredient(int id, Map<String, Object> b) {
         ingredient(id);
         db.jdbc.update("UPDATE ingredient SET name = ?, unit = ?, min_stock = ?, track_expiry = ? WHERE ingredient_id = ?",
-                Db.req(b, "name", "Tên nguyên liệu"), Db.req(b, "unit", "Đơn vị tính"), nonNegative(b, "minStock", "Mức tồn tối thiểu"),
+                Db.req(b, "name", "Tên nguyên liệu", 100), Db.req(b, "unit", "Đơn vị tính", 20), nonNegative(b, "minStock", "Mức tồn tối thiểu"),
                 Boolean.TRUE.equals(b.get("trackExpiry")), id);
         return ingredient(id);
     }
@@ -161,6 +161,7 @@ public class InventoryService {
                 if (exp == null || exp.isEmpty()) throw new OpsException(422, "EXPIRY_REQUIRED", cur.get("name") + " bắt buộc nhập hạn sử dụng.");
                 try { expiry = LocalDate.parse(exp); } catch (Exception e) { throw new OpsException(422, "BAD_DATE", "Hạn sử dụng không hợp lệ."); }
                 if (expiry.isBefore(db.today())) throw new OpsException(422, "EXPIRED", cur.get("name") + ": hạn sử dụng đã qua.");
+                if (expiry.isAfter(db.today().plusYears(5))) throw new OpsException(422, "BAD_DATE", cur.get("name") + ": hạn sử dụng quá xa (tối đa 5 năm kể từ hôm nay).");
             }
             db.jdbc.update("INSERT INTO stock_receipt (ingredient_id, quantity, received_at, expiry_date) VALUES (?, ?, ?, ?)", ing, qty, Db.nowUtc(), expiry);
             db.jdbc.update("UPDATE ingredient SET current_stock = current_stock + ? WHERE ingredient_id = ?", qty, ing);

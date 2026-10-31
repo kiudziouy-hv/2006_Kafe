@@ -68,7 +68,7 @@ public class PromotionService {
     }
 
     private Object[] parse(Map<String, Object> b) {
-        String name = Db.req(b, "name", "Tên chương trình");
+        String name = Db.req(b, "name", "Tên chương trình", 100);
         String group = Db.req(b, "group", "Nhóm món");
         if (!GROUPS.contains(group)) throw new OpsException(422, "BAD_GROUP", "Nhóm món không hợp lệ.");
         int pct = Db.reqInt(b, "discountPercent", "Mức giảm");

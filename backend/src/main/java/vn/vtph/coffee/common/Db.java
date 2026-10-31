@@ -41,6 +41,13 @@ public class Db {
 
     public LocalDate today() { return LocalDate.now(zone); }
 
+    /** Khoảng ngày của bộ lọc: bắt đầu không sau kết thúc, không chọn ngày tương lai, dài tối đa {@code maxDays} ngày. */
+    public void checkRange(LocalDate from, LocalDate to, int maxDays) {
+        if (from.isAfter(to)) throw new OpsException(422, "BAD_RANGE", "Ngày bắt đầu không được sau ngày kết thúc.");
+        if (to.isAfter(today())) throw new OpsException(422, "BAD_RANGE", "Không chọn ngày trong tương lai.");
+        if (java.time.temporal.ChronoUnit.DAYS.between(from, to) > maxDays) throw new OpsException(422, "BAD_RANGE", "Khoảng thời gian tối đa " + maxDays + " ngày.");
+    }
+
     /** Độ lệch múi giờ dạng '+07:00' để dùng với CONVERT_TZ khi gom báo cáo theo ngày địa phương. */
     public String offset() {
         String id = zone.getRules().getOffset(Instant.now()).getId();
@@ -101,16 +108,40 @@ public class Db {
         return o == null ? null : String.valueOf(o).trim();
     }
 
-    public static String req(Map<String, Object> b, String key, String label) {
+    /** Chuỗi bắt buộc, tối đa 255 ký tự (độ dài lớn nhất của các cột lý do/ghi chú). */
+    public static String req(Map<String, Object> b, String key, String label) { return req(b, key, label, 255); }
+
+    /** Chuỗi bắt buộc, tối đa {@code max} ký tự theo độ dài cột trong CSDL (tên 100, đơn vị 20...). */
+    public static String req(Map<String, Object> b, String key, String label, int max) {
         String s = str(b, key);
         if (s == null || s.isEmpty()) throw new OpsException(422, "REQUIRED", label + " là bắt buộc.");
+        if (s.length() > max) throw new OpsException(422, "TOO_LONG", label + " tối đa " + max + " ký tự.");
         return s;
+    }
+
+    /**
+     * Số tiền/số lượng nguyên không âm, không vượt {@code max}; trả null nếu không gửi. Chặn số thập phân, số âm và số quá lớn
+     * (tránh tràn int khi ép kiểu).
+     */
+    public static Integer money(Object o, String label, int max) {
+        if (o == null) return null;
+        java.math.BigDecimal v;
+        try {
+            v = o instanceof Number n ? new java.math.BigDecimal(n.toString()) : new java.math.BigDecimal(String.valueOf(o).trim());
+        } catch (NumberFormatException e) {
+            throw new OpsException(422, "BAD_NUMBER", label + " không hợp lệ.");
+        }
+        if (v.signum() < 0) throw new OpsException(422, "BAD_NUMBER", label + " không được âm.");
+        if (v.stripTrailingZeros().scale() > 0) throw new OpsException(422, "BAD_NUMBER", label + " phải là số nguyên.");
+        if (v.compareTo(java.math.BigDecimal.valueOf(max)) > 0)
+            throw new OpsException(422, "BAD_NUMBER", label + " tối đa " + String.format(java.util.Locale.ROOT, "%,d", max).replace(',', '.') + ".");
+        return v.intValueExact();
     }
 
     public static Integer integer(Map<String, Object> b, String key) {
         Object o = b == null ? null : b.get(key);
         if (o instanceof Number n) return n.intValue();
-        if (o instanceof String s && s.matches("-?\\d+")) return Integer.parseInt(s);
+        if (o instanceof String s && s.matches("-?\\d{1,9}")) return Integer.parseInt(s);
         return null;
     }
 
