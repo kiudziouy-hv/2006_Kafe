@@ -237,19 +237,23 @@ Mặc định `scripts/dev-mysql.sh` chỉ nạp **dữ liệu nền** ở trên
 **Bước 9. Xem báo cáo** (`/admin`, trang đầu)
 - Chọn **Hôm nay**, **Hôm qua**, **7 ngày qua**, **Tháng này** hoặc khoảng ngày tự chọn: tổng doanh thu, số hóa đơn, số sản phẩm đã bán, món bán chạy, danh sách hóa đơn. Hóa đơn đã hủy không tính, hoàn tiền một phần được trừ.
 
+Kịch bản demo đầy đủ từng cảnh, thời lượng và cách xử lý sự cố: [docs/demo/kich-ban-demo.md](docs/demo/kich-ban-demo.md).
+
 ### Chạy lại để test và demo
 
-Dùng ở thư mục gốc dự án. Mặc định hệ thống nạp dữ liệu nền và để luồng nghiệp vụ trống.
+Dùng ở thư mục gốc dự án. **Mỗi lần chạy `scripts/dev-mysql.sh`, cơ sở dữ liệu được dựng lại từ đầu**: chỉ có dữ liệu nền, luồng nghiệp vụ (đơn, hóa đơn, ca thu ngân, chấm công) rỗng và tồn kho về mức ban đầu. Không cần xóa gì thủ công.
 
 | Muốn | Làm |
 |---|---|
-| **Chạy bình thường** (database đang trống hoặc muốn giữ dữ liệu hiện có) | Nhấn `Ctrl+C` ở terminal đang chạy, rồi `scripts/dev-mysql.sh`. Không cần gõ thêm biến nào |
-| **Demo lại từ trống** (xóa hết đơn, hóa đơn, ca; nạp lại dữ liệu nền) | `docker rm -f vtph-mysql && docker volume rm vtph_mysql_data`, rồi `scripts/dev-mysql.sh` |
-| **Có sẵn đơn mẫu** (ca tối đang mở, 3 đơn mẫu, 1 phiếu hao hụt để xem ngay) | Xóa database như dòng trên, rồi `SPRING_FLYWAY_TARGET=latest scripts/dev-mysql.sh` |
+| **Test/demo từ trống** (mặc định) | `Ctrl+C` ở terminal đang chạy, rồi `scripts/dev-mysql.sh`; mở http://localhost:5173 |
+| **Giữ dữ liệu lần chạy trước** | `KEEP_DATA=1 scripts/dev-mysql.sh` |
+| **Có sẵn đơn mẫu** (ca tối đang mở, 3 đơn mẫu, 1 phiếu hao hụt để xem ngay) | `SPRING_FLYWAY_TARGET=latest scripts/dev-mysql.sh` |
 
-- Lệnh xóa database làm mất toàn bộ dữ liệu đã thao tác; nếu cần giữ, sao lưu trước: `docker exec vtph-mysql mysqldump -uroot -prootpw --single-transaction --routines --triggers VTPH_Coffee | gzip > vtph_truoc_khi_xoa.sql.gz`.
-- `SPRING_FLYWAY_TARGET=latest` chỉ có tác dụng trên database **trống**. Đơn mẫu nằm ở `database/05_seed_transactions.sql`.
-- Ngày kinh doanh được tạo theo ngày lúc dựng database. Nên xóa và dựng lại ngay trước buổi demo để ngày kinh doanh khớp với hôm đó.
+- Phải tắt bản đang chạy (`Ctrl+C`) trước khi chạy lại, vì bản cũ giữ cổng 8080 và 5173.
+- Dữ liệu cũ bị xóa mỗi lần chạy. Cần giữ thì sao lưu trước: `docker exec vtph-mysql mysqldump -uroot -prootpw --single-transaction --routines --triggers VTPH_Coffee | gzip > vtph_truoc_khi_xoa.sql.gz`.
+- Chỉ đặt lại dữ liệu trong cơ sở dữ liệu. Ảnh món và topping nằm trong `backend/uploads` nên được giữ nguyên.
+- Ngày kinh doanh được tạo theo ngày lúc dựng, nên luôn khớp với hôm chạy.
+- Đơn mẫu nằm ở `database/05_seed_transactions.sql`.
 
 ---
 
