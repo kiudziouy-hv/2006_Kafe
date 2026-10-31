@@ -1,6 +1,6 @@
 # Chiến lược kiểm thử
 
-Số liệu cập nhật 2026-10-26: **67 test backend** (0 lỗi), **16 test giao diện** (0 lỗi) và **35 kịch bản quy tắc CSDL** (35/35 đạt).
+Số liệu cập nhật 2026-10-31: **72 test backend** (0 lỗi), **17 test giao diện** (0 lỗi) và **35 kịch bản quy tắc CSDL** (35/35 đạt).
 
 ## Backend (JUnit 5, `mvn -f backend/pom.xml test`)
 

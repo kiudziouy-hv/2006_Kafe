@@ -41,7 +41,9 @@ Theo bảng đối chiếu trong [docs/requirements/README.md](docs/requirements
 
 **Chưa làm** (mức mở rộng, Level 2):
 - Xuất Excel, dashboard, báo cáo theo khung giờ.
-- **Nhật ký thao tác (Audit Log): không làm.** Hệ thống chỉ có bảng chấm công (mục *Nhân sự & ca*) để biết ai trực ca nào, và các chỉnh sửa chấm công được ghi lại cùng lịch sử. Thao tác ở máy thu ngân và màn hình pha chế dùng tài khoản quầy dùng chung nên không truy được từng người; nếu cần biết ai làm, đối chiếu giờ thao tác với bảng chấm công của ca đó.
+- **Nhật ký thao tác (Audit Log): không làm.** Hệ thống chỉ có bảng chấm công (mục *Nhân sự & ca*) để biết ai trực ca nào, và các chỉnh sửa chấm công được ghi lại cùng lịch sử. Thao tác ở máy thu ngân, màn hình pha chế và điện thoại phục vụ dùng tài khoản dùng chung của vai trò nên không truy được từng người; nếu cần biết ai làm, đối chiếu giờ thao tác với bảng chấm công của ca đó. Việc truy vết sâu hơn do quán tự xử lý ngoài hệ thống: hỏi nhân viên trực ca và trích camera.
+- **Bắt đổi PIN lần đầu: không làm.** Nhân viên chỉ nhập PIN của vai trò và tài khoản vẫn dùng chung, nên PIN riêng không xác định được người thao tác; PIN chỉ là lớp bảo vệ đăng nhập.
+- **Điều chỉnh so với yêu cầu gốc:** yêu cầu gốc ghi mỗi nhân viên một tài khoản riêng, kể cả khi dùng máy chung, và mỗi thao tác ghi theo tài khoản đang đăng nhập. Nhóm chọn tài khoản dùng chung theo vai trò cho các thiết bị quầy vì giờ cao điểm 1 đến 2 người luân phiên trên cùng một màn hình, đổi tài khoản cho từng thao tác thì không kịp, và phiên tự hết sau 5 phút. Màn hình chỉ thể hiện vai trò (không hiện tên người). Người trực ca được biết qua chấm công bằng tài khoản cá nhân.
 - **Cảnh báo đơn chờ pha chế quá 10 phút:** chưa có.
 
 Hoàn tiền không đi qua ngân hàng: Chủ quán trả tiền ngoài hệ thống rồi xác nhận trên hệ thống.
@@ -163,7 +165,7 @@ scripts/dev-mysql.sh
 | Phục vụ | Dùng chung cho các điện thoại phục vụ (tài khoản "Điện thoại Phục vụ") | Tab **Nhân viên** → Phục vụ | PIN `123456`, không chọn tên |
 | Pha chế | Dùng chung cho màn hình pha chế (tài khoản "Màn hình Pha chế") | Tab **Nhân viên** → Pha chế | PIN `345678`, không chọn tên |
 
-- **Đăng nhập nhân viên không hiện danh sách tên.** Cả ba vai trò (Thu ngân, Pha chế, Phục vụ) đăng nhập bằng cách chọn vai trò rồi nhập PIN của vai trò đó (tài khoản dùng chung). **Ba PIN phải khác nhau** (`123456`, `234567`, `345678` ở dữ liệu mẫu); nếu hai vai trò dùng chung một PIN thì người này có thể vào tài khoản của vai trò kia và nâng quyền. Mọi thao tác ghi vào tài khoản dùng chung của vai trò, không biết đích danh ai bấm; muốn biết ai trực ca đó thì xem bảng chấm công. Tài khoản dùng chung không dùng để chấm công.
+- **Đăng nhập nhân viên không hiện danh sách tên.** Cả ba vai trò đăng nhập bằng cách chọn vai trò rồi nhập PIN của vai trò đó (tài khoản dùng chung). Màn hình chỉ thể hiện vai trò, không thể hiện tên người. **Ba PIN phải khác nhau** (`123456`, `234567`, `345678` ở dữ liệu mẫu); nếu hai vai trò dùng chung một PIN thì người này có thể vào tài khoản của vai trò kia và nâng quyền. Mọi thao tác ghi vào tài khoản dùng chung của vai trò, không biết đích danh ai bấm; muốn biết ai trực ca đó thì xem bảng chấm công. Tài khoản dùng chung không dùng để chấm công.
 - **Chấm công** luôn dùng tài khoản cá nhân: ở trang `/attendance`, mỗi người chọn tên và nhập PIN riêng. Các tài khoản quầy dùng chung không xuất hiện ở đó. Tài khoản cá nhân (phục vụ: Võ Tấn Phát, Võ Thị Em, Đỗ Quang Huy; thu ngân: Hồ Quốc Tiến, Lê Hoàng Cường; pha chế: Trần Thanh Huy, Đặng Thị Giang) ở dữ liệu mẫu dùng PIN trùng với PIN của vai trò (`123456`, `234567`, `345678`); khi dùng thật Chủ quán đặt PIN riêng cho từng người.
 - Nhập sai PIN 5 lần thì tài khoản bị khóa 15 phút (với quầy dùng chung là khóa cả quầy).
 - Thu ngân và Pha chế tự đăng xuất sau 5 phút không thao tác.
@@ -178,19 +180,76 @@ scripts/dev-mysql.sh
 | **Giá tham khảo** | Cà phê đen M 29.000đ · Cà phê sữa M 32.000đ · Latte M 45.000đ · Trà đào cam sả M 45.000đ · Tiramisu 45.000đ · Cheesecake 42.000đ |
 | **Topping** | Trân châu đen 8.000đ · Thạch dừa 7.000đ · Pudding 8.000đ · Kem cheese 12.000đ · Shot espresso 10.000đ |
 | **Khuyến mãi** | **Tea Happy Hour**: giảm 15% nhóm Trà, 14:00–16:00 · **Cake Evening**: giảm 10% nhóm Bánh, 20:00–21:30 |
-| **Thành viên** | Nguyễn Thị Hoa `0912345678` (22 điểm sau đơn mẫu 1: có 24, dùng 10, tích 8) · Trần Quốc Khánh `0987654321` (0 điểm) · Lê Mai Anh `0933222111` (8 điểm) |
+| **Thành viên** | Nguyễn Thị Hoa `0912345678` (24 điểm) · Trần Quốc Khánh `0987654321` (0 điểm) · Lê Mai Anh `0933222111` (8 điểm) |
 | **Kho** | Nguyên liệu kèm định mức tối thiểu, công thức từng món, phiếu nhập kho (cà phê hạt, sữa, đường, trà, syrup, bánh...) |
 
-### Giao dịch mẫu của ngày hôm nay
-Hệ thống khởi động với **ngày kinh doanh đang mở**, **một ca thu ngân đang mở** (ca tối, tiền đầu ca 500.000đ, do Hồ Quốc Tiến mở) và ba đơn để xem ngay luồng nghiệp vụ:
+### Luồng nghiệp vụ bắt đầu từ trống
+Mặc định `scripts/dev-mysql.sh` chỉ nạp **dữ liệu nền** ở trên. Hệ thống chưa có đơn, hóa đơn hay ca thu ngân nào, để bạn tự đi hết luồng khi demo. Mỗi bước ghi rõ ai làm, ở màn hình nào, bấm gì. Nên mở sẵn 3 cửa sổ trình duyệt (hoặc 3 thiết bị) cho Phục vụ, Pha chế và Thu ngân để thấy đơn chạy tức thời giữa các vai trò.
 
-| Đơn | Loại | Nội dung | Trạng thái |
-|---|---|---|---|
-| 1 | Tại quán, bàn 3 | Trà đào cam sả M + trân châu đen, Tiramisu M (giảm 10% Cake Evening). Khách Nguyễn Thị Hoa dùng 10 điểm, tiền mặt | Đã thanh toán **83.500đ**, tích 8 điểm |
-| 2 | Mang đi, số 1 | Cà phê sữa L × 2, tiền mặt | Đã thanh toán **78.000đ**, món đang chờ pha chế |
-| 3 | Mang đi, chuyển khoản/QR | Trà vải M | **Đơn nháp**, chờ nhận đủ tiền (chưa có hóa đơn, chưa giữ nguyên liệu) |
+**Bước 0. Chấm công (không bắt buộc, dùng khi muốn chứng minh "ai trực ca")**
+- Ở màn đăng nhập bấm **Chấm công vào / ra ca** (`/attendance`), chọn tên mình (ví dụ Hồ Quốc Tiến), nhập PIN cá nhân, chọn ca sáng hoặc ca tối.
 
-Ngoài ra có một **phiếu hao hụt** (2 bánh croissant hết hạn) do Pha chế đề xuất, đang chờ Chủ quán xác nhận.
+**Bước 1. Thu ngân mở ca** (`/cashier`)
+1. Tab **Nhân viên** → **Thu ngân** → PIN `234567`.
+2. Ở khung ca, bấm **Mở ca thu ngân**, nhập **Tiền mặt đầu ca (đồng)** (ví dụ 500000), bấm **Mở ca**.
+3. Chưa mở ca thì không thanh toán được; ca tối chỉ mở khi ca sáng đã chốt.
+
+**Bước 2. Phục vụ gọi món tại bàn** (`/service`)
+1. Đăng nhập tab **Nhân viên** → **Phục vụ** → PIN `123456` (dùng điện thoại hoặc cửa sổ thu nhỏ).
+2. Ở sơ đồ bàn chọn một **bàn trống** (bàn 1–8 trong nhà, 9–14 ngoài trời).
+3. Ở mục **Chọn món**, bấm một món; chọn **Kích thước**, **Nóng / lạnh**, **Mức đường**, mức đá, **Topping**, số lượng, rồi bấm **Thêm · giá**. Đồ nóng không có đá; bánh không có tùy chọn.
+4. Kiểm tra giỏ **Món đã chọn** rồi bấm **Gửi order**. Đơn xuống màn hình pha chế gần như ngay lập tức.
+5. Khách gọi thêm: vào lại bàn đó, chọn món rồi bấm **Gửi thêm món** (cùng một đơn, ghi nhận lượt gửi riêng).
+6. Thử thêm: **Chuyển bàn** sang bàn trống khác; hủy một món còn ở trạng thái Mới.
+
+**Bước 3. Pha chế làm món** (`/kitchen`)
+1. Đăng nhập tab **Nhân viên** → **Pha chế** → PIN `345678`. Món mới hiện theo thứ tự đến trước làm trước.
+2. Bấm **Bắt đầu pha** (Mới → Đang làm): kho tự trừ nguyên liệu theo công thức. Nếu thiếu nguyên liệu, nút đổi thành **Thiếu nguyên liệu** và món/kích cỡ đó chuyển Hết hàng.
+3. Làm xong bấm **Hoàn thành**; Phục vụ và Thu ngân nhận thông báo.
+4. Bánh được trừ kho ngay khi đơn được gửi, không qua bước pha.
+
+**Bước 4. Phục vụ xác nhận khách dùng xong**
+- Khi mọi món đã Hoàn thành (hoặc đã hủy), vào lại bàn và bấm **Khách đã dùng xong**: bàn chuyển sang **Chờ thanh toán**. Nếu khách gọi thêm lúc này, bàn quay lại **Đang phục vụ**.
+
+**Bước 5. Thu ngân thanh toán đơn tại quán** (`/cashier`)
+1. Tab **Chờ thanh toán** hiện các bàn đã xong; bấm **Thanh toán** ở bàn cần tính.
+2. Nhập **số điện thoại** để nhận diện thành viên (hoặc đăng ký thành viên mới bằng số điện thoại và tên). Dùng điểm nếu muốn (1 điểm = 1.000đ, tối đa 30% đơn sau khuyến mãi).
+3. Chọn **tiền mặt** hoặc **chuyển khoản/QR** (nhân viên tự kiểm tra tiền về, hệ thống không nối ngân hàng), bấm **Xác nhận thanh toán**.
+4. Hệ thống tính theo thứ tự: giá + topping → khuyến mãi → điểm → làm tròn 500đ → tích điểm (10.000đ = 1 điểm). Thông báo **Thanh toán thành công**, bấm **In hóa đơn** (khổ 80 mm). Bàn về **Trống**.
+5. Thử khuyến mãi: **Tea Happy Hour** (giảm 15% trà, 14:00–16:00) và **Cake Evening** (giảm 10% bánh, 20:00–21:30) chỉ áp dụng cho dòng món được gửi trong khung giờ đó.
+
+**Bước 6. Đơn mang đi** (`/cashier`)
+1. Tab **Đơn mang đi**; chọn món (chỉ đồ uống lạnh và bánh), số lượng, tùy chọn.
+2. **Tiền mặt:** bấm **Thanh toán và gửi pha chế**; đơn nhận số thứ tự trong ngày (001, 002...) và xuống màn hình pha chế ngay.
+3. **Chuyển khoản/QR:** đơn là **đơn nháp** (chưa hiện ở pha chế, chưa giữ nguyên liệu, chưa có hóa đơn). Chỉ sau khi thu ngân xác nhận đã nhận đủ tiền thì đơn mới được xác nhận và gửi pha chế; có thể hủy đơn nháp.
+4. Pha chế làm món như Bước 3; số thứ tự hiện để gọi khách.
+
+**Bước 7. Chủ quán xử lý ngoại lệ** (`/admin`, tab **Quản lý**: `owner` / `admin123`)
+- **Hóa đơn:** xem, in lại (có dấu Reprint), **hủy hóa đơn** kèm lý do (chỉ khi ca chưa chốt và không còn món đang làm), hoàn tiền một phần hoặc toàn bộ rồi xác nhận đã trả tiền.
+- **Hủy món đang làm:** chỉ Chủ quán, bắt buộc ghi lý do; phần đã tiêu hao ghi là hao hụt "hủy món".
+- **Kho:** xem tồn kho sau khi pha, nhập kho, kiểm kê, xác nhận phiếu hao hụt do Pha chế đề xuất, xem cảnh báo sắp hết hoặc sắp hết hạn.
+- **Thực đơn/khuyến mãi/nhân viên/khách hàng:** thêm, sửa, tắt bán, khóa hoặc mở khóa tài khoản.
+
+**Bước 8. Chốt ca và chốt ngày**
+1. Thu ngân bấm **Chốt ca**, nhập tiền mặt kiểm đếm thực tế; hệ thống tính tiền dự kiến (tiền đầu ca + tiền mặt thu, trừ hóa đơn hủy và hoàn tiền) và ghi **chênh lệch**. Sau khi chốt, hóa đơn của ca không sửa được. Nếu thu ngân quên, Chủ quán chốt thay.
+2. Chủ quán vào **Nhân sự và ca** → tab **Ca & chốt ngày**, bấm **Chốt ngày kinh doanh**. Chỉ chốt được khi không còn đơn mở và mọi bàn đều Trống; ca tối là ca chốt ngày.
+
+**Bước 9. Xem báo cáo** (`/admin`, trang đầu)
+- Chọn **Hôm nay**, **Hôm qua**, **7 ngày qua**, **Tháng này** hoặc khoảng ngày tự chọn: tổng doanh thu, số hóa đơn, số sản phẩm đã bán, món bán chạy, danh sách hóa đơn. Hóa đơn đã hủy không tính, hoàn tiền một phần được trừ.
+
+### Chạy lại để test và demo
+
+Dùng ở thư mục gốc dự án. Mặc định hệ thống nạp dữ liệu nền và để luồng nghiệp vụ trống.
+
+| Muốn | Làm |
+|---|---|
+| **Chạy bình thường** (database đang trống hoặc muốn giữ dữ liệu hiện có) | Nhấn `Ctrl+C` ở terminal đang chạy, rồi `scripts/dev-mysql.sh`. Không cần gõ thêm biến nào |
+| **Demo lại từ trống** (xóa hết đơn, hóa đơn, ca; nạp lại dữ liệu nền) | `docker rm -f vtph-mysql && docker volume rm vtph_mysql_data`, rồi `scripts/dev-mysql.sh` |
+| **Có sẵn đơn mẫu** (ca tối đang mở, 3 đơn mẫu, 1 phiếu hao hụt để xem ngay) | Xóa database như dòng trên, rồi `SPRING_FLYWAY_TARGET=latest scripts/dev-mysql.sh` |
+
+- Lệnh xóa database làm mất toàn bộ dữ liệu đã thao tác; nếu cần giữ, sao lưu trước: `docker exec vtph-mysql mysqldump -uroot -prootpw --single-transaction --routines --triggers VTPH_Coffee | gzip > vtph_truoc_khi_xoa.sql.gz`.
+- `SPRING_FLYWAY_TARGET=latest` chỉ có tác dụng trên database **trống**. Đơn mẫu nằm ở `database/05_seed_transactions.sql`.
+- Ngày kinh doanh được tạo theo ngày lúc dựng database. Nên xóa và dựng lại ngay trước buổi demo để ngày kinh doanh khớp với hôm đó.
 
 ---
 
@@ -238,7 +297,7 @@ npm --prefix frontend run test     # test giao diện
 npm --prefix frontend run lint && npm --prefix frontend run typecheck
 ```
 
-Hiện có **67 test backend**, **16 test giao diện** và **35 kịch bản quy tắc CSDL** (`database/run_tests.py`, xem [database/README.md](database/README.md)); tất cả đều đạt. Chi tiết ở [chiến lược kiểm thử](docs/testing/test-strategy.md).
+Hiện có **72 test backend**, **17 test giao diện** và **35 kịch bản quy tắc CSDL** (`database/run_tests.py`, xem [database/README.md](database/README.md)); tất cả đều đạt. Chi tiết ở [chiến lược kiểm thử](docs/testing/test-strategy.md).
 
 ---
 
