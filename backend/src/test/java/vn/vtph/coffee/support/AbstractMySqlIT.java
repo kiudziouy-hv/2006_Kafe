@@ -27,7 +27,7 @@ import org.springframework.test.context.event.RecordApplicationEvents;
 @AutoConfigureMockMvc
 @RecordApplicationEvents
 @ActiveProfiles("mysql")
-@TestPropertySource(properties = "vtph.auth.legacy-demo-hash=true")
+@TestPropertySource(properties = {"vtph.auth.legacy-demo-hash=true", "vtph.auth.require-attendance=false"})
 public abstract class AbstractMySqlIT {
     private static Map<Integer, BigDecimal> stockSnapshot;
     private static List<Map<String, Object>> sizeSnapshot;

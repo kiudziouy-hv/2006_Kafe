@@ -41,6 +41,7 @@ public class AuthController {
         Object id = body.get("accountId");
         int accountId = id instanceof Number n ? n.intValue() : -1;
         Account a = auth.loginStaff(accountId, String.valueOf(body.getOrDefault("pin", "")));
+        auth.requireOnDuty(a);
         return start(a, req, res);
     }
 

@@ -68,6 +68,28 @@ public class JdbcAccountStore implements AccountStore {
     }
 
     @Override
+    public boolean onDuty(Account a) {
+        Integer n = jdbc.queryForObject("""
+                SELECT COUNT(*) FROM attendance t JOIN account ac ON ac.employee_id = t.employee_id
+                WHERE ac.account_id = ? AND t.check_out_time IS NULL""", Integer.class, a.id);
+        return n != null && n > 0;
+    }
+
+    @Override
+    public boolean anyOnDuty(Role role) {
+        String db = switch (role) {
+            case OWNER -> "OWNER_MANAGER";
+            case CASHIER -> "CASHIER";
+            case WAITER -> "WAITER";
+            case BARISTA -> "BARISTA";
+        };
+        Integer n = jdbc.queryForObject("""
+                SELECT COUNT(*) FROM attendance t JOIN account ac ON ac.employee_id = t.employee_id
+                WHERE ac.role = ? AND ac.is_station = 0 AND t.check_out_time IS NULL""", Integer.class, db);
+        return n != null && n > 0;
+    }
+
+    @Override
     public void saveLockState(Account a) {
         if (a.permanentlyLocked) return; // khóa hẳn do Chủ quán đặt, đăng nhập không đổi được
         Instant until = a.lockedUntil;
