@@ -86,8 +86,14 @@ export interface OpsMessage {
     | 'TABLE_WAITING_PAY'
     | 'ORDER_PAID'
     | 'LINE_SHORTAGE'
-  orderId: number
+    | 'SHIFT_OPENED'
+    | 'SHIFT_CLOSED'
+  /** Sự kiện của đơn/dòng món; sự kiện ca (SHIFT_*) mang `shiftId` thay vì `orderId`. */
+  orderId?: number
+  shiftId?: number
   label: string
   name?: string
+  /** LINE_DONE của đơn mang đi: Thu ngân gọi khách nhận, không cần mang ra bàn. */
+  takeaway?: boolean
   at: string
 }

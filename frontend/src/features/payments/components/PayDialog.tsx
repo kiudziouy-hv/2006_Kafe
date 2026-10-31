@@ -11,6 +11,7 @@ import type { OrderDetail } from '@/features/orders/api/ordersApi'
 import { useAction } from '@/hooks/useAction'
 import { formatMoney } from '@/utils/format'
 import { paymentsApi, type PayMethod, type PayOrder } from '../api/paymentsApi'
+import { useStaffPicker } from './StaffPicker'
 
 const round500 = (n: number) => Math.floor(n / 500 + 0.5) * 500
 
@@ -27,18 +28,22 @@ export function PayDialog({
   draft?: boolean
   onClose: () => void
 }) {
+  // Đơn nháp đã có thành viên và điểm từ lúc tạo đơn; backend dùng lại, không hỏi ở bước xác nhận.
   const [member, setMember] = useState<Customer | null>(null)
   const [points, setPoints] = useState('0')
   const [method, setMethod] = useState<PayMethod>(draft ? 'TRANSFER' : 'CASH')
   const [received, setReceived] = useState('')
   const [paid, setPaid] = useState<PayOrder | null>(null)
+  const staff = useStaffPicker()
 
   const maxPoints = member ? Math.min(order.maxPoints, member.points) : 0
-  const usedPoints = Math.min(Number(points || 0), maxPoints)
-  const payable = round500(order.afterPromo - usedPoints * 1000)
+  const usedPoints = draft ? order.pointsUsed : Math.min(Number(points || 0), maxPoints)
+  const payable = draft ? order.rounded : round500(order.afterPromo - usedPoints * 1000)
   const earn = member ? Math.floor(payable / 10_000) : 0
   const cashIn = received === '' ? payable : Number(received)
-  const payer = { customerId: member?.id, points: usedPoints }
+  const payer = draft
+    ? { staffId: staff.staffId }
+    : { customerId: member?.id, points: usedPoints, staffId: staff.staffId }
 
   const submit = useAction(
     () =>
@@ -56,11 +61,7 @@ export function PayDialog({
 
   return (
     <Modal
-      title={
-        draft
-          ? `Xác nhận đơn mang đi #${String(order.seq ?? 0).padStart(3, '0')}`
-          : `Thanh toán bàn ${order.tableNo}`
-      }
+      title={draft ? `Xác nhận đơn nháp #${order.id}` : `Thanh toán bàn ${order.tableNo}`}
       onClose={onClose}
     >
       <div className="flex flex-col gap-4">
@@ -91,14 +92,22 @@ export function PayDialog({
           <dd className="text-lg font-bold">{formatMoney(payable)}</dd>
         </dl>
 
-        <MemberPicker
-          member={member}
-          onChange={(m) => {
-            setMember(m)
-            setPoints('0')
-          }}
-        />
-        {member && (
+        {draft && order.customerName && (
+          <p className="text-sm text-ink-soft">
+            Thành viên: <b>{order.customerName}</b>
+            {order.pointsUsed > 0 && ` · dùng ${order.pointsUsed} điểm`}
+          </p>
+        )}
+        {!draft && (
+          <MemberPicker
+            member={member}
+            onChange={(m) => {
+              setMember(m)
+              setPoints('0')
+            }}
+          />
+        )}
+        {!draft && member && (
           <NumberField
             label={`Số điểm dùng (tối đa ${maxPoints}; 1 điểm = 1.000đ)`}
             value={points}
@@ -106,6 +115,8 @@ export function PayDialog({
             hint={earn > 0 ? `Sẽ tích thêm ${earn} điểm` : undefined}
           />
         )}
+
+        {staff.picker}
 
         {!draft && (
           <div
@@ -131,11 +142,12 @@ export function PayDialog({
             label="Tiền khách đưa (đồng)"
             value={received}
             onValueChange={setReceived}
+            maxLength={10}
             hint={cashIn >= payable ? `Tiền thối: ${formatMoney(cashIn - payable)}` : undefined}
           />
         )}
         <Button
-          disabled={!draft && method === 'CASH' && cashIn < payable}
+          disabled={!staff.ready || (!draft && method === 'CASH' && cashIn < payable)}
           loading={submit.isPending}
           onClick={() => submit.mutate(undefined)}
         >

@@ -64,7 +64,7 @@ export function orderLabel(o: {
 export const GROUP_LABEL: Record<string, string> = {
   COFFEE: 'Coffee',
   TEA: 'Tea',
-  SMOOTHIE: 'Smoothie',
+  SMOOTHIE: 'Sinh tố',
   CAKE: 'Cake',
 }
 
