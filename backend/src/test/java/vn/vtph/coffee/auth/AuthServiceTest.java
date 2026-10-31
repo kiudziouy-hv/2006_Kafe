@@ -19,6 +19,40 @@ class AuthServiceTest {
         auth = new AuthService(store, encoder, false);
     }
 
+    /** Kho tài khoản giả lập có chấm công: chỉ những tài khoản/vai trò trong tập "on" được coi là đang chấm công. */
+    private AuthService withAttendance(java.util.Set<Integer> personalOn, java.util.Set<Role> rolesOn) throws Exception {
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(4);
+        InMemoryAccountStore store = new InMemoryAccountStore(encoder) {
+            @Override public boolean onDuty(Account a) { return personalOn.contains(a.id); }
+            @Override public boolean anyOnDuty(Role r) { return rolesOn.contains(r); }
+        };
+        store.load();
+        return new AuthService(store, encoder, false);
+    }
+
+    @Test
+    void personalAccountNeedsOwnCheckIn() throws Exception {
+        AuthService s = withAttendance(java.util.Set.of(), java.util.Set.of());
+        Account waiter = s.loginStaff(2, "123456"); // PIN đúng nhưng chưa chấm công
+        assertEquals("NOT_CHECKED_IN", assertThrows(AuthException.class, () -> s.requireOnDuty(waiter)).code);
+        AuthService checkedIn = withAttendance(java.util.Set.of(2), java.util.Set.of());
+        checkedIn.requireOnDuty(checkedIn.loginStaff(2, "123456"));
+    }
+
+    @Test
+    void stationAccountNeedsSomeoneOfTheRoleCheckedIn() throws Exception {
+        Account station = new Account(99, "quay", "Quầy", Role.CASHIER, "x");
+        station.station = true;
+        AuthService none = withAttendance(java.util.Set.of(), java.util.Set.of(Role.WAITER));
+        assertEquals("NOT_CHECKED_IN", assertThrows(AuthException.class, () -> none.requireOnDuty(station)).code);
+        withAttendance(java.util.Set.of(), java.util.Set.of(Role.CASHIER)).requireOnDuty(station);
+    }
+
+    @Test
+    void ownerIsNotBoundByAttendance() throws Exception {
+        withAttendance(java.util.Set.of(), java.util.Set.of()).requireOnDuty(new Account(1, "owner", "Chủ quán", Role.OWNER, "x"));
+    }
+
     @Test
     void waiterLogsInWithCorrectPin() {
         assertEquals(Role.WAITER, auth.loginStaff(2, "123456").role);

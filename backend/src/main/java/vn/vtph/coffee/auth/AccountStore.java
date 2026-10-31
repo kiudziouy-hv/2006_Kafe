@@ -11,6 +11,12 @@ public interface AccountStore {
 
     Optional<Account> ownerByUsername(String username);
 
+    /** Người này đã chấm công vào và chưa chấm công ra (chế độ giả lập không có chấm công nên luôn đúng). */
+    default boolean onDuty(Account a) { return true; }
+
+    /** Có ít nhất một nhân viên cá nhân của vai trò này đang chấm công. */
+    default boolean anyOnDuty(Role role) { return true; }
+
     /** Ghi lại số lần sai, thời điểm khóa và trạng thái khóa của tài khoản. */
     void saveLockState(Account a);
 

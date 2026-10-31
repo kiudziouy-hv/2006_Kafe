@@ -44,8 +44,21 @@ public class AttendanceService {
 
     private int employeeOf(Account a) { return db.employeeId(a); }
 
-    public Map<String, Object> checkIn(int accountId, String pin, String shift) {
+    /** Người chấm công chọn vai trò rồi tên; tên không thuộc vai trò đã chọn thì từ chối trước khi kiểm tra PIN (không tính lần nhập sai). */
+    private void requireRole(int accountId, String role) {
+        if (role == null || role.isEmpty()) return;
+        Account a = auth.find(accountId);
+        if (a != null && !a.role.name().equals(role))
+            throw new OpsException(422, "WRONG_ROLE", "Nhân viên này không thuộc vai trò đã chọn. Hãy chọn đúng vai trò và tên của bạn.");
+    }
+
+    public Map<String, Object> checkIn(int accountId, String pin, String shift) { return checkIn(accountId, pin, shift, null); }
+
+    public Map<String, Object> checkOut(int accountId, String pin) { return checkOut(accountId, pin, null); }
+
+    public Map<String, Object> checkIn(int accountId, String pin, String shift, String role) {
         if (!SHIFTS.contains(shift)) throw new OpsException(422, "BAD_SHIFT", "Chọn ca sáng hoặc ca tối.");
+        requireRole(accountId, role);
         Account a = personal(auth.loginStaff(accountId, pin));
         int emp = employeeOf(a);
         if (!db.jdbc.queryForList("SELECT 1 FROM attendance WHERE employee_id = ? AND check_out_time IS NULL", emp).isEmpty())
@@ -54,7 +67,8 @@ public class AttendanceService {
         return Map.of("id", id, "fullName", a.fullName, "shift", shift, "at", Instant.now().toString());
     }
 
-    public Map<String, Object> checkOut(int accountId, String pin) {
+    public Map<String, Object> checkOut(int accountId, String pin, String role) {
+        requireRole(accountId, role);
         Account a = personal(auth.loginStaff(accountId, pin));
         int emp = employeeOf(a);
         Integer id = db.one("SELECT attendance_id FROM attendance WHERE employee_id = ? AND check_out_time IS NULL ORDER BY check_in_time DESC LIMIT 1",
@@ -67,6 +81,7 @@ public class AttendanceService {
     @Transactional(readOnly = true)
     public List<Map<String, Object>> list(LocalDate from, LocalDate to, Integer employeeId) {
         LocalDate f = from == null ? db.today().minusDays(6) : from, t = to == null ? db.today() : to;
+        db.checkRange(f, t, 366);
         LocalDateTime lo = f.atStartOfDay(db.zone).toInstant().atZone(java.time.ZoneOffset.UTC).toLocalDateTime();
         LocalDateTime hi = t.plusDays(1).atStartOfDay(db.zone).toInstant().atZone(java.time.ZoneOffset.UTC).toLocalDateTime();
         String sql = LIST_SQL + " WHERE a.check_in_time >= ? AND a.check_in_time < ?" + (employeeId == null ? "" : " AND a.employee_id = ?")

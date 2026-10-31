@@ -25,6 +25,10 @@ public class AuthService {
     public static final int MAX_ATTEMPTS = 5;
     public static final Duration LOCK_TIME = Duration.ofMinutes(15);
 
+    /** Công tắc ràng buộc chấm công mới được đăng nhập; mặc định bật. Chỉ tắt trong test tích hợp cũ không chấm công. */
+    @Value("${vtph.auth.require-attendance:true}")
+    private boolean requireAttendance = true;
+
     private final AccountStore store;
     private final PasswordEncoder encoder;
     private final boolean legacyDemoHash;
@@ -58,6 +62,20 @@ public class AuthService {
         if (a == null || a.role == Role.OWNER) throw new AuthException("NOT_FOUND", "Không tìm thấy tài khoản.", 404, 0, 0);
         if (pin == null || !pin.matches("\\d{6}")) throw new AuthException("INVALID_FORMAT", "Mã PIN gồm đúng 6 chữ số.", 400, 0, 0);
         return check(a, pin, "Mã PIN không đúng.");
+    }
+
+    /**
+     * Ràng buộc chấm công: nhân viên chỉ được vào hệ thống khi đã chấm công vào. Tài khoản cá nhân thì chính người đó phải đang chấm công;
+     * tài khoản quầy dùng chung thì phải có ít nhất một nhân viên cùng vai trò đang chấm công. Chủ quán/Quản lý không bị ràng buộc.
+     * Gọi sau khi PIN đúng; chấm công vào/ra dùng {@link #loginStaff} nên không bị chặn.
+     */
+    public void requireOnDuty(Account a) {
+        if (!requireAttendance || a.role == Role.OWNER) return;
+        if (a.station ? !store.anyOnDuty(a.role) : !store.onDuty(a)) {
+            throw new AuthException("NOT_CHECKED_IN", a.station
+                    ? "Chưa có nhân viên nào chấm công vào ca. Hãy chấm công trước khi đăng nhập."
+                    : "Bạn chưa chấm công vào ca. Hãy chấm công trước khi đăng nhập.", 403, 0, 0);
+        }
     }
 
     public Account loginOwner(String username, String password) {

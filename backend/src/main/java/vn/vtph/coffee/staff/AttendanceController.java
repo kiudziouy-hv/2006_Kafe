@@ -23,12 +23,12 @@ public class AttendanceController {
 
     @PostMapping("/api/auth/attendance/in")
     public Map<String, Object> in(@RequestBody Map<String, Object> b) {
-        return svc.checkIn(Db.reqInt(b, "accountId", "Tài khoản"), String.valueOf(b.getOrDefault("pin", "")), String.valueOf(b.get("shift")));
+        return svc.checkIn(Db.reqInt(b, "accountId", "Tài khoản"), String.valueOf(b.getOrDefault("pin", "")), String.valueOf(b.get("shift")), Db.str(b, "role"));
     }
 
     @PostMapping("/api/auth/attendance/out")
     public Map<String, Object> out(@RequestBody Map<String, Object> b) {
-        return svc.checkOut(Db.reqInt(b, "accountId", "Tài khoản"), String.valueOf(b.getOrDefault("pin", "")));
+        return svc.checkOut(Db.reqInt(b, "accountId", "Tài khoản"), String.valueOf(b.getOrDefault("pin", "")), Db.str(b, "role"));
     }
 
     @GetMapping("/api/attendance")

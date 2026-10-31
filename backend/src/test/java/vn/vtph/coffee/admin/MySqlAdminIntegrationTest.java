@@ -242,7 +242,8 @@ class MySqlAdminIntegrationTest extends AbstractMySqlIT {
     void attendanceCheckInOutAndAuditedEdits() throws Exception {
         MockHttpSession anon = new MockHttpSession();
         rule(anon, "POST", "/api/auth/attendance/in", "{\"accountId\":2,\"pin\":\"000000\",\"shift\":\"MORNING\"}", 401, "WRONG_SECRET");
-        ok(anon, "POST", "/api/auth/attendance/in", "{\"accountId\":2,\"pin\":\"234567\",\"shift\":\"MORNING\"}");
+        rule(anon, "POST", "/api/auth/attendance/in", "{\"accountId\":2,\"pin\":\"234567\",\"shift\":\"MORNING\",\"role\":\"WAITER\"}", 422, "WRONG_ROLE"); // tên không thuộc vai trò đã chọn
+        ok(anon, "POST", "/api/auth/attendance/in", "{\"accountId\":2,\"pin\":\"234567\",\"shift\":\"MORNING\",\"role\":\"CASHIER\"}");
         rule(anon, "POST", "/api/auth/attendance/in", "{\"accountId\":2,\"pin\":\"234567\",\"shift\":\"MORNING\"}", 409, "ALREADY_IN");
         rule(owner, "POST", "/api/auth/attendance/out", "{\"accountId\":4,\"pin\":\"123456\"}", 409, "NOT_IN");
         ok(anon, "POST", "/api/auth/attendance/out", "{\"accountId\":2,\"pin\":\"234567\"}");
