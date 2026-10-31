@@ -443,6 +443,28 @@ class MySqlOpsIntegrationTest extends AbstractMySqlIT {
 
     private JsonNode openShiftEvening() throws Exception { return postJson(cashier, "/api/ops/shift/open", "{\"type\":\"EVENING\",\"openingCash\":0}"); }
 
+    /** ASM-35: ca sáng bàn giao đơn đang mở sang ca tối. ASM-46, BR-037: ca tối chỉ chốt khi không còn đơn mở và mọi bàn Trống. */
+    @Test
+    void morningShiftHandsOverOpenOrdersButEveningShiftCannotCloseWithThem() throws Exception {
+        openShift();
+        int id = send(5, line(1, 1, "M", "COLD", null)).get("id").asInt(); // 29.000, bàn 5 đang phục vụ
+        postJson(cashier, "/api/ops/shift/close", "{\"actualCash\":500000}"); // ca sáng không bị chặn bởi đơn đang mở
+        openShiftEvening();
+
+        JsonNode blocked = fail(cashier, "/api/ops/shift/close", "{\"actualCash\":0}", 409, "OPEN_ORDERS");
+        assertEquals(1, blocked.get("orders").size());
+        assertEquals(1, blocked.get("tables").size());
+        assertEquals(5, blocked.get("tables").get(0).get("number").asInt());
+
+        int lid = firstKitchenLine("NEW");
+        postJson(barista, "/api/ops/kitchen/" + lid + "/start", null);
+        postJson(barista, "/api/ops/kitchen/" + lid + "/done", null);
+        postJson(waiter, "/api/ops/orders/" + id + "/finish", null);
+        fail(cashier, "/api/ops/shift/close", "{\"actualCash\":0}", 409, "OPEN_ORDERS"); // chưa thanh toán, bàn Chờ thanh toán
+        postJson(cashier, "/api/ops/orders/" + id + "/pay", "{\"method\":\"CASH\",\"received\":29000}");
+        assertFalse(postJson(cashier, "/api/ops/shift/close", "{\"actualCash\":29000}").get("open").asBoolean());
+    }
+
     // ---------- hợp đồng API và lớp bảo vệ CSDL ----------
     @Test
     void orderJsonHasTheSameFieldsAsTheInMemoryModel() throws Exception {

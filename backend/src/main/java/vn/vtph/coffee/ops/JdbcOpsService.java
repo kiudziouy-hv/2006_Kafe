@@ -35,6 +35,7 @@ import vn.vtph.coffee.ops.Model.Shift;
 import vn.vtph.coffee.ops.Model.Size;
 import vn.vtph.coffee.ops.Model.Topping;
 import vn.vtph.coffee.menu.MenuImageStore;
+import vn.vtph.coffee.shift.OpenWork;
 import vn.vtph.coffee.promotion.PromotionService;
 import vn.vtph.coffee.shared.pricing.PricingPolicy;
 
@@ -64,13 +65,15 @@ public class JdbcOpsService implements OpsService {
     private final ZoneId zone;
     private final PromotionService promotions;
     private final MenuImageStore images;
+    private final OpenWork openWork;
 
     public JdbcOpsService(JdbcTemplate jdbc, ApplicationEventPublisher events, PromotionService promotions, MenuImageStore images,
-                          @Value("${vtph.timezone:Asia/Ho_Chi_Minh}") String timezone) {
+                          OpenWork openWork, @Value("${vtph.timezone:Asia/Ho_Chi_Minh}") String timezone) {
         this.jdbc = jdbc;
         this.events = events;
         this.promotions = promotions;
         this.images = images;
+        this.openWork = openWork;
         this.zone = ZoneId.of(timezone);
     }
 
@@ -727,13 +730,22 @@ public class JdbcOpsService implements OpsService {
         return one(SHIFT_SQL + " WHERE s.session_id = ?", JdbcOpsService::shift, id);
     }
 
-    /** UC-31: chốt ca. Chặn khi còn đơn nháp chuyển khoản/QR. */
+    /**
+     * UC-31: chốt ca. Mọi ca bị chặn khi còn đơn nháp chuyển khoản/QR. Ca sáng bàn giao đơn đang mở sang ca tối (ASM-35);
+     * ca tối còn bị chặn khi còn đơn mở hoặc bàn chưa Trống (BR-037, ASM-46) và liệt kê các mục cần xử lý.
+     */
     @Override
     public Shift closeShift(Integer actual, Account by) {
         Shift s = openSession();
         if (s == null) throw new OpsException(409, "NO_SHIFT", "Chưa mở ca thu ngân.");
         int d = draftCount();
         if (d > 0) throw new OpsException(409, "DRAFTS_PENDING", "Còn " + d + " đơn nháp, hãy xác nhận hoặc hủy trước khi chốt ca.");
+        if ("EVENING".equals(s.type)) {
+            List<Map<String, Object>> orders = openWork.orders(), tables = openWork.busyTables();
+            if (!orders.isEmpty() || !tables.isEmpty())
+                throw new OpsException(409, "OPEN_ORDERS", "Còn " + orders.size() + " đơn mở và " + tables.size() + " bàn chưa Trống, hãy xử lý trước khi chốt ca tối.",
+                        Map.of("orders", orders, "tables", tables));
+        }
         if (actual == null || actual < 0) throw new OpsException(422, "BAD_CASH", "Vui lòng nhập tiền mặt kiểm đếm thực tế.");
         int expected = s.openingCash + cashSales(s.id);
         jdbc.update("""
