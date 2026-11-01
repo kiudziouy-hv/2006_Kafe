@@ -41,7 +41,7 @@ Theo bảng đối chiếu trong [docs/requirements/README.md](docs/requirements
 
 **Quy tắc vận hành nổi bật** (đã làm, backend và trigger CSDL thực thi, giao diện chỉ hỗ trợ):
 - **Chấm công mới được đăng nhập.** Nhân viên (thu ngân, phục vụ, pha chế) chỉ đăng nhập được khi đã chấm công vào ca: tài khoản cá nhân thì chính người đó đang chấm công; tài khoản quầy dùng chung thì phải có ít nhất một nhân viên cùng vai trò đang chấm công. Chủ quán/Quản lý không bị ràng buộc. Trang `/attendance` luôn mở, và chỉ chặn lúc đăng nhập (phiên đang mở không bị ngắt khi chấm công ra). Chấm công chọn **vai trò rồi tên**, backend từ chối nếu tên không thuộc vai trò đã chọn.
-- **Nhân viên phụ trách.** Khi tạo đơn mang đi, xác nhận đơn nháp hoặc thanh toán đơn tại bàn, Thu ngân chọn người trong số thu ngân đang chấm công; tên được lưu vào hóa đơn (`issued_by`) và đơn mang đi (`created_by`), hiện trên hóa đơn in. Chưa ai chấm công thì không bắt chọn và ghi theo tài khoản quầy.
+- **Nhân viên phụ trách.** Thu ngân và Phục vụ là người trong ca: lúc đăng nhập các vai trò này, chọn tên trong số người cùng vai trò đang chấm công (cần chấm công trước); phiên đó gửi đơn tại bàn (`created_by`), lập đơn mang đi, xác nhận đơn nháp, thanh toán đơn tại bàn, và tên được lưu vào hóa đơn (`issued_by`), đơn mang đi (`created_by`), hiện trên hóa đơn in. Màn thu tiền không còn ô chọn người.
 - **Ca thu ngân.** Mỗi lúc một ca mở; mỗi ca (sáng, tối) chỉ mở một lần trong ngày; ngày đã chốt thì không mở thêm. Tab *Ca thu ngân* hiện hai ô ca sáng và ca tối của hôm nay (kèm tổng ngày) và 7 ngày gần nhất. Mở hoặc chốt ca được báo thời gian thực cho mọi cửa sổ thu ngân và Chủ quán. Hệ thống **không** ràng buộc theo giờ thật nên demo giờ nào cũng mở được ca.
 - **Đơn mang đi.** Có mức đá **Đá riêng** (chỉ đơn mang đi). Pha chế xong thì chỉ **Thu ngân** được báo và là người **giao khách** (nút *Đã giao khách* ở thẻ *Chờ giao khách*). **Chốt ca bị chặn** khi còn đơn nháp hoặc còn đơn mang đi chưa giao khách (cả backend lẫn trigger CSDL). Ca hiện thêm doanh thu chuyển khoản/QR để đối chiếu với app ngân hàng; số này không tính vào tiền mặt dự kiến.
 - **Thực đơn.** Nhóm *Sinh tố* không có topping; cà phê giữ Kem cheese, Shot espresso, Pudding (Cappuccino và Espresso chỉ Shot espresso).
@@ -49,9 +49,9 @@ Theo bảng đối chiếu trong [docs/requirements/README.md](docs/requirements
 
 **Chưa làm** (mức mở rộng, Level 2):
 - Xuất Excel, dashboard, báo cáo theo khung giờ.
-- **Nhật ký thao tác (Audit Log): không làm.** Hệ thống chỉ có bảng chấm công (mục *Nhân sự & ca*) để biết ai trực ca nào, và các chỉnh sửa chấm công được ghi lại cùng lịch sử. Thao tác ở máy thu ngân, màn hình pha chế và điện thoại phục vụ dùng tài khoản dùng chung của vai trò nên không truy được từng người, trừ phần *nhân viên phụ trách* của hóa đơn và đơn mang đi nêu trên. Các thao tác khác (gửi món, pha chế...) muốn biết ai làm thì đối chiếu giờ thao tác với bảng chấm công của ca đó; việc truy vết sâu hơn do quán tự xử lý ngoài hệ thống: hỏi nhân viên trực ca và trích camera.
+- **Nhật ký thao tác (Audit Log): không làm.** Hệ thống chỉ có bảng chấm công (mục *Nhân sự & ca*) để biết ai trực ca nào, và các chỉnh sửa chấm công được ghi lại cùng lịch sử. Thao tác ở máy thu ngân và điện thoại phục vụ ghi theo tên người chọn lúc đăng nhập (đơn, hóa đơn, ca), còn màn hình pha chế dùng tài khoản dùng chung nên không truy được từng người. Các thao tác của pha chế muốn biết ai làm thì đối chiếu giờ thao tác với bảng chấm công của ca đó; việc truy vết sâu hơn do quán tự xử lý ngoài hệ thống: hỏi nhân viên trực ca và trích camera.
 - **Bắt đổi PIN lần đầu: không làm.** Nhân viên chỉ nhập PIN của vai trò và tài khoản vẫn dùng chung, nên PIN riêng không xác định được người thao tác; PIN chỉ là lớp bảo vệ đăng nhập.
-- **Điều chỉnh so với yêu cầu gốc:** yêu cầu gốc ghi mỗi nhân viên một tài khoản riêng, kể cả khi dùng máy chung, và mỗi thao tác ghi theo tài khoản đang đăng nhập. Nhóm chọn tài khoản dùng chung theo vai trò cho các thiết bị quầy vì giờ cao điểm 1 đến 2 người luân phiên trên cùng một màn hình, đổi tài khoản cho từng thao tác thì không kịp, và phiên tự hết sau 5 phút. Màn hình chỉ thể hiện vai trò (không hiện tên người). Người trực ca được biết qua chấm công bằng tài khoản cá nhân.
+- **Điều chỉnh so với yêu cầu gốc:** yêu cầu gốc ghi mỗi nhân viên một tài khoản riêng, kể cả khi dùng máy chung, và mỗi thao tác ghi theo tài khoản đang đăng nhập. Nhóm chọn tài khoản dùng chung theo vai trò cho các thiết bị quầy vì giờ cao điểm 1 đến 2 người luân phiên trên cùng một màn hình, đổi tài khoản cho từng thao tác thì không kịp, và phiên tự hết sau 5 phút. Với thu ngân và phục vụ, lúc đăng nhập người dùng chọn thêm tên mình trong số người đang chấm công, nên đơn và hóa đơn vẫn ghi đúng người; pha chế chỉ thể hiện vai trò. Người trực ca được biết qua chấm công bằng tài khoản cá nhân.
 - **Cảnh báo đơn chờ pha chế quá 10 phút:** chưa có.
 
 Hoàn tiền không đi qua ngân hàng: Chủ quán trả tiền ngoài hệ thống rồi xác nhận trên hệ thống.
@@ -170,11 +170,11 @@ Dự án đã có sẵn ảnh cho 30 món và 5 topping. Chủ quán thêm ảnh
 | Vai trò | Họ tên | Cách đăng nhập | Thông tin |
 |---|---|---|---|
 | Chủ quán / Quản lý | Huỳnh Thị Kiều Vy | Tab **Quản lý** | `owner` / `admin123` |
-| Thu ngân | Dùng chung cho máy thu ngân (tài khoản "Quầy Thu ngân") | Tab **Nhân viên** → Thu ngân | PIN `234567`, không chọn tên |
+| Thu ngân | Dùng chung cho máy thu ngân (tài khoản "Quầy Thu ngân") | Tab **Nhân viên** → Thu ngân | chọn tên rồi nhập **PIN riêng**: Hồ Quốc Tiến `234567`, Lê Hoàng Cường `456789` |
 | Phục vụ | Dùng chung cho các điện thoại phục vụ (tài khoản "Điện thoại Phục vụ") | Tab **Nhân viên** → Phục vụ | PIN `123456`, không chọn tên |
 | Pha chế | Dùng chung cho màn hình pha chế (tài khoản "Màn hình Pha chế") | Tab **Nhân viên** → Pha chế | PIN `345678`, không chọn tên |
 
-- **Đăng nhập nhân viên không hiện danh sách tên.** Cả ba vai trò đăng nhập bằng cách chọn vai trò rồi nhập PIN của vai trò đó (tài khoản dùng chung). Màn hình chỉ thể hiện vai trò, không thể hiện tên người. **Ba PIN phải khác nhau** (`123456`, `234567`, `345678` ở dữ liệu mẫu); nếu hai vai trò dùng chung một PIN thì người này có thể vào tài khoản của vai trò kia và nâng quyền. Mọi thao tác ghi vào tài khoản dùng chung của vai trò, không biết đích danh ai bấm; muốn biết ai trực ca đó thì xem bảng chấm công. Tài khoản dùng chung không dùng để chấm công.
+- **Đăng nhập nhân viên không hiện danh sách tài khoản.** Cả ba vai trò đăng nhập bằng cách chọn vai trò rồi nhập PIN của vai trò đó (tài khoản dùng chung). Riêng Thu ngân và Phục vụ còn chọn tên mình trong số người cùng vai trò đang chấm công; Pha chế chỉ thể hiện vai trò. **Thu ngân nhập PIN riêng của chính người đã chọn** (quán có hai thu ngân theo ca sáng và ca tối: *Hồ Quốc Tiến*, *Lê Hoàng Cường*), nên chọn tên người khác thì không vào được; Chủ quán đặt hoặc đổi PIN từng người ở màn Nhân viên. **PIN của các vai trò phải khác nhau** (phục vụ `123456`, pha chế `345678`, thu ngân Hồ Quốc Tiến `234567` và Lê Hoàng Cường `456789` ở dữ liệu mẫu); nếu hai vai trò dùng chung một PIN thì người này có thể vào tài khoản của vai trò kia và nâng quyền. Thao tác của Thu ngân và Phục vụ ghi theo người đã chọn lúc đăng nhập (thu ngân có PIN riêng nên không chọn nhầm được; phục vụ dùng PIN chung nên chỉ là tên chọn); thao tác của Pha chế ghi vào tài khoản dùng chung, muốn biết ai trực ca đó thì xem bảng chấm công. Tài khoản dùng chung không dùng để chấm công.
 - **Chấm công** luôn dùng tài khoản cá nhân: ở trang `/attendance`, mỗi người chọn **vai trò** (Thu ngân, Phục vụ, Pha chế), rồi chọn **tên** trong danh sách của vai trò đó và nhập PIN. Backend từ chối nếu tên không thuộc vai trò đã chọn (`WRONG_ROLE`). PIN ở dữ liệu mẫu **theo vai trò**, đồng bộ với đăng nhập: thu ngân `234567`, phục vụ `123456`, pha chế `345678`. Tài khoản cá nhân: phục vụ Võ Tấn Phát, Võ Thị Em, Đỗ Quang Huy; thu ngân Hồ Quốc Tiến, Lê Hoàng Cường; pha chế Trần Thanh Huy, Đặng Thị Giang. Các tài khoản quầy dùng chung không xuất hiện ở trang chấm công. Khi dùng thật, Chủ quán đặt PIN riêng cho từng người ở **Nhân sự & ca → Nhân viên**.
 - **Phải chấm công trước khi đăng nhập** (thu ngân, phục vụ, pha chế): tài khoản cá nhân thì chính người đó đang chấm công; quầy dùng chung thì phải có ít nhất một nhân viên cùng vai trò đang chấm công. Với dữ liệu mẫu mới dựng lại thì chưa ai chấm công, nên việc đầu tiên là vào `/attendance`. Chủ quán không bị ràng buộc.
 - **Ràng buộc nhập liệu:** số điện thoại đúng 10 số bắt đầu bằng 0; tiền không âm, không thập phân, có trần (tiền đầu ca 100 triệu, tiền kiểm đếm/khách đưa 1 tỷ, giá bán và phụ phí 10 triệu); tên tối đa 100 ký tự; hạn sử dụng nguyên liệu không ở quá khứ và không quá 5 năm; bộ lọc ngày không chọn tương lai, không đảo ngược, tối đa 366 ngày.
@@ -198,10 +198,10 @@ Dự án đã có sẵn ảnh cho 30 món và 5 topping. Chủ quán thêm ảnh
 Mặc định `scripts/dev-mysql.sh` chỉ nạp **dữ liệu nền** ở trên. Hệ thống chưa có đơn, hóa đơn hay ca thu ngân nào, để bạn tự đi hết luồng khi demo. Mỗi bước ghi rõ ai làm, ở màn hình nào, bấm gì. Nên mở sẵn 3 cửa sổ trình duyệt (hoặc 3 thiết bị) cho Phục vụ, Pha chế và Thu ngân để thấy đơn chạy tức thời giữa các vai trò.
 
 **Bước 0. Chấm công (bắt buộc trước khi đăng nhập nhân viên)**
-- Ở màn đăng nhập bấm **Chấm công vào / ra ca** (`/attendance`), bấm tab **Chấm công vào**, chọn **vai trò** (ví dụ Thu ngân), chọn **tên** (ví dụ Hồ Quốc Tiến), chọn ca sáng hoặc ca tối, nhập PIN (thu ngân `234567`) rồi bấm OK. Làm tương tự cho một phục vụ (`123456`) và một pha chế (`345678`). Chưa ai chấm công thì đăng nhập vai trò đó bị chặn.
+- Ở màn đăng nhập bấm **Chấm công vào / ra ca** (`/attendance`), bấm tab **Chấm công vào**, chọn **vai trò** (ví dụ Thu ngân), chọn **tên** (ví dụ Hồ Quốc Tiến), chọn ca sáng hoặc ca tối, nhập PIN (thu ngân: Hồ Quốc Tiến `234567`, Lê Hoàng Cường `456789`) rồi bấm OK. Làm tương tự cho một phục vụ (`123456`) và một pha chế (`345678`). Chưa ai chấm công thì đăng nhập vai trò đó bị chặn.
 
 **Bước 1. Thu ngân mở ca** (`/cashier`)
-1. Tab **Nhân viên** → **Thu ngân** → PIN `234567`.
+1. Tab **Nhân viên** → **Thu ngân** → chọn tên (người đã chấm công) → PIN riêng (Hồ Quốc Tiến `234567`).
 2. Vào tab **Ca thu ngân**: ô **Ca sáng** hoặc **Ca tối** chưa mở có sẵn form; nhập **Tiền mặt đầu ca (đồng)** (ví dụ 500000), bấm **Mở ca**. Ở tab **Chờ thanh toán** hoặc **Đơn mang đi** khi chưa mở ca, nút **Mở ca thu ngân** mở popup mở ca ngay tại chỗ.
 3. Chưa mở ca thì không thanh toán và không tạo đơn mang đi được; mỗi lúc chỉ một ca mở, ca tối mở sau khi chốt ca sáng. Mở ca xong, mọi cửa sổ thu ngân tự cập nhật.
 
@@ -224,13 +224,13 @@ Mặc định `scripts/dev-mysql.sh` chỉ nạp **dữ liệu nền** ở trên
 
 **Bước 5. Thu ngân thanh toán đơn tại quán** (`/cashier`)
 1. Tab **Chờ thanh toán** hiện các bàn đã xong; bấm **Thanh toán** ở bàn cần tính.
-2. Chọn **Nhân viên phụ trách** (thu ngân đang chấm công; máy nhớ lựa chọn gần nhất). Nhập **số điện thoại** (đúng 10 số) để nhận diện thành viên (hoặc đăng ký thành viên mới bằng số điện thoại và tên). Dùng điểm nếu muốn (1 điểm = 1.000đ, tối đa 30% đơn sau khuyến mãi).
+2. Nhập **số điện thoại** (đúng 10 số) để nhận diện thành viên (hoặc đăng ký thành viên mới bằng số điện thoại và tên). Dùng điểm nếu muốn (1 điểm = 1.000đ, tối đa 30% đơn sau khuyến mãi).
 3. Chọn **tiền mặt** hoặc **chuyển khoản/QR** (nhân viên tự kiểm tra tiền về, hệ thống không nối ngân hàng), bấm **Xác nhận thanh toán**.
 4. Hệ thống tính theo thứ tự: giá + topping → khuyến mãi → điểm → làm tròn 500đ → tích điểm (10.000đ = 1 điểm). Thông báo **Thanh toán thành công**, bấm **In hóa đơn** (khổ 80 mm). Bàn về **Trống**.
 5. Thử khuyến mãi: **Tea Happy Hour** (giảm 15% trà, 14:00–16:00) và **Cake Evening** (giảm 10% bánh, 20:00–21:30) chỉ áp dụng cho dòng món được gửi trong khung giờ đó.
 
 **Bước 6. Đơn mang đi** (`/cashier`)
-1. Tab **Đơn mang đi**; chọn món (chỉ đồ uống lạnh và bánh), số lượng, tùy chọn (mức đá có thêm **Đá riêng**). Chọn **Nhân viên phụ trách** và thành viên (nếu có, dùng được cho cả tiền mặt lẫn chuyển khoản).
+1. Tab **Đơn mang đi**; chọn món (chỉ đồ uống lạnh và bánh), số lượng, tùy chọn (mức đá có thêm **Đá riêng**). Chọn thành viên (nếu có, dùng được cho cả tiền mặt lẫn chuyển khoản).
 2. **Tiền mặt:** bấm **Thanh toán và gửi pha chế**; đơn nhận số thứ tự trong ngày (001, 002...) và xuống màn hình pha chế ngay.
 3. **Chuyển khoản/QR:** đơn là **đơn nháp** (chưa hiện ở pha chế, chưa giữ nguyên liệu, chưa có hóa đơn). Chỉ sau khi thu ngân xác nhận đã nhận đủ tiền thì đơn mới được xác nhận và gửi pha chế; có thể hủy đơn nháp.
 4. Pha chế làm món như Bước 3; số thứ tự hiện để gọi khách.
@@ -278,7 +278,7 @@ Mỗi vai trò dùng một trình duyệt hoặc cửa sổ ẩn danh riêng đ�
 0. **Chấm công trước** (`/attendance`): chọn vai trò, chọn tên, nhập PIN, cho ít nhất một thu ngân, một phục vụ và một pha chế. Không có bước này thì không đăng nhập được các vai trò nhân viên.
 1. **Phục vụ** (tab Nhân viên → Phục vụ, PIN `123456`, không chọn tên): vào *Sơ đồ bàn*, chọn một bàn trống. Thực đơn nằm bên trái: bấm món, chọn kích cỡ, nóng/lạnh, đường, đá, topping rồi *Thêm*. Món vừa chọn hiện ở khối *Món đã chọn* bên phải (bấm biểu tượng thùng rác để bỏ), bấm *Gửi order* thì chỉ hiện thông báo và món chuyển xuống quầy pha chế.
 2. **Pha chế** (chọn vai trò Pha chế, PIN `345678`, không chọn tên): món mới hiện trên bảng, bấm *Bắt đầu pha* (nguyên liệu trong kho được trừ theo công thức; nếu thiếu nguyên liệu nút báo "Thiếu nguyên liệu"), pha xong bấm *Hoàn thành* để báo Phục vụ và Thu ngân.
-3. **Thu ngân** (chọn vai trò Thu ngân, PIN `234567`, không chọn tên): chọn bàn đang chờ thanh toán. Nhập số điện thoại thành viên (ví dụ `0912345678`) để dùng điểm, chọn phương thức rồi thanh toán và in hóa đơn.
+3. **Thu ngân** (chọn vai trò Thu ngân, chọn tên, nhập PIN riêng của người đó, ví dụ Hồ Quốc Tiến `234567`): chọn bàn đang chờ thanh toán. Nhập số điện thoại thành viên (ví dụ `0912345678`) để dùng điểm, chọn phương thức rồi thanh toán và in hóa đơn.
 4. **Chủ quán** (`owner` / `admin123`): xem *Báo cáo* (doanh thu, món bán chạy), *Hóa đơn* (in lại, hủy, hoàn tiền), *Kho* (cảnh báo sắp hết, xác nhận hao hụt). Avatar ở cuối thanh bên mở menu *Thông tin cá nhân* và *Đăng xuất*.
 5. Cuối ngày: Thu ngân hoặc Chủ quán **chốt ca**, Chủ quán **chốt ngày**.
 
@@ -315,7 +315,7 @@ npm --prefix frontend run test     # test giao diện
 npm --prefix frontend run lint && npm --prefix frontend run typecheck
 ```
 
-Hiện có **86 test backend** (gồm test chạy trên MySQL thật), **18 test giao diện** và **36 kịch bản quy tắc CSDL** (`database/run_tests.py`, xem [database/README.md](database/README.md)); tất cả đều đạt. Chi tiết ở [chiến lược kiểm thử](docs/testing/test-strategy.md).
+Hiện có **87 test backend** (gồm test chạy trên MySQL thật), **20 test giao diện** và **36 kịch bản quy tắc CSDL** (`database/run_tests.py`, xem [database/README.md](database/README.md)); tất cả đều đạt. Chi tiết ở [chiến lược kiểm thử](docs/testing/test-strategy.md).
 
 ---
 

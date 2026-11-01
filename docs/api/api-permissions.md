@@ -14,6 +14,7 @@ Cập nhật 2026-10-31, lập từ mã nguồn các `*Controller` (89 API) và 
 | Method | API | Phục vụ | Pha chế | Thu ngân | Chủ quán |
 |---|---|:-:|:-:|:-:|:-:|
 | GET | `/api/auth/staff` | công khai | công khai | công khai | công khai |
+| GET | `/api/auth/on-duty` | công khai | công khai | công khai | công khai |
 | POST | `/api/auth/staff/login` | công khai | công khai | công khai | công khai |
 | POST | `/api/auth/owner/login` | công khai | công khai | công khai | công khai |
 | POST | `/api/auth/logout` | công khai | công khai | công khai | công khai |
@@ -67,7 +68,6 @@ Cập nhật 2026-10-31, lập từ mã nguồn các `*Controller` (89 API) và 
 | POST | `/api/ops/orders/{id}/pay` |  |  | ✓ | ✓ |
 | POST | `/api/ops/takeaway` |  |  | ✓ | ✓ |
 | POST | `/api/ops/takeaway/quote` |  |  | ✓ | ✓ |
-| GET | `/api/ops/on-duty` |  |  | ✓ | ✓ |
 | GET | `/api/ops/takeaway/handovers` |  |  | ✓ | ✓ |
 | POST | `/api/ops/orders/{id}/handover` |  |  | ✓ | ✓ |
 | GET | `/api/ops/drafts` |  |  | ✓ | ✓ |
@@ -175,13 +175,13 @@ Cập nhật 2026-10-31, lập từ mã nguồn các `*Controller` (89 API) và 
 
 ## Điểm cần lưu ý
 
-- `GET /api/auth/staff` công khai và trả danh sách mọi tài khoản nhân viên (id, họ tên, vai trò, cờ khóa, cờ quầy dùng chung; không có Chủ quán). Giao diện không hiển thị danh sách này khi đăng nhập quầy, nhưng ai gọi API cũng đọc được.
+- `GET /api/auth/staff` công khai và trả danh sách mọi tài khoản nhân viên (id, họ tên, vai trò, cờ khóa, cờ quầy dùng chung; không có Chủ quán). Giao diện không hiển thị danh sách này khi đăng nhập quầy, nhưng ai gọi API cũng đọc được. `GET /api/auth/on-duty?role=CASHIER|WAITER` cũng công khai và chỉ trả mã và tên người đang chấm công của vai trò đó, để chọn tên lúc đăng nhập.
 - `GET /api/ops/orders/{id}` cho Phục vụ và Thu ngân xem bất kỳ đơn nào theo mã, không giới hạn theo bàn đang phục vụ.
 - Hóa đơn (`GET /api/invoices`, chi tiết, in lại): Thu ngân xem được toàn bộ hóa đơn, không chỉ ca của mình.
 
 ## Ngoài phạm vi phân quyền
 
-- **Không truy vết từng người ở quầy dùng chung.** Thu ngân, pha chế và phục vụ đăng nhập bằng tài khoản dùng chung của vai trò, màn hình chỉ thể hiện vai trò, nên hệ thống không biết người nào thao tác. Quản lý đối chiếu giờ thao tác với bảng chấm công của ca. Truy vết sâu hơn do quán tự xử lý ngoài hệ thống: hỏi nhân viên trực ca và trích camera.
+- **Truy vết ở quầy dùng chung chỉ theo tên được chọn.** Thu ngân và phục vụ chọn tên lúc đăng nhập nên đơn, hóa đơn, ca ghi theo người đó; thu ngân phải nhập PIN riêng của người đã chọn (khóa tạm 5 lần sai tính theo từng người) nên không chọn nhầm được; phục vụ dùng PIN chung nên hệ thống không xác minh được người chọn đúng là mình. Pha chế dùng tài khoản dùng chung, hệ thống không biết người nào thao tác. Quản lý đối chiếu giờ thao tác với bảng chấm công của ca. Truy vết sâu hơn do quán tự xử lý ngoài hệ thống: hỏi nhân viên trực ca và trích camera.
 - **Không có nhật ký thao tác (Audit Log)** cho từng API; chỉ chỉnh sửa chấm công có lịch sử.
 - **Không bắt đổi PIN lần đầu.** PIN chỉ là lớp bảo vệ đăng nhập, không dùng để xác định người thao tác.
 - **Điều chỉnh so với yêu cầu gốc** (mỗi người một tài khoản): xem mục Chưa làm trong [README](../../README.md).

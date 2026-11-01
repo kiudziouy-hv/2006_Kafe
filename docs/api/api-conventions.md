@@ -28,7 +28,7 @@
 | Gọi món | `POST /api/ops/tables/{no}/orders`, `POST /api/ops/orders/{id}/lines/{lid}/cancel`, `POST /api/ops/orders/{id}/move`, `POST /api/ops/orders/{id}/finish` | Phục vụ (hủy món: theo BR-025) |
 | Thực đơn | `GET /api/ops/menu` | Phục vụ, Thu ngân, Pha chế |
 | Pha chế | `GET /api/ops/kitchen`, `POST /api/ops/kitchen/{lid}/start`, `…/done` | Pha chế |
-| Thu ngân | `GET/POST /api/ops/shift`, `/shift/open`, `/shift/close`, `GET /api/ops/pending`, `POST /api/ops/orders/{id}/pay`, `POST /api/ops/takeaway`, `GET /api/ops/drafts`, `POST /api/ops/drafts/{id}/confirm|cancel`, `GET /api/ops/takeaway/handovers`, `POST /api/ops/orders/{id}/handover` (giao khách), `GET /api/ops/on-duty` (thu ngân đang chấm công, để chọn nhân viên phụ trách) | Thu ngân |
+| Thu ngân | `GET/POST /api/ops/shift`, `/shift/open`, `/shift/close`, `GET /api/ops/pending`, `POST /api/ops/orders/{id}/pay`, `POST /api/ops/takeaway`, `GET /api/ops/drafts`, `POST /api/ops/drafts/{id}/confirm|cancel`, `GET /api/ops/takeaway/handovers`, `POST /api/ops/orders/{id}/handover` (giao khách), người lập đơn/hóa đơn lấy từ thu ngân hoặc phục vụ đã chọn lúc đăng nhập (`staffId` trong `POST /api/auth/staff/login`, danh sách ở `GET /api/auth/on-duty?role=CASHIER|WAITER`) | Thu ngân |
 | Hệ thống | `GET /api/health` (công khai), `GET /api/menu` (đọc MySQL, 503 nếu chạy mock), `/actuator/health` | — |
 
 Chủ quán/Quản lý được phép gọi mọi điểm vào (kế thừa quyền).
