@@ -31,6 +31,15 @@ public class AttendanceController {
         return svc.checkOut(Db.reqInt(b, "accountId", "Tài khoản"), String.valueOf(b.getOrDefault("pin", "")), Db.str(b, "role"));
     }
 
+    @GetMapping("/api/attendance/me")
+    public Map<String, Object> mine(HttpSession s) { return svc.mine(access.who(s)); }
+
+    @PostMapping("/api/attendance/me/in")
+    public Map<String, Object> inSelf(@RequestBody Map<String, Object> b, HttpSession s) { return svc.checkInSelf(access.who(s), String.valueOf(b.get("shift"))); }
+
+    @PostMapping("/api/attendance/me/out")
+    public Map<String, Object> outSelf(HttpSession s) { return svc.checkOutSelf(access.who(s)); }
+
     @GetMapping("/api/attendance")
     public List<Map<String, Object>> list(@RequestParam(required = false) String from, @RequestParam(required = false) String to,
                                           @RequestParam(required = false) Integer employeeId, HttpSession s) {

@@ -59,7 +59,30 @@ public class AttendanceService {
     public Map<String, Object> checkIn(int accountId, String pin, String shift, String role) {
         if (!SHIFTS.contains(shift)) throw new OpsException(422, "BAD_SHIFT", "Chọn ca sáng hoặc ca tối.");
         requireRole(accountId, role);
-        Account a = personal(auth.loginStaff(accountId, pin));
+        return clockIn(personal(auth.loginStaff(accountId, pin)), shift);
+    }
+
+    public Map<String, Object> checkOut(int accountId, String pin, String role) {
+        requireRole(accountId, role);
+        return clockOut(personal(auth.loginStaff(accountId, pin)));
+    }
+
+    /** Chủ quán/Quản lý đã đăng nhập bằng mật khẩu nên tự chấm công vào/ra không cần PIN. */
+    public Map<String, Object> checkInSelf(Account a, String shift) {
+        if (!SHIFTS.contains(shift)) throw new OpsException(422, "BAD_SHIFT", "Chọn ca sáng hoặc ca tối.");
+        return clockIn(a, shift);
+    }
+
+    public Map<String, Object> checkOutSelf(Account a) { return clockOut(a); }
+
+    /** Bản ghi chấm công đang mở (chưa ra) của chính người đăng nhập, hoặc rỗng. */
+    @Transactional(readOnly = true)
+    public Map<String, Object> mine(Account a) {
+        List<Map<String, Object>> r = db.rows(LIST_SQL + " WHERE a.employee_id = ? AND a.check_out_time IS NULL ORDER BY a.check_in_time DESC LIMIT 1", employeeOf(a));
+        return r.isEmpty() ? Map.of() : r.get(0);
+    }
+
+    private Map<String, Object> clockIn(Account a, String shift) {
         int emp = employeeOf(a);
         if (!db.jdbc.queryForList("SELECT 1 FROM attendance WHERE employee_id = ? AND check_out_time IS NULL", emp).isEmpty())
             throw new OpsException(409, "ALREADY_IN", "Bạn đã chấm công vào và chưa chấm công ra. Hãy chấm công ra hoặc nhờ Chủ quán/Quản lý chỉnh sửa.");
@@ -67,9 +90,7 @@ public class AttendanceService {
         return Map.of("id", id, "fullName", a.fullName, "shift", shift, "at", Instant.now().toString());
     }
 
-    public Map<String, Object> checkOut(int accountId, String pin, String role) {
-        requireRole(accountId, role);
-        Account a = personal(auth.loginStaff(accountId, pin));
+    private Map<String, Object> clockOut(Account a) {
         int emp = employeeOf(a);
         Integer id = db.one("SELECT attendance_id FROM attendance WHERE employee_id = ? AND check_out_time IS NULL ORDER BY check_in_time DESC LIMIT 1",
                 (rs, n) -> rs.getInt(1), emp);

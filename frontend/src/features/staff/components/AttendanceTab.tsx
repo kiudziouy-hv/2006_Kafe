@@ -1,8 +1,10 @@
 import { TabAction } from '@/components/ui/Tabs'
 import { useQuery } from '@tanstack/react-query'
+import { LogIn, LogOut } from 'lucide-react'
 import { useState } from 'react'
 import { QueryState } from '@/components/feedback/QueryState'
 import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
 import { DataTable } from '@/components/ui/DataTable'
 import { SelectField, TextField } from '@/components/ui/Field'
 import { Modal } from '@/components/ui/Modal'
@@ -25,6 +27,7 @@ export function AttendanceTab() {
   const [history, setHistory] = useState<AttendanceRecord | null>(null)
   return (
     <>
+      <MyAttendance />
       <form
         className="mb-4 flex flex-wrap items-end gap-3"
         onSubmit={(e) => {
@@ -101,6 +104,53 @@ export function AttendanceTab() {
       )}
       {history && <History record={history} onClose={() => setHistory(null)} />}
     </>
+  )
+}
+
+/** Quản lý cũng chấm công như nhân viên: đã đăng nhập nên không cần PIN. */
+function MyAttendance() {
+  const mine = useQuery({ queryKey: ['attendance', 'me'], queryFn: staffApi.myAttendance })
+  const [shift, setShift] = useState('MORNING')
+  const checkIn = useAction(() => staffApi.checkInSelf(shift), {
+    invalidate: KEY,
+    success: 'Đã chấm công vào',
+  })
+  const checkOut = useAction(staffApi.checkOutSelf, { invalidate: KEY, success: 'Đã chấm công ra' })
+  const open = mine.data && 'id' in mine.data ? mine.data : null
+  return (
+    <Card className="mb-4">
+      <QueryState isPending={mine.isPending} error={mine.error} onRetry={() => void mine.refetch()}>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-bold">Chấm công của tôi</h2>
+            <p className="text-ink-soft">
+              {open
+                ? `Đang làm ${SHIFT_LABEL[open.shift].toLowerCase()}, vào lúc ${formatDateTime(open.checkIn)}`
+                : 'Bạn chưa chấm công vào.'}
+            </p>
+          </div>
+          {open ? (
+            <Button
+              variant="secondary"
+              loading={checkOut.isPending}
+              onClick={() => checkOut.mutate(undefined)}
+            >
+              <LogOut size={16} aria-hidden /> Chấm công ra
+            </Button>
+          ) : (
+            <div className="flex items-end gap-3">
+              <SelectField label="Ca" value={shift} onChange={(e) => setShift(e.target.value)}>
+                <option value="MORNING">Ca sáng</option>
+                <option value="EVENING">Ca tối</option>
+              </SelectField>
+              <Button loading={checkIn.isPending} onClick={() => checkIn.mutate(undefined)}>
+                <LogIn size={16} aria-hidden /> Chấm công vào
+              </Button>
+            </div>
+          )}
+        </div>
+      </QueryState>
+    </Card>
   )
 }
 

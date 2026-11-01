@@ -66,6 +66,8 @@ export interface DayState {
   busyTables: { number: number; status: string }[]
   eveningClosed: boolean
   canClose: boolean
+  closedAt: string | null
+  note: string | null
 }
 
 export const staffApi = {
@@ -94,6 +96,10 @@ export const staffApi = {
     checkIn: string
     checkOut: string | null
   }) => http.post<AttendanceRecord>('/attendance', b).then((r) => r.data),
+  myAttendance: () =>
+    http.get<AttendanceRecord | Record<string, never>>('/attendance/me').then((r) => r.data),
+  checkInSelf: (shift: string) => http.post('/attendance/me/in', { shift }).then((r) => r.data),
+  checkOutSelf: () => http.post('/attendance/me/out').then((r) => r.data),
   checkIn: (accountId: number, pin: string, shift: string, role?: string) =>
     http
       .post<{ fullName: string }>('/auth/attendance/in', { accountId, pin, shift, role })
@@ -103,7 +109,7 @@ export const staffApi = {
       .post<{ fullName: string }>('/auth/attendance/out', { accountId, pin, role })
       .then((r) => r.data),
   day: () => http.get<DayState>('/shift/day').then((r) => r.data),
-  closeDay: () => http.post<DayState>('/shift/day/close').then((r) => r.data),
+  closeDay: (note: string) => http.post<DayState>('/shift/day/close', { note }).then((r) => r.data),
 }
 
 export const ROLE_NAME: Record<StaffRole, string> = {
