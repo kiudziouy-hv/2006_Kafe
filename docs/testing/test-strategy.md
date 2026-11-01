@@ -1,6 +1,6 @@
 # Chiến lược kiểm thử
 
-Số liệu cập nhật 2026-11-01: **86 test backend** (0 lỗi), **18 test giao diện** (0 lỗi) và **36 kịch bản quy tắc CSDL** (36/36 đạt).
+Số liệu cập nhật 2026-11-01: **87 test backend** (0 lỗi), **20 test giao diện** (0 lỗi) và **36 kịch bản quy tắc CSDL** (36/36 đạt).
 
 ## Backend (JUnit 5, `mvn -f backend/pom.xml test`)
 
@@ -25,7 +25,7 @@ Các test MySQL cần Docker đang chạy; không có Docker thì tự bỏ qua.
 
 | Nội dung | Số test |
 |---|---|
-| Form đăng nhập: kiểm tra, sai PIN, bị khóa, chọn vai trò (`LoginPage`) | 5 |
+| Form đăng nhập: kiểm tra, sai PIN, bị khóa, chọn vai trò, chọn tên thu ngân và phục vụ (`LoginPage`) | 8 |
 | Định dạng tiền và ngày (`format`) | 5 |
 | Chặn truy cập theo vai trò (`RequireRole`) | 3 |
 | Bảng dữ liệu (`DataTable`) | 2 |
