@@ -25,7 +25,7 @@ Tất cả 34 use case (UC-01..UC-34) đã có API và giao diện. Số UC theo
 | 22..24 | Thanh toán, in lại, hủy hóa đơn | `ops/`, `payment/` | `features/payments`, `features/invoices` |
 | 25, 26 | Đăng ký và tra cứu thành viên | `customer/` | `features/customers` |
 | 28, 29 | Chấm công, chỉnh sửa chấm công | `staff/` | `features/staff` (Chấm công, `/attendance`) |
-| 30..32 | Mở ca, chốt ca (Chủ quán chốt thay), chốt ngày | `ops/`, `shift/` | `features/payments`, `features/staff` |
+| 30..32 | Mở ca, chốt ca, chốt ngày | `ops/`, `shift/` | `features/payments`, `features/staff` |
 | 33, 34 | Báo cáo doanh thu; danh sách hóa đơn | `report/`, `payment/` | `features/reports`, `features/invoices` |
 
 Ngoài phạm vi phiên bản này (Level 2): xuất Excel, dashboard, báo cáo theo khung giờ (FR-M11-007..009).
