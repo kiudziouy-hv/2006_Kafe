@@ -1,5 +1,6 @@
 package vn.vtph.coffee.ops;
 
+import vn.vtph.coffee.auth.AuthController;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -74,8 +75,8 @@ class MySqlOpsIntegrationTest extends AbstractMySqlIT {
     }
 
     // ---------- tiện ích gọi API ----------
-    /** PIN mẫu theo vai trò: Phục vụ 123456, Thu ngân 234567, Pha chế 345678. */
-    private static String pinOf(int accountId) { return accountId <= 3 ? "234567" : accountId >= 7 ? "345678" : "123456"; }
+    /** PIN mẫu theo vai trò: Phục vụ 123456, Lê Hoàng Cường34567, Pha chế 345678. */
+    private static String pinOf(int accountId) { return accountId == 3 ? "456789" : accountId <= 3 ? "234567" : accountId >= 7 ? "345678" : "123456"; }
 
     private MockHttpSession login(int accountId) throws Exception {
         MockHttpSession s = new MockHttpSession();
@@ -536,18 +537,22 @@ class MySqlOpsIntegrationTest extends AbstractMySqlIT {
         assertEquals(1, state.get("shift").get("transferCount").asInt());
         assertEquals(500000 + 32000, state.get("expected").asInt()); // tiền mặt: đầu ca + đơn tiền mặt, không có chuyển khoản
 
-        // nhân viên phụ trách: chỉ thu ngân đang chấm công
-        assertEquals(0, getJson(cashier, "/api/ops/on-duty").size());
-        fail(cashier, "/api/ops/takeaway", cash + ",\"staffId\":2}", 422, "NOT_ON_DUTY");
+        // nhân viên phụ trách: thu ngân chọn lúc đăng nhập, chỉ được là người đang chấm công
+        assertEquals(0, getJson(cashier, "/api/auth/on-duty?role=CASHIER").size());
+        cashier.setAttribute(AuthController.STAFF_KEY, 2);
+        fail(cashier, "/api/ops/takeaway", cash + "}", 422, "NOT_ON_DUTY");
         jdbc.update("INSERT INTO attendance (employee_id, shift, check_in_time) VALUES (2, 'MORNING', UTC_TIMESTAMP())");
         try {
-            assertEquals(2, getJson(cashier, "/api/ops/on-duty").get(0).get("id").asInt());
-            int staffOrder = postJson(cashier, "/api/ops/takeaway", cash + ",\"staffId\":2}").get("id").asInt();
+            assertEquals(2, getJson(cashier, "/api/auth/on-duty?role=CASHIER").get(0).get("id").asInt());
+            int staffOrder = postJson(cashier, "/api/ops/takeaway", cash + "}").get("id").asInt();
             assertEquals(2, jdbc.queryForObject("SELECT issued_by FROM invoice WHERE order_id = ?", Integer.class, staffOrder));
             assertEquals(2, jdbc.queryForObject("SELECT created_by FROM orders WHERE order_id = ?", Integer.class, staffOrder));
-            fail(cashier, "/api/ops/takeaway", cash + ",\"staffId\":3}", 422, "NOT_ON_DUTY"); // thu ngân khác chưa chấm công
-            fail(cashier, "/api/ops/takeaway", cash + ",\"staffId\":9}", 422, "NOT_ON_DUTY"); // tài khoản quầy không phải người
+            cashier.setAttribute(AuthController.STAFF_KEY, 3); // thu ngân khác chưa chấm công
+            fail(cashier, "/api/ops/takeaway", cash + "}", 422, "NOT_ON_DUTY");
+            cashier.setAttribute(AuthController.STAFF_KEY, 9); // tài khoản quầy không phải người
+            fail(cashier, "/api/ops/takeaway", cash + "}", 422, "NOT_ON_DUTY");
         } finally {
+            cashier.removeAttribute(AuthController.STAFF_KEY);
             jdbc.update("DELETE FROM attendance");
         }
     }

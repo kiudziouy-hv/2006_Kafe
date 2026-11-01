@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -87,6 +88,32 @@ public class JdbcAccountStore implements AccountStore {
                 SELECT COUNT(*) FROM attendance t JOIN account ac ON ac.employee_id = t.employee_id
                 WHERE ac.role = ? AND ac.is_station = 0 AND t.check_out_time IS NULL""", Integer.class, db);
         return n != null && n > 0;
+    }
+
+    @Override
+    public List<Map<String, Object>> onDutyStaff(Role role) {
+        String db = switch (role) {
+            case OWNER -> "OWNER_MANAGER";
+            case CASHIER -> "CASHIER";
+            case WAITER -> "WAITER";
+            case BARISTA -> "BARISTA";
+        };
+        return jdbc.query("""
+                SELECT DISTINCT e.employee_id, e.full_name FROM employee e JOIN account ac ON ac.employee_id = e.employee_id
+                JOIN attendance t ON t.employee_id = e.employee_id
+                WHERE ac.role = ? AND ac.is_station = 0 AND t.check_out_time IS NULL ORDER BY e.full_name""",
+                (rs, n) -> Map.<String, Object>of("id", rs.getInt(1), "name", rs.getString(2)), db);
+    }
+
+    @Override
+    public Optional<Account> personalByEmployee(int employeeId, Role role) {
+        String db = switch (role) {
+            case OWNER -> "OWNER_MANAGER";
+            case CASHIER -> "CASHIER";
+            case WAITER -> "WAITER";
+            case BARISTA -> "BARISTA";
+        };
+        return jdbc.query(SELECT + " WHERE a.employee_id = ? AND a.role = ? AND a.is_station = 0", mapper, employeeId, db).stream().findFirst();
     }
 
     @Override

@@ -57,6 +57,46 @@ public class AuthService {
         return out;
     }
 
+    /** Nhân viên đang chấm công của vai trò (thu ngân, phục vụ), để chọn tên khi đăng nhập tài khoản quầy dùng chung. */
+    public List<Map<String, Object>> onDutyStaff(Role role) {
+        return store.onDutyStaff(role);
+    }
+
+    /**
+     * Người đứng quầy trong phiên này. Tài khoản quầy thu ngân hoặc phục vụ phải chọn một người đang chấm công;
+     * chế độ giả lập (không có chấm công) cho bỏ trống. Vai trò khác hoặc tài khoản cá nhân thì không dùng.
+     */
+    public Map<String, Object> pickStaff(Account a, Integer staffId) {
+        if ((a.role != Role.CASHIER && a.role != Role.WAITER) || !a.station) return null;
+        List<Map<String, Object>> list = onDutyStaff(a.role);
+        if (list.isEmpty() && staffId == null) return null;
+        return list.stream().filter(m -> staffId != null && staffId.equals(m.get("id"))).findFirst()
+                .orElseThrow(() -> new AuthException("STAFF_REQUIRED", "Hãy chọn tên của bạn trong danh sách đang chấm công.", 400, 0, 0));
+    }
+
+    /** Kết quả đăng nhập nhân viên: tài khoản của phiên và người đứng quầy đã chọn (null nếu không có). */
+    public record StaffLogin(Account account, Map<String, Object> picked) {}
+
+    /**
+     * Đăng nhập nhân viên. Thu ngân vào quầy thu ngân thì chọn tên rồi nhập PIN riêng của chính người đó (khóa tạm tính theo từng người),
+     * không dùng PIN chung của quầy. Vai trò khác, hoặc chế độ giả lập không có tài khoản cá nhân, vẫn dùng PIN của tài khoản quầy.
+     */
+    public StaffLogin loginStaff(int accountId, String pin, Integer staffId) {
+        Account station = store.byId(accountId).orElse(null);
+        if (station != null && station.role == Role.CASHIER && station.station && staffId != null) {
+            Account personal = store.personalByEmployee(staffId, Role.CASHIER).orElse(null);
+            if (personal != null) {
+                if (pin == null || !pin.matches("\\d{6}")) throw new AuthException("INVALID_FORMAT", "Mã PIN gồm đúng 6 chữ số.", 400, 0, 0);
+                personal = check(personal, pin, "Mã PIN không đúng.");
+                requireOnDuty(personal);
+                return new StaffLogin(station, Map.of("id", staffId, "name", personal.fullName));
+            }
+        }
+        Account a = loginStaff(accountId, pin);
+        requireOnDuty(a);
+        return new StaffLogin(a, pickStaff(a, staffId));
+    }
+
     public Account loginStaff(int accountId, String pin) {
         Account a = store.byId(accountId).orElse(null);
         if (a == null || a.role == Role.OWNER) throw new AuthException("NOT_FOUND", "Không tìm thấy tài khoản.", 404, 0, 0);

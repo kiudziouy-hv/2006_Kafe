@@ -27,7 +27,7 @@ import vn.vtph.coffee.support.AbstractMySqlIT;
 
 /**
  * Các module quản trị trên MySQL thật: nhân sự, thực đơn, kho, khuyến mãi, thành viên và điểm, hóa đơn/hoàn tiền,
- * chấm công, chốt ngày, báo cáo. Dữ liệu mẫu: tài khoản 2 Thu ngân, 4 Phục vụ, 7 Pha chế (PIN: Phục vụ 123456, Thu ngân 234567, Pha chế 345678), owner/admin123;
+ * chấm công, chốt ngày, báo cáo. Dữ liệu mẫu: tài khoản 2 Thu ngân, 4 Phục vụ, 7 Pha chế (PIN: Phục vụ 123456, Lê Hoàng Cường34567, Pha chế 345678), owner/admin123;
  * món 1 Cà phê đen (M 29.000, L 36.000), 2 Cà phê sữa (M 32.000, L 39.000); thành viên 1 có 24 điểm.
  */
 class MySqlAdminIntegrationTest extends AbstractMySqlIT {
@@ -82,7 +82,7 @@ class MySqlAdminIntegrationTest extends AbstractMySqlIT {
     private MockHttpSession staff(int accountId) throws Exception {
         jdbc.update("UPDATE account SET failed_attempts = 0, locked_until = NULL, status = 'ACTIVE' WHERE account_id = ?", accountId);
         MockHttpSession s = new MockHttpSession();
-        send(s, "POST", "/api/auth/staff/login", "{\"accountId\":" + accountId + ",\"pin\":\"" + (accountId <= 3 ? "234567" : accountId >= 7 ? "345678" : "123456") + "\"}", 200);
+        send(s, "POST", "/api/auth/staff/login", "{\"accountId\":" + accountId + ",\"pin\":\"" + (accountId == 3 ? "456789" : accountId <= 3 ? "234567" : accountId >= 7 ? "345678" : "123456") + "\"}", 200);
         return s;
     }
 

@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.vtph.coffee.auth.Account;
 import vn.vtph.coffee.common.Db;
+import vn.vtph.coffee.auth.AuthController;
 import vn.vtph.coffee.auth.AuthService;
 import vn.vtph.coffee.auth.Role;
 
@@ -30,7 +31,7 @@ public class OpsController {
             throw new OpsException(401, "ACCOUNT_LOCKED", "Tài khoản đã bị khóa. Vui lòng liên hệ Chủ quán.");
         }
         if (a.role != Role.OWNER && !List.of(allowed).contains(a.role)) throw new OpsException(403, "FORBIDDEN", "Bạn không có quyền thực hiện thao tác này.");
-        return a;
+        return a.actingAs(s.getAttribute(AuthController.STAFF_KEY) instanceof Integer i ? i : null);
     }
 
     /** Số điểm dùng: số âm chuyển cho tầng nghiệp vụ trả BAD_POINTS; số quá lớn hoặc không nguyên bị chặn ở đây. */
@@ -40,9 +41,10 @@ public class OpsController {
     }
 
     private static int num(Object o) { return o instanceof Number n ? n.intValue() : -1; }
-    private static OpsService.Payer payer(Map<String, Object> b) {
+    /** Nhân viên phụ trách lấy từ thu ngân đã chọn lúc đăng nhập, không nhận từ yêu cầu. */
+    private static OpsService.Payer payer(Map<String, Object> b, HttpSession s) {
         return new OpsService.Payer(b.get("customerId") instanceof Number c ? c.intValue() : null, points(b.get("points")),
-                b.get("staffId") instanceof Number s ? s.intValue() : null);
+                s.getAttribute(AuthController.STAFF_KEY) instanceof Integer i ? i : null);
     }
     @SuppressWarnings("unchecked")
     private static List<Map<String, Object>> lines(Map<String, Object> b) { return (List<Map<String, Object>>) b.get("lines"); }
@@ -74,17 +76,16 @@ public class OpsController {
     @GetMapping("/pending") public List<Model.Order> pending(HttpSession s) { who(s, Role.CASHIER); return ops.pending(); }
     @GetMapping("/orders/{id}") public Model.Order get(@PathVariable int id, HttpSession s) { who(s, Role.CASHIER, Role.WAITER); return ops.get(id); }
     @PostMapping("/orders/{id}/pay") public Model.Order pay(@PathVariable int id, @RequestBody Map<String, Object> b, HttpSession s) {
-        Account a = who(s, Role.CASHIER); return ops.pay(id, String.valueOf(b.get("method")), Db.money(b.get("received"), "Tiền khách đưa", 1_000_000_000), a, payer(b)); }
+        Account a = who(s, Role.CASHIER); return ops.pay(id, String.valueOf(b.get("method")), Db.money(b.get("received"), "Tiền khách đưa", 1_000_000_000), a, payer(b, s)); }
     @PostMapping("/takeaway") public Model.Order takeaway(@RequestBody Map<String, Object> b, HttpSession s) {
         Account a = who(s, Role.CASHIER);
-        return ops.takeaway(lines(b), String.valueOf(b.get("method")), Db.money(b.get("received"), "Tiền khách đưa", 1_000_000_000), a, payer(b)); }
-    @GetMapping("/on-duty") public List<Map<String, Object>> onDuty(HttpSession s) { who(s, Role.CASHIER); return ops.onDuty(); }
+        return ops.takeaway(lines(b), String.valueOf(b.get("method")), Db.money(b.get("received"), "Tiền khách đưa", 1_000_000_000), a, payer(b, s)); }
     @GetMapping("/takeaway/handovers") public List<Model.Order> handovers(HttpSession s) { who(s, Role.CASHIER); return ops.handovers(); }
     @PostMapping("/orders/{id}/handover") public Model.Order handover(@PathVariable int id, HttpSession s) { Account a = who(s, Role.CASHIER); return ops.handover(id, a); }
     @PostMapping("/takeaway/quote") public Map<String, Object> quote(@RequestBody Map<String, Object> b, HttpSession s) { who(s, Role.CASHIER); return ops.quote(lines(b)); }
     @GetMapping("/drafts") public List<Model.Order> drafts(HttpSession s) { who(s, Role.CASHIER); return ops.drafts(); }
     @PostMapping("/drafts/{id}/confirm") public Model.Order confirm(@PathVariable int id, @RequestBody(required = false) Map<String, Object> b, HttpSession s) {
-        Account a = who(s, Role.CASHIER); return ops.confirmDraft(id, a, b == null ? OpsService.Payer.NONE : payer(b)); }
+        Account a = who(s, Role.CASHIER); return ops.confirmDraft(id, a, payer(b == null ? Map.of() : b, s)); }
     @PostMapping("/drafts/{id}/requote") public Model.Order requote(@PathVariable int id, HttpSession s) { Account a = who(s, Role.CASHIER); return ops.requoteDraft(id, a); }
     @PostMapping("/drafts/{id}/cancel") public Model.Order cancelDraft(@PathVariable int id, HttpSession s) { Account a = who(s, Role.CASHIER); return ops.cancelDraft(id, a); }
 
