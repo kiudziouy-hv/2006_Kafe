@@ -47,15 +47,36 @@ class MySqlAttendanceLoginIntegrationTest extends AbstractMySqlIT {
         // thu ngân cá nhân (2) chấm công vào: chính người đó và quầy thu ngân (9) đăng nhập được
         send("/api/auth/attendance/in", "{\"accountId\":2,\"pin\":\"234567\",\"shift\":\"MORNING\"}").andExpect(status().isOk());
         staffLogin(2, "234567").andExpect(status().isOk());
-        staffLogin(9, "234567").andExpect(status().isOk());
+        // quầy thu ngân phải kèm tên thu ngân đang chấm công; thiếu tên thì bị từ chối, người chưa chấm công cũng không vào được
+        staffLogin(9, "234567").andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("STAFF_REQUIRED"));
+        send("/api/auth/staff/login", "{\"accountId\":9,\"pin\":\"456789\",\"staffId\":3}").andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("NOT_CHECKED_IN"));
+        send("/api/auth/staff/login", "{\"accountId\":9,\"pin\":\"234567\",\"staffId\":2}")
+                .andExpect(status().isOk()).andExpect(jsonPath("$.staffName").value("Hồ Quốc Tiến"));
 
         // vai trò khác vẫn bị chặn: chấm công của thu ngân không mở cửa cho quầy phục vụ (11) hay phục vụ cá nhân (4)
         staffLogin(11, "123456").andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("NOT_CHECKED_IN"));
         staffLogin(4, "123456").andExpect(status().isForbidden());
 
+        // phục vụ chấm công thì quầy phục vụ (11) đăng nhập được, cũng phải chọn tên người đang chấm công
+        send("/api/auth/attendance/in", "{\"accountId\":4,\"pin\":\"123456\",\"shift\":\"MORNING\"}").andExpect(status().isOk());
+        staffLogin(11, "123456").andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("STAFF_REQUIRED"));
+        send("/api/auth/staff/login", "{\"accountId\":11,\"pin\":\"123456\",\"staffId\":4}")
+                .andExpect(status().isOk()).andExpect(jsonPath("$.staffName").isNotEmpty());
+
         // chấm công ra thì không đăng nhập lại được
         send("/api/auth/attendance/out", "{\"accountId\":2,\"pin\":\"234567\"}").andExpect(status().isOk());
-        staffLogin(9, "234567").andExpect(status().isForbidden());
+        send("/api/auth/staff/login", "{\"accountId\":9,\"pin\":\"234567\",\"staffId\":2}").andExpect(status().isForbidden());
+    }
+
+    @Test
+    void cashierUsesOwnPinNotTheCounterPin() throws Exception {
+        // dữ liệu mẫu: thu ngân 2 (Hồ Quốc Tiến) PIN 234567, thu ngân 3 (Lê Hoàng Cường) PIN 456789
+        send("/api/auth/attendance/in", "{\"accountId\":3,\"pin\":\"456789\",\"shift\":\"MORNING\"}").andExpect(status().isOk());
+        String as3 = "{\"accountId\":9,\"staffId\":3,\"pin\":\"";
+        send("/api/auth/staff/login", as3 + "234567\"}").andExpect(status().isUnauthorized()); // PIN của người kia hay PIN chung của quầy đều không vào được
+        send("/api/auth/staff/login", as3 + "456789\"}").andExpect(status().isOk()).andExpect(jsonPath("$.staffName").value("Lê Hoàng Cường"));
+        // PIN của người này không mở được tên người khác
+        send("/api/auth/staff/login", "{\"accountId\":9,\"staffId\":2,\"pin\":\"456789\"}").andExpect(status().isUnauthorized());
     }
 
     @Test

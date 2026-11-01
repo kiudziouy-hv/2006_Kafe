@@ -25,7 +25,7 @@ INSERT INTO employee (employee_id, full_name, phone, email) VALUES
 INSERT INTO account (account_id, employee_id, username, secret_hash, role, is_station) VALUES
 (1,1,'owner',SHA2(CONCAT('demo-','owner','-','admin123'),256),'OWNER_MANAGER',0),
 (2,2,'thungan1',SHA2(CONCAT('demo-','thungan1','-','234567'),256),'CASHIER',0),
-(3,3,'thungan2',SHA2(CONCAT('demo-','thungan2','-','234567'),256),'CASHIER',0),
+(3,3,'thungan2',SHA2(CONCAT('demo-','thungan2','-','456789'),256),'CASHIER',0),
 (4,4,'phucvu1',SHA2(CONCAT('demo-','phucvu1','-','123456'),256),'WAITER',0),
 (5,5,'phucvu2',SHA2(CONCAT('demo-','phucvu2','-','123456'),256),'WAITER',0),
 (6,6,'phucvu3',SHA2(CONCAT('demo-','phucvu3','-','123456'),256),'WAITER',0),

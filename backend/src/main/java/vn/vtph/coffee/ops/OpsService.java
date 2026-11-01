@@ -18,9 +18,6 @@ public interface OpsService {
         public Payer(Integer customerId, int points) { this(customerId, points, null); }
     }
 
-    /** Thu ngân đang chấm công (chưa có giờ ra) để chọn làm nhân viên phụ trách đơn/hóa đơn; tài khoản quầy dùng chung không nằm trong danh sách. */
-    default List<Map<String, Object>> onDuty() { return List.of(); }
-
     Map<String, Object> menu();
     List<Map<String, Object>> tables();
 

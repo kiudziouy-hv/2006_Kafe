@@ -19,7 +19,7 @@ class MySqlAuthIntegrationTest extends AbstractMySqlIT {
     @Autowired AuthService auth;
     @Autowired JdbcTemplate jdbc;
 
-    /** Dữ liệu mẫu: account 4 = phucvu1 (Phục vụ), 2 = thungan1 (Thu ngân), 7 = phache1; PIN: Phục vụ 123456, Thu ngân 234567, Pha chế 345678; chủ quán owner/admin123. */
+    /** Dữ liệu mẫu: account 4 = phucvu1 (Phục vụ), 2 = thungan1 (Thu ngân), 7 = phache1; PIN: Phục vụ 123456, Lê Hoàng Cường34567, Pha chế 345678; chủ quán owner/admin123. */
     @BeforeEach
     void resetLocks() {
         jdbc.update("UPDATE account SET failed_attempts = 0, locked_until = NULL, status = 'ACTIVE'");
@@ -68,7 +68,7 @@ class MySqlAuthIntegrationTest extends AbstractMySqlIT {
     @Test
     void eachRoleHasItsOwnSeedPin() {
         assertEquals(Role.WAITER, auth.loginStaff(5, "123456").role);
-        assertEquals(Role.CASHIER, auth.loginStaff(3, "234567").role);
+        assertEquals(Role.CASHIER, auth.loginStaff(3, "456789").role);
         assertEquals(Role.BARISTA, auth.loginStaff(8, "345678").role);
         assertEquals("WRONG_SECRET", assertThrows(AuthException.class, () -> auth.loginStaff(3, "123456")).code);
     }

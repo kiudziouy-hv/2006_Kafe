@@ -103,14 +103,15 @@ public class JdbcOpsService implements OpsService {
     }
 
     private int employeeId(Account a) {
+        if (a.actingStaffId != null) return a.actingStaffId;
         Integer id = jdbc.queryForObject("SELECT employee_id FROM account WHERE account_id = ?", Integer.class, a.id);
         if (id == null) throw new OpsException(404, "NO_EMPLOYEE", "Không tìm thấy nhân viên.");
         return id;
     }
 
     /**
-     * Nhân viên phụ trách đơn/hóa đơn: Thu ngân chọn người đang chấm công (tài khoản quầy dùng chung không biết ai bấm).
-     * Không chọn thì ghi theo tài khoản đang đăng nhập.
+     * Nhân viên phụ trách hóa đơn: người thu ngân chọn lúc đăng nhập tài khoản quầy, kiểm lại vẫn đang chấm công lúc thu tiền.
+     * Không có (phiên cá nhân hoặc chế độ giả lập) thì ghi theo tài khoản đang đăng nhập.
      */
     private int staffId(Account by, Payer p) {
         if (p == null || p.staffId() == null) return employeeId(by);
@@ -120,16 +121,6 @@ public class JdbcOpsService implements OpsService {
                   AND EXISTS (SELECT 1 FROM attendance a WHERE a.employee_id = e.employee_id AND a.check_out_time IS NULL)""", (rs, n) -> rs.getInt(1), p.staffId());
         if (ok == null) throw new OpsException(422, "NOT_ON_DUTY", "Nhân viên này chưa chấm công hoặc không phải thu ngân.");
         return ok;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Map<String, Object>> onDuty() {
-        return jdbc.query("""
-                SELECT DISTINCT e.employee_id, e.full_name FROM employee e JOIN account ac ON ac.employee_id = e.employee_id
-                JOIN attendance a ON a.employee_id = e.employee_id
-                WHERE ac.role = 'CASHIER' AND ac.is_station = 0 AND a.check_out_time IS NULL ORDER BY e.full_name""",
-                (rs, n) -> Map.<String, Object>of("id", rs.getInt(1), "name", rs.getString(2)));
     }
 
     private static final Map<String, String> SHIFT_NAME = Map.of("MORNING", "Ca sáng", "EVENING", "Ca tối");
