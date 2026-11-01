@@ -144,22 +144,39 @@ function StaffForm() {
   const staff = useQuery({ queryKey: ['auth', 'staff'], queryFn: authApi.staff })
   const [role, setRole] = useState<StaffRole | null>(null)
   const [pin, setPin] = useState('')
+  const [cashierId, setCashierId] = useState<number | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Đăng nhập nhân viên chỉ chọn vai trò rồi nhập PIN của vai trò đó (tài khoản dùng chung, mỗi vai trò một PIN khác nhau).
-  // Danh sách tên từng người chỉ hiện ở trang chấm công.
+  // Đăng nhập nhân viên chọn vai trò rồi nhập PIN của vai trò đó (tài khoản dùng chung, mỗi vai trò một PIN khác nhau).
+  // Thu ngân và phục vụ chọn thêm tên trong số người đang chấm công; danh sách mọi tài khoản chỉ hiện ở trang chấm công.
   const station = (staff.data ?? []).find((a) => a.role === role && a.station)
+
+  // Thu ngân và phục vụ là một người trong ca: chọn tên (trong số người cùng vai trò đang chấm công)
+  // để đơn và hóa đơn ghi đúng người thực hiện.
+  const pickable = role === 'CASHIER' || role === 'WAITER' ? role : null
+  const onDuty = useQuery({
+    queryKey: ['auth', 'on-duty', pickable],
+    queryFn: () => authApi.onDuty(pickable!),
+    enabled: pickable !== null,
+  })
+  const cashierList = pickable ? (onDuty.data ?? []) : []
+  const needCashier = cashierList.length > 0
 
   const submit = async () => {
     setError(null)
     if (!role) return setError('Chọn vai trò trước khi nhập PIN.')
     if (!station) return setError('Vai trò này chưa có tài khoản đăng nhập. Hãy liên hệ Chủ quán.')
+    if (needCashier && cashierId === null) return setError('Chọn tên của bạn trước khi nhập PIN.')
     const parsed = pinSchema.safeParse(pin)
     if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? 'PIN không hợp lệ.')
     setBusy(true)
     try {
-      const u = await loginStaff(station.id, pin)
+      const u = await loginStaff(
+        station.id,
+        pin,
+        needCashier ? (cashierId ?? undefined) : undefined,
+      )
       navigate(HOME_BY_ROLE[u.role], { replace: true })
     } catch (e) {
       setPin('')
@@ -177,6 +194,7 @@ function StaffForm() {
           value={role}
           onChange={(r) => {
             setRole(r)
+            setCashierId(null)
             setError(null)
           }}
         />
@@ -186,6 +204,29 @@ function StaffForm() {
           </p>
         )}
       </div>
+      {needCashier && (
+        <div>
+          <p className="mb-2 text-center text-xs font-bold uppercase">
+            {role === 'CASHIER' ? 'Thu ngân' : 'Nhân viên phục vụ'}
+          </p>
+          <select
+            aria-label="Tên nhân viên"
+            value={cashierId ?? ''}
+            onChange={(e) => {
+              setCashierId(e.target.value ? Number(e.target.value) : null)
+              setError(null)
+            }}
+            className="vt-field min-h-12 w-full rounded-2xl border-2 border-white/90 bg-white/40 px-4 outline-none"
+          >
+            <option value="">Chọn tên của bạn…</option>
+            {cashierList.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <div>
         <p className="mb-2 text-center text-xs font-bold uppercase">Nhập PIN</p>
         <PinPad value={pin} onChange={setPin} onSubmit={submit} disabled={busy} />

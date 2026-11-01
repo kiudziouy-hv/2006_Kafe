@@ -13,7 +13,6 @@ import { useAction } from '@/hooks/useAction'
 import { formatMoney } from '@/utils/format'
 import { paymentsApi, type PayOrder } from '../api/paymentsApi'
 import { PaidDialog, PayDialog } from './PayDialog'
-import { useStaffPicker } from './StaffPicker'
 
 const round500 = (n: number) => Math.floor(n / 500 + 0.5) * 500
 
@@ -29,7 +28,6 @@ export function TakeawayPanel() {
   const handovers = useQuery({ queryKey: ['ops', 'handovers'], queryFn: paymentsApi.handovers })
   const [confirming, setConfirming] = useState<PayOrder | null>(null)
 
-  const staff = useStaffPicker()
   const lines = toNewLines(cart)
   const signature = JSON.stringify(lines)
   const quote = useQuery({
@@ -53,7 +51,6 @@ export function TakeawayPanel() {
         received: method === 'CASH' ? cashIn : undefined,
         customerId: member?.id,
         points: usedPoints,
-        staffId: staff.staffId,
       }),
     {
       invalidate: [['ops'], ['invoices'], ['customers']],
@@ -120,7 +117,6 @@ export function TakeawayPanel() {
                   </Button>
                 ))}
               </div>
-              {staff.picker}
               <MemberPicker
                 member={member}
                 onChange={(m) => {
@@ -153,7 +149,7 @@ export function TakeawayPanel() {
                 </>
               )}
               <Button
-                disabled={!staff.ready || (method === 'CASH' && cashIn < payable)}
+                disabled={method === 'CASH' && cashIn < payable}
                 loading={submit.isPending}
                 onClick={() => submit.mutate(undefined)}
               >
