@@ -34,7 +34,8 @@ public class DayService {
     @Transactional(readOnly = true)
     public Map<String, Object> state() {
         LocalDate day = currentDay();
-        String status = db.one("SELECT status FROM business_day WHERE business_date = ?", (rs, n) -> rs.getString(1), day);
+        Map<String, Object> bd = db.rows("SELECT status, closed_at AS closedAt, note FROM business_day WHERE business_date = ?", day).stream().findFirst().orElse(Map.of());
+        String status = (String) bd.get("status");
         List<Map<String, Object>> sessions = db.rows("""
                 SELECT s.session_id AS id, s.shift, s.status, s.opening_cash AS openingCash, s.expected_cash AS expectedCash, s.actual_cash AS actualCash,
                        s.difference, s.opened_at AS openedAt, s.closed_at AS closedAt, o.full_name AS openedBy, c.full_name AS closedBy,
@@ -49,6 +50,8 @@ public class DayService {
         Map<String, Object> m = new java.util.LinkedHashMap<>();
         m.put("date", day.toString());
         m.put("status", status == null ? "NONE" : status);
+        m.put("closedAt", bd.get("closedAt"));
+        m.put("note", bd.get("note"));
         m.put("sessions", sessions);
         m.put("openOrders", orders);
         m.put("busyTables", tables);
@@ -57,7 +60,7 @@ public class DayService {
         return m;
     }
 
-    public Map<String, Object> close() {
+    public Map<String, Object> close(String note) {
         Map<String, Object> st = state();
         if (!"OPEN".equals(st.get("status"))) throw new OpsException(409, "NO_OPEN_DAY", "Chưa có ngày kinh doanh nào đang mở.");
         boolean anyEvening = ((List<?>) st.get("sessions")).stream().anyMatch(s -> "EVENING".equals(((Map<?, ?>) s).get("shift")));
@@ -66,7 +69,9 @@ public class DayService {
         List<?> orders = (List<?>) st.get("openOrders"), tables = (List<?>) st.get("busyTables");
         if (!orders.isEmpty() || !tables.isEmpty())
             throw new OpsException(409, "OPEN_ORDERS", "Còn " + orders.size() + " đơn mở và " + tables.size() + " bàn chưa Trống.", Map.of("orders", orders, "tables", tables));
-        db.jdbc.update("UPDATE business_day SET status = 'CLOSED', closed_at = ? WHERE business_date = ? AND status = 'OPEN'", Db.nowUtc(), LocalDate.parse((String) st.get("date")));
+        String text = note == null || note.isBlank() ? null : note.strip();
+        if (text != null && text.length() > 500) throw new OpsException(422, "NOTE_TOO_LONG", "Ghi chú chốt ngày tối đa 500 ký tự.");
+        db.jdbc.update("UPDATE business_day SET status = 'CLOSED', closed_at = ?, note = ? WHERE business_date = ? AND status = 'OPEN'", Db.nowUtc(), text, LocalDate.parse((String) st.get("date")));
         return state();
     }
 }

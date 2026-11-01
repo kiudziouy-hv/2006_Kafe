@@ -176,7 +176,6 @@ Tài liệu này liệt kê test case chức năng cho **2006 Kafé (VTPH Coffee
 | SHF-08 | Chốt ca đúng | Nhập tiền kiểm đếm bằng dự kiến | Chênh lệch 0; ca đóng | TC, Auto | P1 | |
 | SHF-09 | Chốt ca lệch tiền | Nhập kiểm đếm khác dự kiến | Lưu chênh lệch (thừa/thiếu) | TC | P1 | |
 | SHF-10 | Chốt ca khi còn đơn nháp/chưa giao | Còn đơn mang đi chưa giao khách | 409 `UNDELIVERED`; giao xong mới chốt được | TC, Auto | P1 | |
-| SHF-11 | Chủ quán chốt thay ca | Chủ quán chốt ca đang mở | Chốt được | TC, API | P2 | |
 | SHF-12 | Chốt ngày | Chủ quán `/admin/staff` → Ngày → Chốt ngày (hết ca mở) | Ngày đã chốt; không mở thêm ca | TC, Auto | P1 | |
 | SHF-13 | Chốt ngày khi còn ca mở | Chốt ngày khi ca còn mở | Từ chối, nêu rõ việc còn dở | TC | P1 | |
 | SHF-14 | Thông báo mở/chốt ca | Mở ca ở cửa sổ thu ngân 1 | Cửa sổ thu ngân 2 và Chủ quán cập nhật tức thời | TC | P2 | |

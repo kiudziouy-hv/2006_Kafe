@@ -76,6 +76,7 @@ CREATE TABLE business_day (
   business_date DATE NOT NULL,
   status        ENUM('OPEN','CLOSED') NOT NULL DEFAULT 'OPEN',
   closed_at     DATETIME NULL,
+  note          VARCHAR(500) NULL COMMENT 'Ghi chú của Chủ quán khi chốt ngày',
   PRIMARY KEY (business_date),
   CONSTRAINT ck_day_closed CHECK (status = 'OPEN' OR closed_at IS NOT NULL)
 ) ENGINE=InnoDB COMMENT='Ngày kinh doanh và chốt ngày (FR-M10-008, BR-037)';
