@@ -9,7 +9,7 @@ import { authApi } from '../api/authApi'
 interface AuthContextValue {
   user: SessionUser | null
   loading: boolean
-  loginStaff: (accountId: number, pin: string) => Promise<SessionUser>
+  loginStaff: (accountId: number, pin: string, staffId?: number) => Promise<SessionUser>
   loginOwner: (username: string, password: string) => Promise<SessionUser>
   logout: (reason?: 'expired' | 'manual') => Promise<void>
 }
@@ -37,7 +37,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   })
 
   const staffMutation = useMutation({
-    mutationFn: (v: { accountId: number; pin: string }) => authApi.staffLogin(v.accountId, v.pin),
+    mutationFn: (v: { accountId: number; pin: string; staffId?: number }) =>
+      authApi.staffLogin(v.accountId, v.pin, v.staffId),
   })
   const ownerMutation = useMutation({
     mutationFn: (v: { username: string; password: string }) =>
@@ -61,8 +62,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       user: me.data ?? null,
       loading: me.isPending,
-      loginStaff: async (accountId, pin) => {
-        const u = await staffMutation.mutateAsync({ accountId, pin })
+      loginStaff: async (accountId, pin, staffId) => {
+        const u = await staffMutation.mutateAsync({ accountId, pin, staffId })
         qc.setQueryData(ME_KEY, u)
         return u
       },

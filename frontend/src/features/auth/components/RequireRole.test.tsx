@@ -10,6 +10,7 @@ vi.mock('../api/authApi', () => ({
   authApi: {
     me: vi.fn(),
     staff: vi.fn(),
+    onDuty: vi.fn(),
     staffLogin: vi.fn(),
     ownerLogin: vi.fn(),
     logout: vi.fn(),

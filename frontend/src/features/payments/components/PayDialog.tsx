@@ -11,7 +11,6 @@ import type { OrderDetail } from '@/features/orders/api/ordersApi'
 import { useAction } from '@/hooks/useAction'
 import { formatMoney } from '@/utils/format'
 import { paymentsApi, type PayMethod, type PayOrder } from '../api/paymentsApi'
-import { useStaffPicker } from './StaffPicker'
 
 const round500 = (n: number) => Math.floor(n / 500 + 0.5) * 500
 
@@ -34,16 +33,13 @@ export function PayDialog({
   const [method, setMethod] = useState<PayMethod>(draft ? 'TRANSFER' : 'CASH')
   const [received, setReceived] = useState('')
   const [paid, setPaid] = useState<PayOrder | null>(null)
-  const staff = useStaffPicker()
 
   const maxPoints = member ? Math.min(order.maxPoints, member.points) : 0
   const usedPoints = draft ? order.pointsUsed : Math.min(Number(points || 0), maxPoints)
   const payable = draft ? order.rounded : round500(order.afterPromo - usedPoints * 1000)
   const earn = member ? Math.floor(payable / 10_000) : 0
   const cashIn = received === '' ? payable : Number(received)
-  const payer = draft
-    ? { staffId: staff.staffId }
-    : { customerId: member?.id, points: usedPoints, staffId: staff.staffId }
+  const payer = draft ? {} : { customerId: member?.id, points: usedPoints }
 
   const submit = useAction(
     () =>
@@ -116,8 +112,6 @@ export function PayDialog({
           />
         )}
 
-        {staff.picker}
-
         {!draft && (
           <div
             role="radiogroup"
@@ -147,7 +141,7 @@ export function PayDialog({
           />
         )}
         <Button
-          disabled={!staff.ready || (!draft && method === 'CASH' && cashIn < payable)}
+          disabled={!draft && method === 'CASH' && cashIn < payable}
           loading={submit.isPending}
           onClick={() => submit.mutate(undefined)}
         >

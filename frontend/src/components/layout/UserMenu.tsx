@@ -68,7 +68,9 @@ export function UserMenu({
             </span>
             {!collapsed && (
               <span className="min-w-0">
-                <span className="block truncate text-sm font-bold">{user.fullName}</span>
+                <span className="block truncate text-sm font-bold">
+                  {user.staffName ?? user.fullName}
+                </span>
                 <span className="block truncate text-xs text-ink-soft">
                   {ROLE_LABEL[user.role]}
                 </span>
@@ -95,7 +97,9 @@ export function UserMenu({
               {initials(user.fullName)}
             </span>
             <span className="min-w-0">
-              <span className="block truncate text-sm font-bold">{user.fullName}</span>
+              <span className="block truncate text-sm font-bold">
+                {user.staffName ?? user.fullName}
+              </span>
               <span className="block truncate text-xs text-ink-soft">{ROLE_LABEL[user.role]}</span>
             </span>
           </div>

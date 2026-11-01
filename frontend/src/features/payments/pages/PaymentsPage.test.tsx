@@ -11,7 +11,6 @@ vi.mock('../api/paymentsApi', () => ({
     pending: vi.fn(),
     drafts: vi.fn(),
     handovers: vi.fn(),
-    onDuty: vi.fn(),
   },
 }))
 vi.mock('@/features/orders/api/ordersApi', async (orig) => ({
@@ -67,7 +66,6 @@ describe('Màn thu ngân: đồng bộ trạng thái ca', () => {
     api.pending.mockResolvedValue([])
     api.drafts.mockResolvedValue([])
     api.handovers.mockResolvedValue([])
-    api.onDuty.mockResolvedValue([])
 
     renderApp(<PaymentsPage />)
 

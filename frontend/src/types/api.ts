@@ -5,6 +5,8 @@ export interface SessionUser {
   id: number
   fullName: string
   role: Role
+  /** Thu ngân đứng quầy trong phiên (chọn lúc đăng nhập); hóa đơn ghi theo người này. */
+  staffName?: string | null
   /** Mã màn hình trang chủ theo vai trò (S54, S10, S20, S30) */
   home: string
   /** 0 = không tự đăng xuất; 300 = 5 phút không thao tác (UC-02) */

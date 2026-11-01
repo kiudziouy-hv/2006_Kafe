@@ -47,13 +47,6 @@ export type PayMethod = 'CASH' | 'TRANSFER'
 export interface Payer {
   customerId?: number
   points?: number
-  /** Nhân viên phụ trách (thu ngân đang chấm công); không gửi thì ghi theo tài khoản quầy. */
-  staffId?: number
-}
-
-export interface OnDutyStaff {
-  id: number
-  name: string
 }
 
 /** Đơn kèm số liệu tính tiền (khuyến mãi, điểm) trả về từ các API thanh toán. */
@@ -73,7 +66,6 @@ export const paymentsApi = {
   drafts: () => http.get<PayOrder[]>('/ops/drafts').then((r) => r.data),
   confirmDraft: (id: number, payer: Payer) =>
     http.post<PayOrder>(`/ops/drafts/${id}/confirm`, payer).then((r) => r.data),
-  onDuty: () => http.get<OnDutyStaff[]>('/ops/on-duty').then((r) => r.data),
   handovers: () => http.get<PayOrder[]>('/ops/takeaway/handovers').then((r) => r.data),
   handover: (id: number) => http.post<PayOrder>(`/ops/orders/${id}/handover`).then((r) => r.data),
   cancelDraft: (id: number) => http.post<PayOrder>(`/ops/drafts/${id}/cancel`).then((r) => r.data),
