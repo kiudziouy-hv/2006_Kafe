@@ -22,7 +22,7 @@ Theo bảng đối chiếu trong [docs/requirements/README.md](docs/requirements
 | Nhóm | Nội dung |
 |---|---|
 | Tài khoản | Đăng nhập (Quản lý bằng tên + mật khẩu, nhân viên bằng PIN 6 số và phải chấm công trước), tự đăng xuất, hồ sơ cá nhân |
-| Nhân sự | Quản lý nhân viên và tài khoản, chấm công vào/ra, chỉnh sửa chấm công, mở/chốt ca, chốt ngày |
+| Nhân sự | Quản lý nhân viên và tài khoản, chấm công vào/ra (kể cả của chính quản lý), chỉnh sửa chấm công, chốt ngày |
 | Thực đơn | Món theo kích cỡ (M/L), topping, ảnh món và topping, khuyến mãi theo nhóm món và khung giờ |
 | Bán hàng | Sơ đồ 14 bàn, gọi món, gọi thêm, chuyển bàn, hủy món, đơn mang đi (tiền mặt hoặc chuyển khoản/QR, mức "Đá riêng", Thu ngân giao khách khi pha chế xong; chốt ca bị chặn khi còn đơn chưa giao) |
 | Pha chế | Bảng món chờ làm cập nhật tức thời, trừ nguyên liệu theo công thức |
@@ -243,7 +243,7 @@ Mặc định `scripts/dev-mysql.sh` chỉ nạp **dữ liệu nền** ở trên
 - **Thực đơn/khuyến mãi/nhân viên/khách hàng:** thêm, sửa, tắt bán, khóa hoặc mở khóa tài khoản.
 
 **Bước 8. Chốt ca và chốt ngày**
-1. Thu ngân bấm **Chốt ca** ở ô ca đang mở, nhập tiền mặt kiểm đếm thực tế; hệ thống tính tiền dự kiến (tiền đầu ca + tiền mặt thu, trừ hóa đơn hủy và hoàn tiền) và ghi **chênh lệch**. Doanh thu chuyển khoản/QR hiện riêng để đối chiếu ngân hàng. Chốt bị chặn khi còn đơn nháp hoặc đơn mang đi chưa giao. Sau khi chốt, hóa đơn của ca không sửa được; ô ca chuyển sang **Đã chốt** kèm nhãn Khớp tiền hoặc số tiền lệch. Chủ quán cũng chốt được ca.
+1. Thu ngân bấm **Chốt ca** ở ô ca đang mở, nhập tiền mặt kiểm đếm thực tế; hệ thống tính tiền dự kiến (tiền đầu ca + tiền mặt thu, trừ hóa đơn hủy và hoàn tiền) và ghi **chênh lệch**. Doanh thu chuyển khoản/QR hiện riêng để đối chiếu ngân hàng. Chốt bị chặn khi còn đơn nháp hoặc đơn mang đi chưa giao. Sau khi chốt, hóa đơn của ca không sửa được; ô ca chuyển sang **Đã chốt** kèm nhãn Khớp tiền hoặc số tiền lệch.
 2. Chủ quán vào **Nhân sự và ca** → tab **Ca & chốt ngày**, bấm **Chốt ngày kinh doanh**. Chỉ chốt được khi không còn đơn mở và mọi bàn đều Trống; ca tối là ca chốt ngày.
 
 **Bước 9. Xem báo cáo** (`/admin`, trang đầu)
@@ -280,7 +280,7 @@ Mỗi vai trò dùng một trình duyệt hoặc cửa sổ ẩn danh riêng đ�
 2. **Pha chế** (chọn vai trò Pha chế, PIN `345678`, không chọn tên): món mới hiện trên bảng, bấm *Bắt đầu pha* (nguyên liệu trong kho được trừ theo công thức; nếu thiếu nguyên liệu nút báo "Thiếu nguyên liệu"), pha xong bấm *Hoàn thành* để báo Phục vụ và Thu ngân.
 3. **Thu ngân** (chọn vai trò Thu ngân, chọn tên, nhập PIN riêng của người đó, ví dụ Hồ Quốc Tiến `234567`): chọn bàn đang chờ thanh toán. Nhập số điện thoại thành viên (ví dụ `0912345678`) để dùng điểm, chọn phương thức rồi thanh toán và in hóa đơn.
 4. **Chủ quán** (`owner` / `admin123`): xem *Báo cáo* (doanh thu, món bán chạy), *Hóa đơn* (in lại, hủy, hoàn tiền), *Kho* (cảnh báo sắp hết, xác nhận hao hụt). Avatar ở cuối thanh bên mở menu *Thông tin cá nhân* và *Đăng xuất*.
-5. Cuối ngày: Thu ngân hoặc Chủ quán **chốt ca**, Chủ quán **chốt ngày**.
+5. Cuối ngày: Thu ngân **chốt ca**, Chủ quán **chốt ngày**.
 
 ### Các thao tác khác nên thử
 - **Gọi thêm / chuyển bàn / hủy món:** trên màn hình đơn của một bàn đang phục vụ.

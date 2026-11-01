@@ -383,8 +383,23 @@ class MySqlAdminIntegrationTest extends AbstractMySqlIT {
         // Ca tối đã chốt, không còn đơn mở và bàn trống: chốt ngày được; sau đó ca/ngày bị khóa (BR-038)
         ok(cashier, "POST", "/api/ops/shift/open", "{\"type\":\"EVENING\",\"openingCash\":100000}");
         ok(owner, "POST", "/api/ops/shift/close", "{\"actualCash\":100000}");
-        JsonNode day = ok(owner, "POST", "/api/shift/day/close", null);
+        JsonNode day = ok(owner, "POST", "/api/shift/day/close", "{\"note\":\"Cuối ngày ổn, không lệch tiền\"}");
         assertEquals("CLOSED", day.get("status").asText());
+        assertEquals("Cuối ngày ổn, không lệch tiền", day.get("note").asText());
         rule(cashier, "POST", "/api/ops/shift/open", "{\"type\":\"MORNING\",\"openingCash\":0}", 409, "DAY_CLOSED");
+    }
+
+    // ---------- chấm công của Chủ quán/Quản lý ----------
+    @Test
+    void ownerClocksInAndOutWithoutPin() throws Exception {
+        assertEquals(0, ok(owner, "GET", "/api/attendance/me", null).size());
+        rule(owner, "POST", "/api/attendance/me/in", "{\"shift\":\"NOON\"}", 422, "BAD_SHIFT");
+        rule(owner, "POST", "/api/attendance/me/out", null, 409, "NOT_IN");
+        ok(owner, "POST", "/api/attendance/me/in", "{\"shift\":\"MORNING\"}");
+        assertEquals("MORNING", ok(owner, "GET", "/api/attendance/me", null).get("shift").asText());
+        rule(owner, "POST", "/api/attendance/me/in", "{\"shift\":\"EVENING\"}", 409, "ALREADY_IN");
+        ok(owner, "POST", "/api/attendance/me/out", null);
+        assertEquals(0, ok(owner, "GET", "/api/attendance/me", null).size());
+        rule(cashier, "POST", "/api/attendance/me/in", "{\"shift\":\"MORNING\"}", 403, "FORBIDDEN");
     }
 }
