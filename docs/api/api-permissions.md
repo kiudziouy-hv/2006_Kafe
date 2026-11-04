@@ -178,6 +178,7 @@ Cập nhật 2026-10-31, lập từ mã nguồn các `*Controller` (89 API) và 
 - `GET /api/auth/staff` công khai và trả danh sách mọi tài khoản nhân viên (id, họ tên, vai trò, cờ khóa, cờ quầy dùng chung; không có Chủ quán). Giao diện không hiển thị danh sách này khi đăng nhập quầy, nhưng ai gọi API cũng đọc được. `GET /api/auth/on-duty?role=CASHIER|WAITER` cũng công khai và chỉ trả mã và tên người đang chấm công của vai trò đó, để chọn tên lúc đăng nhập.
 - `GET /api/ops/orders/{id}` cho Phục vụ và Thu ngân xem bất kỳ đơn nào theo mã, không giới hạn theo bàn đang phục vụ.
 - Hóa đơn (`GET /api/invoices`, chi tiết, in lại): Thu ngân xem được toàn bộ hóa đơn, không chỉ ca của mình.
+- In lại hóa đơn **đã hủy** chỉ Chủ quán/Quản lý (UC-23 E2); Thu ngân gọi `POST /api/invoices/{id}/reprint` với hóa đơn đã hủy nhận 403 `CANCELLED_OWNER_ONLY`.
 
 ## Ngoài phạm vi phân quyền
 

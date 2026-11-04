@@ -171,6 +171,8 @@ class MySqlAdminIntegrationTest extends AbstractMySqlIT {
         assertEquals(47000, c.get("refunds").get(1).get("cashAmount").asInt());
         assertEquals(500000, ok(cashier, "GET", "/api/ops/shift", null).get("expected").asInt());
         rule(owner, "POST", "/api/invoices/" + inv + "/cancel", "{\"reason\":\"x\"}", 409, "ALREADY_CANCELLED");
+        rule(cashier, "POST", "/api/invoices/" + inv + "/reprint", null, 403, "CANCELLED_OWNER_ONLY"); // UC-23 E2
+        assertEquals(1, ok(owner, "POST", "/api/invoices/" + inv + "/reprint", null).get("reprintCount").asInt());
 
         int refundId = c.get("refunds").get(1).get("id").asInt();
         ok(owner, "POST", "/api/invoices/refunds/" + refundId + "/confirm", null);

@@ -37,7 +37,7 @@ public class InvoiceController {
 
     @GetMapping("/{id}") public Map<String, Object> detail(@PathVariable int id, HttpSession s) { access.who(s, Role.CASHIER); return invoices.detail(id); }
 
-    @PostMapping("/{id}/reprint") public Map<String, Object> reprint(@PathVariable int id, HttpSession s) { access.who(s, Role.CASHIER); return invoices.reprint(id); }
+    @PostMapping("/{id}/reprint") public Map<String, Object> reprint(@PathVariable int id, HttpSession s) { Account a = access.who(s, Role.CASHIER); return invoices.reprint(id, a); }
 
     @PostMapping("/{id}/cancel") public Map<String, Object> cancel(@PathVariable int id, @RequestBody Map<String, Object> b, HttpSession s) {
         Account a = access.who(s); return invoices.cancel(id, Db.str(b, "reason"), a); }

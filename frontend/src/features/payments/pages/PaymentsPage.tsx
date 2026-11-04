@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Banknote, Clock, Receipt, ShoppingBag, Wallet } from 'lucide-react'
+import { Banknote, Clock, LayoutGrid, Receipt, ShoppingBag, Wallet } from 'lucide-react'
 import { useState } from 'react'
 import { QueryState } from '@/components/feedback/QueryState'
 import { Button } from '@/components/ui/Button'
@@ -9,13 +9,14 @@ import { Tabs } from '@/components/ui/Tabs'
 import InvoicesPage from '@/features/invoices/pages/InvoicesPage'
 import { formatMoney } from '@/utils/format'
 import { paymentsApi, type PayOrder } from '../api/paymentsApi'
+import { CashierTableMap } from '../components/CashierTableMap'
 import { PayDialog } from '../components/PayDialog'
 import { OpenShiftDialog, ShiftPanel } from '../components/ShiftPanel'
 import { TakeawayPanel } from '../components/TakeawayPanel'
 
-type Tab = 'pay' | 'takeaway' | 'invoices' | 'shift'
+type Tab = 'pay' | 'tables' | 'takeaway' | 'invoices' | 'shift'
 
-/** Màn Thu ngân: UC-22 thanh toán, UC-12 đơn mang đi, UC-23 in lại hóa đơn, UC-30/31 ca. Mọi kiểm tra tiền/ca do backend thực hiện. */
+/** Màn Thu ngân: UC-22 thanh toán, UC-07 sơ đồ bàn (chỉ xem), UC-12 đơn mang đi, UC-23 in lại hóa đơn, UC-30/31 ca. Mọi kiểm tra tiền/ca do backend thực hiện. */
 export default function PaymentsPage() {
   const shift = useQuery({ queryKey: ['ops', 'shift'], queryFn: paymentsApi.shift })
   const [tab, setTab] = useState<Tab>('pay')
@@ -34,6 +35,7 @@ export default function PaymentsPage() {
         onChange={setTab}
         tabs={[
           { id: 'pay', label: 'Chờ thanh toán', icon: Wallet },
+          { id: 'tables', label: 'Sơ đồ bàn', icon: LayoutGrid },
           { id: 'takeaway', label: 'Đơn mang đi', icon: ShoppingBag },
           { id: 'invoices', label: 'Hóa đơn', icon: Receipt },
           { id: 'shift', label: 'Ca thu ngân', icon: Clock },
@@ -51,6 +53,7 @@ export default function PaymentsPage() {
       )}
       {opening && <OpenShiftDialog onClose={() => setOpening(false)} />}
       {!needsShift && tab === 'pay' && <PendingList />}
+      {tab === 'tables' && <CashierTableMap />}
       {!needsShift && tab === 'takeaway' && <TakeawayPanel />}
       {tab === 'invoices' && <InvoicesPage />}
       {tab === 'shift' && <ShiftPanel />}

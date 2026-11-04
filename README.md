@@ -244,7 +244,7 @@ Mặc định `scripts/dev-mysql.sh` chỉ nạp **dữ liệu nền** ở trên
 
 **Bước 8. Chốt ca và chốt ngày**
 1. Thu ngân bấm **Chốt ca** ở ô ca đang mở, nhập tiền mặt kiểm đếm thực tế; hệ thống tính tiền dự kiến (tiền đầu ca + tiền mặt thu, trừ hóa đơn hủy và hoàn tiền) và ghi **chênh lệch**. Doanh thu chuyển khoản/QR hiện riêng để đối chiếu ngân hàng. Chốt bị chặn khi còn đơn nháp hoặc đơn mang đi chưa giao. Sau khi chốt, hóa đơn của ca không sửa được; ô ca chuyển sang **Đã chốt** kèm nhãn Khớp tiền hoặc số tiền lệch.
-2. Chủ quán vào **Nhân sự và ca** → tab **Ca & chốt ngày**, bấm **Chốt ngày kinh doanh**. Chỉ chốt được khi không còn đơn mở và mọi bàn đều Trống; ca tối là ca chốt ngày.
+2. Chủ quán vào **Nhân sự và ca** → tab **Ca & chốt ngày**, bấm **Chốt ngày**, nhập ghi chú nếu cần (không bắt buộc) rồi **Xác nhận chốt ngày**. Chỉ chốt được khi ca tối đã chốt, không còn đơn mở và mọi bàn đều Trống; sau khi chốt, màn hình hiện giờ chốt và ghi chú.
 
 **Bước 9. Xem báo cáo** (`/admin`, trang đầu)
 - Chọn **Hôm nay**, **Hôm qua**, **7 ngày qua**, **Tháng này** hoặc khoảng ngày tự chọn: tổng doanh thu, số hóa đơn, số sản phẩm đã bán, món bán chạy, danh sách hóa đơn. Hóa đơn đã hủy không tính, hoàn tiền một phần được trừ.
@@ -288,9 +288,9 @@ Mỗi vai trò dùng một trình duyệt hoặc cửa sổ ẩn danh riêng đ�
 - **Ca thu ngân:** xem hai ô ca sáng, ca tối của hôm nay và 7 ngày gần nhất; mở hai cửa sổ thu ngân để thấy mở/chốt ca cập nhật ngay.
 - **Thêm món, sửa giá, tạo khuyến mãi:** Chủ quán, mục *Thực đơn*.
 - **Nhập kho, kiểm kê:** Chủ quán, mục *Kho*.
-- **Thêm nhân viên, đặt lại PIN, xem và sửa chấm công, chốt ca/ngày:** Chủ quán, mục *Nhân sự & ca*.
+- **Thêm nhân viên, đặt lại PIN, xem và sửa chấm công, chốt ngày:** Chủ quán, mục *Nhân sự & ca* (chốt ca là việc của Thu ngân).
 - **Đăng ký và tra cứu thành viên:** Chủ quán, mục *Thành viên*.
-- **Chấm công vào/ra:** trang `/attendance`, mỗi người chọn vai trò, tên và dùng PIN cá nhân.
+- **Chấm công vào/ra:** nhân viên dùng trang `/attendance` (chọn vai trò, tên và nhập PIN cá nhân). Chủ quán/Quản lý đã đăng nhập nên chấm công ngay ở *Nhân sự & ca* → **Chấm công** → thẻ **Chấm công của tôi**, không cần PIN.
 
 ---
 
