@@ -52,7 +52,7 @@ const openShift = {
 }
 
 describe('Màn thu ngân: đồng bộ trạng thái ca', () => {
-  it('mở ca ở tab Ca thu ngân thì Chờ thanh toán và Đơn mang đi mở khóa ngay', async () => {
+  it('mở ca ở tab Ca thu ngân thì Đơn mang đi mở khóa ngay', async () => {
     let opened = false
     api.shift.mockImplementation(async () =>
       opened
@@ -75,14 +75,14 @@ describe('Màn thu ngân: đồng bộ trạng thái ca', () => {
 
     renderApp(<PaymentsPage />)
 
-    expect(await screen.findByText(/Chưa mở ca thu ngân, cần mở ca trước/)).toBeInTheDocument()
+    fireEvent.click(await screen.findByRole('tab', { name: /Đơn mang đi/ }))
+    expect(
+      await screen.findByText(/Cần mở ca thu ngân mới tạo được đơn mang đi/),
+    ).toBeInTheDocument()
     fireEvent.click(screen.getByRole('tab', { name: /Ca thu ngân/ }))
     fireEvent.click((await screen.findAllByRole('button', { name: 'Mở ca' }))[0]!)
 
     await waitFor(() => expect(api.openShift).toHaveBeenCalled())
-    fireEvent.click(screen.getByRole('tab', { name: /Chờ thanh toán/ }))
-    expect(await screen.findByText('Chưa có đơn nào chờ thanh toán.')).toBeInTheDocument()
-
     fireEvent.click(screen.getByRole('tab', { name: /Đơn mang đi/ }))
     expect(await screen.findByText('Chọn món mang đi')).toBeInTheDocument()
     expect(

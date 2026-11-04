@@ -202,7 +202,7 @@ Mặc định `scripts/dev-mysql.sh` chỉ nạp **dữ liệu nền** ở trên
 
 **Bước 1. Thu ngân mở ca** (`/cashier`)
 1. Tab **Nhân viên** → **Thu ngân** → chọn tên (người đã chấm công) → PIN riêng (Hồ Quốc Tiến `234567`).
-2. Vào tab **Ca thu ngân**: ô **Ca sáng** hoặc **Ca tối** chưa mở có sẵn form; nhập **Tiền mặt đầu ca (đồng)** (ví dụ 500000), bấm **Mở ca**. Ở tab **Chờ thanh toán** hoặc **Đơn mang đi** khi chưa mở ca, nút **Mở ca thu ngân** mở popup mở ca ngay tại chỗ.
+2. Vào tab **Ca thu ngân**: ô **Ca sáng** hoặc **Ca tối** chưa mở có sẵn form; nhập **Tiền mặt đầu ca (đồng)** (ví dụ 500000), bấm **Mở ca**. Ở tab **Đơn mang đi** khi chưa mở ca (hoặc khi bấm bàn Chờ thanh toán trên **Sơ đồ bàn**), nút **Mở ca thu ngân** mở popup mở ca ngay tại chỗ.
 3. Chưa mở ca thì không thanh toán và không tạo đơn mang đi được; mỗi lúc chỉ một ca mở, ca tối mở sau khi chốt ca sáng. Mở ca xong, mọi cửa sổ thu ngân tự cập nhật.
 
 **Bước 2. Phục vụ gọi món tại bàn** (`/service`)
@@ -223,7 +223,7 @@ Mặc định `scripts/dev-mysql.sh` chỉ nạp **dữ liệu nền** ở trên
 - Khi mọi món đã Hoàn thành (hoặc đã hủy), vào lại bàn và bấm **Khách đã dùng xong**: bàn chuyển sang **Chờ thanh toán**. Nếu khách gọi thêm lúc này, bàn quay lại **Đang phục vụ**.
 
 **Bước 5. Thu ngân thanh toán đơn tại quán** (`/cashier`)
-1. Tab **Chờ thanh toán** hiện các bàn đã xong; bấm **Thanh toán** ở bàn cần tính.
+1. Tab **Sơ đồ bàn** (mặc định) hiện bàn **Chờ thanh toán** kèm số tiền; bấm bàn cần tính để thanh toán.
 2. Nhập **số điện thoại** (đúng 10 số) để nhận diện thành viên (hoặc đăng ký thành viên mới bằng số điện thoại và tên). Dùng điểm nếu muốn (1 điểm = 1.000đ, tối đa 30% đơn sau khuyến mãi).
 3. Chọn **tiền mặt** hoặc **chuyển khoản/QR** (nhân viên tự kiểm tra tiền về, hệ thống không nối ngân hàng), bấm **Xác nhận thanh toán**.
 4. Hệ thống tính theo thứ tự: giá + topping → khuyến mãi → điểm → làm tròn 500đ → tích điểm (10.000đ = 1 điểm). Thông báo **Thanh toán thành công**, bấm **In hóa đơn** (khổ 80 mm). Bàn về **Trống**.
