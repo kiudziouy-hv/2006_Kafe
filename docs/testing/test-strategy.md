@@ -30,7 +30,7 @@ Các test MySQL cần Docker đang chạy; không có Docker thì tự bỏ qua.
 | Chặn truy cập theo vai trò (`RequireRole`) | 3 |
 | Bảng dữ liệu (`DataTable`) | 2 |
 | Bàn phím PIN (`PinPad`) | 1 |
-| Màn thu ngân: mở ca ở tab Ca thu ngân thì Chờ thanh toán và Đơn mang đi mở khóa ngay (`PaymentsPage`) | 1 |
+| Màn thu ngân: mở ca ở tab Ca thu ngân thì Đơn mang đi mở khóa ngay (`PaymentsPage`) | 1 |
 
 Trước khi nộp còn chạy `npm run lint`, `npm run format:check` và `npm run typecheck`; CI chạy cùng bộ này cộng `npm run build` và kiểm tra tệp Flyway khớp `database/*.sql` (`scripts/sync-migrations.py --check`).
 

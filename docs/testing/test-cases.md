@@ -187,7 +187,7 @@ Quy tắc: khuyến mãi → dùng điểm (1 điểm = 1.000đ, tối đa 30% s
 
 | Mã | Mô tả | Các bước | Kết quả mong đợi | Loại | Ưu tiên | Kết quả |
 |---|---|---|---|---|---|---|
-| PAY-01 | Danh sách chờ thanh toán | Phục vụ hoàn tất bàn; thu ngân xem tab **Chờ thanh toán** | Đơn hiện đúng bàn, tổng tiền, theo thời gian thực | TC | P1 | |
+| PAY-01 | Danh sách chờ thanh toán | Phục vụ hoàn tất bàn; thu ngân xem tab **Sơ đồ bàn** | Đơn hiện đúng bàn, tổng tiền, theo thời gian thực | TC | P1 | |
 | PAY-02 | Thanh toán tiền mặt đủ | Chọn tiền mặt, khách đưa ≥ tổng | Có hóa đơn; hiện tiền thối đúng | TC, Auto | P1 | |
 | PAY-03 | Khách đưa thiếu | Tiền khách đưa < tổng | Nút thanh toán khóa/báo lỗi | TC | P1 | |
 | PAY-04 | Tiền khách đưa quá trần | Nhập > 1 tỷ | Từ chối | TC, Auto | P3 | |

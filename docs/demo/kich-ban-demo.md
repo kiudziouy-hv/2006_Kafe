@@ -53,7 +53,7 @@ Nói ngắn: quán 14 bàn, 1 chi nhánh, 4 vai trò, 4 loại thiết bị. H�
 
 ### Cảnh 4. Thu ngân mở ca (UC-30, ASM-15) (1 phút)
 **Cửa sổ D** (`/cashier`).
-1. Khung ca báo chưa mở. Thử chuyển tab **Chờ thanh toán**: chưa thanh toán được vì chưa có ca.
+1. Khung ca báo chưa mở. Thử bấm bàn Chờ thanh toán trên **Sơ đồ bàn**: chưa thanh toán được vì chưa có ca.
 2. Bấm **Mở ca thu ngân**, chọn **Ca tối (14:30 – 22:00)** (ca tối là ca chốt ngày, dùng cho Cảnh 11), nhập **Tiền mặt đầu ca (đồng)** `500000`, bấm **Mở ca**. Thấy **Đang mở**, giờ mở.
 
 ### Cảnh 5. Phục vụ gọi món tại bàn (UC-07, 08, 09, 10) (3 phút)
@@ -76,7 +76,7 @@ Nói ngắn: quán 14 bàn, 1 chi nhánh, 4 vai trò, 4 loại thiết bị. H�
 
 ### Cảnh 7. Phục vụ xác nhận khách dùng xong, thu ngân thanh toán (UC-11, 22; BR-021) (4 phút)
 1. **Cửa sổ B:** vào bàn 3, bấm **Khách đã dùng xong**. Bàn chuyển **Chờ thanh toán**. Chỉ ra: nếu còn món chưa xong thì nút bị khóa; nếu khách gọi thêm lúc này, bàn quay lại Đang phục vụ.
-2. **Cửa sổ D:** tab **Chờ thanh toán** hiện bàn 3. Bàn đang phục vụ thì báo **"Bàn đang phục vụ, chưa thể thanh toán"**. Bấm **Thanh toán**.
+2. **Cửa sổ D:** tab **Sơ đồ bàn** hiện bàn 3 ở trạng thái Chờ thanh toán. Bàn đang phục vụ thì ghi **"Chưa thể thanh toán"**. Bấm bàn 3 để thanh toán.
 3. Ở hộp thanh toán, nhập số điện thoại `0912345678` để nhận diện thành viên **Nguyễn Thị Hoa** (24 điểm). Nhập **Số điểm dùng** `10` (tối đa 30% giá trị đơn, 1 điểm = 1.000đ).
 4. Đọc dòng tính tiền theo đúng thứ tự: Tạm tính 98.000đ → khuyến mãi (nếu có) → trừ 10.000đ điểm → **Khách phải trả 88.000đ** (đã làm tròn 500đ) → sẽ tích **8 điểm** (10.000đ = 1 điểm). Chọn **Tiền mặt**, **Tiền khách đưa** `100000` → **Tiền thối** 12.000đ.
 5. Bấm **Xác nhận thanh toán** → **Thanh toán thành công**; bấm **In hóa đơn** (bản in khổ 80 mm, "Giá đã bao gồm thuế"). Bàn 3 về Trống.

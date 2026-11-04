@@ -63,7 +63,6 @@ export function TableGrid({
       {mode === 'readonly' && tables.data?.length === 0 && (
         <EmptyState icon={LayoutGrid}>Chưa có bàn nào.</EmptyState>
       )}
-      {mode === 'readonly' && !!tables.data?.length && <Legend />}
       {zones.map(([zone, list]) => (
         <section key={zone} className="mb-7">
           <h2 className="mb-3 text-lg font-semibold">{zone}</h2>
@@ -79,19 +78,6 @@ export function TableGrid({
         </section>
       ))}
     </QueryState>
-  )
-}
-
-function Legend() {
-  return (
-    <ul aria-label="Chú thích trạng thái bàn" className="mb-4 flex flex-wrap gap-4 text-sm">
-      {(Object.keys(LABEL) as TableStatus[]).map((s) => (
-        <li key={s} className="flex items-center gap-2">
-          <span className={clsx('size-4 rounded border', STYLE[s])} aria-hidden />
-          {LABEL[s]}
-        </li>
-      ))}
-    </ul>
   )
 }
 
