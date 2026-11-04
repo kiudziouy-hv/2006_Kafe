@@ -234,6 +234,7 @@ Quy tắc: khuyến mãi → dùng điểm (1 điểm = 1.000đ, tối đa 30% s
 | INVC-03 | Xem chi tiết | Mở một hóa đơn | Hiện món, topping, KM, điểm, tổng, nhân viên, bố cục cân đối, chữ không xuống dòng | TC | P2 | |
 | INVC-04 | In lại (UC-23) | Bấm In lại | Bản in khổ 80 mm đủ thông tin, có "Thu ngân: tên" | TC | P1 | |
 | INVC-05 | Thu ngân chỉ xem/in lại | Thu ngân mở chi tiết hóa đơn | Không có nút Hủy/Hoàn tiền (BR-026, BR-031) | TC | P1 | |
+| INVC-05b | In lại hóa đơn đã hủy (UC-23 E2) | Thu ngân mở hóa đơn đã hủy; Chủ quán mở cùng hóa đơn và bấm In lại | Thu ngân không có nút In lại, gọi API nhận 403; bản in của Chủ quán có dòng "ĐÃ HỦY" và dấu REPRINT | TC, Auto | P1 | |
 | INVC-06 | Hủy hóa đơn (UC-24) | Chủ quán hủy hóa đơn, nhập lý do | Hóa đơn chuyển Hủy; hoàn điểm/kho theo quy tắc; doanh thu giảm | TC, Auto | P1 | |
 | INVC-07 | Hoàn tiền một phần | Hoàn một số dòng | Số tiền hoàn theo tỷ lệ; lưu trên hóa đơn | TC, Auto (PricingRulesIntegrationTest) | P1 | |
 | INVC-08 | Hoàn tiền toàn bộ | Hoàn hết | Trạng thái hoàn toàn bộ | TC, Auto | P1 | |

@@ -16,6 +16,7 @@ const LINE_LABEL = { NEW: 'Mới', MAKING: 'Đang pha', DONE: 'Xong', CANCELLED:
 /**
  * UC-34 chi tiết hóa đơn, UC-23 in lại, UC-24 hủy hóa đơn, UC-13 hủy dòng món đã thanh toán, xác nhận hoàn tiền.
  * Cashier chỉ xem và in lại; thao tác hủy/hoàn tiền chỉ hiện cho Chủ quán/Quản lý (BR-026, BR-031).
+ * Hóa đơn đã hủy chỉ Chủ quán/Quản lý được in lại (UC-23 E2).
  */
 export function InvoiceDetailModal({
   invoiceId,
@@ -167,13 +168,15 @@ export function InvoiceDetailModal({
               </div>
             )}
             <div className="flex flex-wrap justify-end gap-2">
-              <Button
-                variant="secondary"
-                loading={reprint.isPending}
-                onClick={() => reprint.mutate(undefined)}
-              >
-                In lại hóa đơn
-              </Button>
+              {(owner || detail.data.status !== 'CANCELLED') && (
+                <Button
+                  variant="secondary"
+                  loading={reprint.isPending}
+                  onClick={() => reprint.mutate(undefined)}
+                >
+                  In lại hóa đơn
+                </Button>
+              )}
               {owner && detail.data.canCancel && (
                 <Button variant="danger" onClick={() => setCancelling(true)}>
                   Hủy hóa đơn

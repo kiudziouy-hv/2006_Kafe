@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.vtph.coffee.auth.Account;
+import vn.vtph.coffee.auth.Role;
 import vn.vtph.coffee.common.Db;
 import vn.vtph.coffee.ops.OpsEvent;
 import vn.vtph.coffee.ops.OpsException;
@@ -100,9 +101,10 @@ public class InvoiceService {
         return inv;
     }
 
-    /** UC-23: ghi nhận lần in lại; giao diện in bản có dấu "Reprint" (NFR-016). */
-    public Map<String, Object> reprint(int id) {
-        detail(id);
+    /** UC-23: ghi nhận lần in lại; giao diện in bản có dấu "Reprint" (NFR-016). Hóa đơn đã hủy chỉ Chủ quán/Quản lý in lại (UC-23 E2). */
+    public Map<String, Object> reprint(int id, Account by) {
+        if ("CANCELLED".equals(detail(id).get("status")) && by.role != Role.OWNER)
+            throw new OpsException(403, "CANCELLED_OWNER_ONLY", "Hóa đơn đã hủy chỉ Chủ quán/Quản lý được in lại.");
         db.jdbc.update("UPDATE invoice SET reprint_count = reprint_count + 1 WHERE invoice_id = ?", id);
         return detail(id);
     }
