@@ -29,5 +29,5 @@ MySQL bật binary log cần `log_bin_trust_function_creators=1` mới tạo đ�
 - Món thuộc nhóm `SMOOTHIE` hiển thị là "Sinh tố" và không gán topping nào trong `menu_item_topping`.
 - `account.secret_hash` trong dữ liệu mẫu chỉ để minh họa; ứng dụng thật phải băm bcrypt/argon2 trước khi lưu.
 - Không xóa cứng dữ liệu giao dịch (NFR-010): khóa ngoại `RESTRICT`, trigger chặn `DELETE`. Muốn xóa dữ liệu mẫu, `V3`/`V5` dùng `TRUNCATE` (chỉ chạy trên CSDL mẫu).
-- **Đã kiểm chứng:** `MySqlAuthIntegrationTest` (Testcontainers, MySQL 8.4) áp 8 migration lên CSDL trống, thấy đủ 29 bảng, 15 trigger, 8 tài khoản mẫu và collation `utf8mb4_0900_as_ci`. `run_tests.py` (36 kịch bản) đã chạy 36/36 đạt trên MySQL 8.4 nạp từ `database/*.sql`.
+- **Đã kiểm chứng:** `MySqlAuthIntegrationTest` (Testcontainers, MySQL 8.4) áp 7 migration lên CSDL trống, thấy đủ 29 bảng, 15 trigger, 8 tài khoản mẫu và collation `utf8mb4_0900_as_ci`. `run_tests.py` (36 kịch bản) đã chạy 36/36 đạt trên MySQL 8.4 nạp từ `database/*.sql`.
 - Script đồng bộ giữ `ALTER DATABASE … COLLATE utf8mb4_0900_as_ci` (đổi sang CSDL hiện tại) để so sánh chuỗi phân biệt dấu như bản gốc.
