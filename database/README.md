@@ -10,8 +10,9 @@ Cơ sở dữ liệu của đồ án "Hệ thống quản lý quán cà phê VTP
 | `02_triggers.sql` | 15 trigger thực thi quy tắc nghiệp vụ (BR-004, 017, 025, 028, 030, 031, 035, 037, NFR-010, ASM-01, ISS-C4-10, UC-31) |
 | `03_seed_master.sql` | Dữ liệu danh mục: nhân viên, tài khoản, 14 bàn, 30 món, topping, nguyên liệu, công thức, phiếu nhập, khuyến mãi, thành viên |
 | `04_views_procedures.sql` | 5 view báo cáo/tra cứu và thủ tục `sp_start_making` |
-| `05_seed_transactions.sql` | Dữ liệu giao dịch mẫu của ngày hôm nay (đơn, hóa đơn, điểm). Chạy lại được sau `03` |
+| `05_seed_transactions.sql` | (Flyway V8, nạp cuối, chỉ khi `SPRING_FLYWAY_TARGET=latest`) Dữ liệu giao dịch mẫu của ngày hôm nay (đơn, hóa đơn, điểm). Chạy lại được sau `03` |
 | `06_fix_expiry_view.sql` | Sửa `v_expiry_warning`: không cảnh báo phiếu nhập có số lượng cần kiểm tra bằng 0 (ASM-25) |
+| `07_invoice_reprint_log.sql` | Bảng `invoice_reprint`: ghi người và giờ mỗi lần in lại hóa đơn (UC-23). Tổng cộng 29 bảng |
 | `run_tests.py` | 36 kịch bản kiểm thử quy tắc nghiệp vụ, mỗi kịch bản chạy trong giao dịch rồi hoàn tác |
 | `06_test_results.md` | Kết quả lần chạy kiểm thử gần nhất |
 
@@ -30,7 +31,7 @@ SET GLOBAL log_bin_trust_function_creators = 1;
 Nạp các tập lệnh:
 
 ```bash
-for f in 01_schema.sql 02_triggers.sql 03_seed_master.sql 04_views_procedures.sql 05_seed_transactions.sql 06_fix_expiry_view.sql; do
+for f in 01_schema.sql 02_triggers.sql 03_seed_master.sql 04_views_procedures.sql 05_seed_transactions.sql 06_fix_expiry_view.sql 07_invoice_reprint_log.sql; do
   /usr/local/mysql/bin/mysql -u vtph -p --default-character-set=utf8mb4 VTPH_Coffee < $f
 done
 ```

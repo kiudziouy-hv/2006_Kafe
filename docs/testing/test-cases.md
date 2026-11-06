@@ -309,7 +309,7 @@ Quy tắc: khuyến mãi → dùng điểm (1 điểm = 1.000đ, tối đa 30% s
 | DB-07 | Giá/số lượng âm | Chặn (CHECK) | DB | P2 | |
 | DB-08 | Ngày đã chốt mở thêm ca | Chặn | DB | P1 | |
 | DB-09 | Khóa ngoại: xóa nhân viên đã lập hóa đơn | Chặn | DB | P2 | |
-| DB-10 | Flyway dựng sạch | 28 bảng, 15 trigger, 5 view, dữ liệu mẫu | Auto | P1 | |
+| DB-10 | Flyway dựng sạch | 29 bảng, 15 trigger, 5 view, dữ liệu mẫu | Auto | P1 | |
 
 ## 17. Phi chức năng
 

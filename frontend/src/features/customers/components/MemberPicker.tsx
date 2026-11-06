@@ -81,31 +81,25 @@ export function MemberPicker({
       </div>
       {!notFound && (
         <div className="flex items-center justify-between gap-2">
-          <p className="text-sm text-ink-soft">
-            Khách không phải thành viên hoặc không cho số: bỏ qua, thanh toán bình thường (không
-            tích điểm).
-          </p>
+          <p className="text-sm text-ink-soft">Khách chưa là thành viên? Tạo thành viên mới.</p>
           <Button variant="ghost" onClick={() => setNotFound(true)}>
-            Đăng ký mới
+            Tạo mới
           </Button>
         </div>
       )}
       {notFound && (
         <div className="flex flex-col gap-2 rounded-2xl bg-warning-bg p-3">
-          <p className="text-sm text-warning">
-            Nhập số điện thoại và tên để đăng ký thành viên mới, hoặc bỏ qua nếu khách không đăng
-            ký.
-          </p>
+          <p className="text-sm text-warning">Chưa là thành viên. Nhập tên để tạo mới.</p>
           <TextField label="Họ tên khách" value={name} onChange={(e) => setName(e.target.value)} />
           <Button
             disabled={!name.trim() || phone.length !== 10}
             loading={register.isPending}
             onClick={() => register.mutate()}
           >
-            Đăng ký thành viên
+            Tạo thành viên
           </Button>
           <Button variant="ghost" onClick={() => setNotFound(false)}>
-            Bỏ qua, không đăng ký
+            Bỏ qua
           </Button>
         </div>
       )}

@@ -93,6 +93,9 @@ public class InvoiceService {
         boolean making = lines.stream().anyMatch(l -> "MAKING".equals(l.get("status")));
         inv.put("lines", lines);
         inv.put("canCancel", paid && open && !making);
+        inv.put("reprints", db.rows("""
+                SELECT p.reprinted_at AS reprintedAt, e.full_name AS reprintedBy FROM invoice_reprint p JOIN employee e ON e.employee_id = p.reprinted_by
+                WHERE p.invoice_id = ? ORDER BY p.reprint_id""", id));
         inv.put("refunds", db.rows("""
                 SELECT r.refund_id AS id, r.type, r.order_line_id AS lineId, r.cash_amount AS cashAmount, r.points_refunded AS pointsRefunded, r.reason,
                        r.created_at AS createdAt, c.full_name AS createdBy, r.confirmed_at AS confirmedAt, f.full_name AS confirmedBy
@@ -105,7 +108,9 @@ public class InvoiceService {
     public Map<String, Object> reprint(int id, Account by) {
         if ("CANCELLED".equals(detail(id).get("status")) && by.role != Role.OWNER)
             throw new OpsException(403, "CANCELLED_OWNER_ONLY", "Hóa đơn đã hủy chỉ Chủ quán/Quản lý được in lại.");
+        // Chỉ tăng bộ đếm và ghi nhật ký (ai, lúc nào); không đụng nội dung giao dịch, doanh thu hay trạng thái (BR-030 do trigger bảo vệ).
         db.jdbc.update("UPDATE invoice SET reprint_count = reprint_count + 1 WHERE invoice_id = ?", id);
+        db.jdbc.update("INSERT INTO invoice_reprint (invoice_id, reprinted_by) VALUES (?, ?)", id, db.employeeId(by));
         return detail(id);
     }
 

@@ -281,6 +281,26 @@ textarea:focus {
     box-shadow: var(--shadow-card);
   }
 
+  /* Nội dung tab và trang mới trượt nhẹ vào, không nhảy cục */
+  .vt-panel-in {
+    animation: vt-panel-in 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes vt-panel-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .vt-panel-in {
+      animation: none;
+    }
+  }
+
   .vt-tab {
     border: 1px solid var(--color-line);
     transition:

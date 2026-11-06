@@ -197,7 +197,6 @@ function ItemForm({
   const [pm, setPm] = useState(String(price('M') ?? ''))
   const [pl, setPl] = useState(String(price('L') ?? ''))
   const [tops, setTops] = useState<number[]>(item?.toppingIds ?? [])
-  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const cake = group === 'CAKE'
 
   const remove = useAction(() => menuApi.deleteItem(item?.id ?? 0), {
@@ -288,30 +287,14 @@ function ItemForm({
         <Button loading={save.isPending} onClick={() => save.mutate(undefined)}>
           Lưu
         </Button>
-        {item && !confirmingDelete && (
-          <Button variant="ghost" onClick={() => setConfirmingDelete(true)}>
+        {item && (
+          <Button
+            variant="ghost"
+            loading={remove.isPending}
+            onClick={() => remove.mutate(undefined)}
+          >
             Xóa món
           </Button>
-        )}
-        {item && confirmingDelete && (
-          <div className="flex flex-col gap-2 rounded-xl border border-line p-3">
-            <p className="text-sm">
-              Xóa hẳn món {item.name}? Chỉ xóa được món chưa từng có giao dịch; món đã bán hãy
-              chuyển sang Ngừng bán.
-            </p>
-            <div className="flex gap-2">
-              <Button
-                variant="danger"
-                loading={remove.isPending}
-                onClick={() => remove.mutate(undefined)}
-              >
-                Xác nhận xóa
-              </Button>
-              <Button variant="secondary" onClick={() => setConfirmingDelete(false)}>
-                Không xóa
-              </Button>
-            </div>
-          </div>
         )}
       </div>
     </Modal>

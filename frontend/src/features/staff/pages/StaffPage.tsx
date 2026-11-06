@@ -1,7 +1,7 @@
 import { CalendarClock, Clock, UsersRound, Users } from 'lucide-react'
 import { PageTitle } from '@/components/ui/PageTitle'
 import { useState } from 'react'
-import { Tabs } from '@/components/ui/Tabs'
+import { Tabs, TabPanel } from '@/components/ui/Tabs'
 import { AttendanceTab } from '../components/AttendanceTab'
 import { DayTab } from '../components/DayTab'
 import { StaffTab } from '../components/StaffTab'
@@ -23,9 +23,11 @@ export default function StaffPage() {
           { id: 'day', label: 'Ca & chốt ngày', icon: CalendarClock },
         ]}
       />
-      {tab === 'staff' && <StaffTab />}
-      {tab === 'attendance' && <AttendanceTab />}
-      {tab === 'day' && <DayTab />}
+      <TabPanel id={tab}>
+        {tab === 'staff' && <StaffTab />}
+        {tab === 'attendance' && <AttendanceTab />}
+        {tab === 'day' && <DayTab />}
+      </TabPanel>
     </section>
   )
 }

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { QueryState } from '@/components/feedback/QueryState'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { Tabs } from '@/components/ui/Tabs'
+import { Tabs, TabPanel } from '@/components/ui/Tabs'
 import InvoicesPage from '@/features/invoices/pages/InvoicesPage'
 import { paymentsApi } from '../api/paymentsApi'
 import { CashierTableMap } from '../components/CashierTableMap'
@@ -44,10 +44,12 @@ export default function PaymentsPage() {
         </div>
       )}
       {opening && <OpenShiftDialog onClose={() => setOpening(false)} />}
-      {tab === 'tables' && <CashierTableMap />}
-      {!needsShift && tab === 'takeaway' && <TakeawayPanel />}
-      {tab === 'invoices' && <InvoicesPage />}
-      {tab === 'shift' && <ShiftPanel />}
+      <TabPanel id={tab}>
+        {tab === 'tables' && <CashierTableMap />}
+        {!needsShift && tab === 'takeaway' && <TakeawayPanel />}
+        {tab === 'invoices' && <InvoicesPage />}
+        {tab === 'shift' && <ShiftPanel />}
+      </TabPanel>
     </QueryState>
   )
 }

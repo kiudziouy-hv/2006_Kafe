@@ -59,7 +59,23 @@ export default function LoginPage() {
         <h1 className="sr-only">
           {mode === 'owner' ? 'Đăng nhập quản lý' : 'Đăng nhập nhân viên'}
         </h1>
-        {mode === 'owner' ? <OwnerForm /> : <StaffForm />}
+        {/* Hai form xếp chồng cùng một ô lưới: khung luôn cao bằng form cao nhất nên đổi tab không làm khung nhảy hoặc co lại. */}
+        <div className="grid">
+          {(['owner', 'staff'] as const).map((m) => (
+            <div
+              key={m}
+              inert={mode !== m}
+              aria-hidden={mode !== m}
+              className={clsx(
+                'col-start-1 row-start-1 flex flex-col justify-center',
+                'transition-opacity duration-200',
+                mode !== m && 'pointer-events-none opacity-0',
+              )}
+            >
+              {m === 'owner' ? <OwnerForm /> : <StaffForm />}
+            </div>
+          ))}
+        </div>
       </div>
 
       <Link to="/attendance" className="relative text-sm font-semibold text-coffee-700 underline">
@@ -90,7 +106,7 @@ function OwnerForm() {
   })
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-3" noValidate>
+    <form onSubmit={submit} className="flex flex-col gap-5" noValidate>
       <label className="flex flex-col gap-1">
         <span className="sr-only">Tên đăng nhập</span>
         <span className="vt-field flex items-center gap-2 rounded-2xl border-2 border-white/90 bg-white/40 px-4">
@@ -134,6 +150,9 @@ function OwnerForm() {
       <Button type="submit" loading={isSubmitting} className="min-h-14">
         Đăng nhập
       </Button>
+      <p className="text-center text-xs text-ink-soft">
+        Dành cho Chủ quán / Quản lý. Nhân viên chọn tab “Nhân viên”.
+      </p>
     </form>
   )
 }

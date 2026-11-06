@@ -51,7 +51,7 @@ Theo bảng đối chiếu trong [docs/requirements/README.md](docs/requirements
 - Xuất Excel, dashboard, báo cáo theo khung giờ.
 - **Nhật ký thao tác (Audit Log): không làm.** Hệ thống chỉ có bảng chấm công (mục *Nhân sự & ca*) để biết ai trực ca nào, và các chỉnh sửa chấm công được ghi lại cùng lịch sử. Thao tác ở máy thu ngân và điện thoại phục vụ ghi theo tên người chọn lúc đăng nhập (đơn, hóa đơn, ca), còn màn hình pha chế dùng tài khoản dùng chung nên không truy được từng người. Các thao tác của pha chế muốn biết ai làm thì đối chiếu giờ thao tác với bảng chấm công của ca đó; việc truy vết sâu hơn do quán tự xử lý ngoài hệ thống: hỏi nhân viên trực ca và trích camera.
 - **Bắt đổi PIN lần đầu: không làm.** Nhân viên chỉ nhập PIN của vai trò và tài khoản vẫn dùng chung, nên PIN riêng không xác định được người thao tác; PIN chỉ là lớp bảo vệ đăng nhập.
-- **Điều chỉnh so với yêu cầu gốc:** yêu cầu gốc ghi mỗi nhân viên một tài khoản riêng, kể cả khi dùng máy chung, và mỗi thao tác ghi theo tài khoản đang đăng nhập. Nhóm chọn tài khoản dùng chung theo vai trò cho các thiết bị quầy vì giờ cao điểm 1 đến 2 người luân phiên trên cùng một màn hình, đổi tài khoản cho từng thao tác thì không kịp, và phiên tự hết sau 5 phút. Với thu ngân và phục vụ, lúc đăng nhập người dùng chọn thêm tên mình trong số người đang chấm công, nên đơn và hóa đơn vẫn ghi đúng người; pha chế chỉ thể hiện vai trò. Người trực ca được biết qua chấm công bằng tài khoản cá nhân.
+- **Điều chỉnh so với yêu cầu gốc:** yêu cầu gốc ghi mỗi nhân viên một tài khoản riêng, kể cả khi dùng máy chung, và mỗi thao tác ghi theo tài khoản đang đăng nhập. Nhóm chọn tài khoản dùng chung theo vai trò cho các thiết bị quầy vì giờ cao điểm 1 đến 2 người luân phiên trên cùng một màn hình, đổi tài khoản cho từng thao tác thì không kịp, và phiên của thu ngân, pha chế tự hết sau 5 phút (phục vụ 8 giờ). Với thu ngân và phục vụ, lúc đăng nhập người dùng chọn thêm tên mình trong số người đang chấm công, nên đơn và hóa đơn vẫn ghi đúng người; pha chế chỉ thể hiện vai trò. Người trực ca được biết qua chấm công bằng tài khoản cá nhân.
 - **Cảnh báo đơn chờ pha chế quá 10 phút:** chưa có.
 
 Hoàn tiền không đi qua ngân hàng: Chủ quán trả tiền ngoài hệ thống rồi xác nhận trên hệ thống.
@@ -64,7 +64,7 @@ Hoàn tiền không đi qua ngân hàng: Chủ quán trả tiền ngoài hệ th
 |---|---|---|---|
 | Backend | **Java 21** | Spring Boot 3.3.5, Spring Security (phiên cookie), WebSocket/STOMP, JDBC, Flyway, springdoc (Swagger), Maven | `backend/` |
 | Giao diện | **TypeScript** (React 19) | Vite 8, Tailwind CSS 4, React Router, TanStack Query, React Hook Form + Zod, Vitest | `frontend/` |
-| Cơ sở dữ liệu | **SQL** (MySQL 8.4) | 28 bảng, 15 trigger, 5 view, thủ tục; dữ liệu mẫu; Flyway sinh từ `database/*.sql` | `database/` |
+| Cơ sở dữ liệu | **SQL** (MySQL 8.4) | 29 bảng, 15 trigger, 5 view, thủ tục; dữ liệu mẫu; Flyway sinh từ `database/*.sql` | `database/` |
 | Công cụ | **Python 3**, **shell** (Bash), batch (Windows) | `run_tests.py` (36 kịch bản CSDL), `sync-migrations.py`, `dev-mysql.sh`, sao lưu và khôi phục | `scripts/`, `database/` |
 | Cấu hình, tài liệu | JSON, properties, YAML, Markdown, Makefile | CI GitHub Actions, `docs/` | `.github/`, `docs/` |
 
@@ -154,7 +154,7 @@ Dự án đã có sẵn ảnh cho 30 món và 5 topping. Chủ quán thêm ảnh
 | Dừng backend và giao diện | `Ctrl+C` trong terminal đang chạy |
 | Dừng MySQL | `docker stop vtph-mysql` |
 | Đặt lại dữ liệu mẫu | chạy lại `scripts/dev-mysql.sh` (tự dựng lại); xóa hẳn: `docker rm -f vtph-mysql && docker volume rm vtph_mysql_data` |
-| Chạy test backend | `mvn -f backend/pom.xml test` (test MySQL cần Docker đang chạy) |
+| Chạy test backend | `mvn -f backend/pom.xml test` (**cần Docker đang chạy**: 53/88 test dùng MySQL thật, không có Docker thì các test này báo lỗi chứ không tự bỏ qua) |
 | Chạy test giao diện | `npm --prefix frontend run test` |
 | Kiểm tra mã giao diện | `npm --prefix frontend run lint && npm --prefix frontend run typecheck` |
 | Sau khi sửa `database/*.sql` | `python3 scripts/sync-migrations.py` (kiểm tra không ghi: thêm `--check`) |
@@ -310,12 +310,12 @@ Chế độ này chỉ có luồng gọi món → pha chế → thanh toán cơ 
 ## 7. Kiểm thử
 
 ```bash
-mvn -f backend/pom.xml test        # test backend (các test MySQL cần Docker, tự bỏ qua nếu không có)
+mvn -f backend/pom.xml test        # test backend (cần Docker đang chạy; 53/88 test dùng MySQL thật, thiếu Docker thì báo lỗi)
 npm --prefix frontend run test     # test giao diện
 npm --prefix frontend run lint && npm --prefix frontend run typecheck
 ```
 
-Hiện có **87 test backend** (gồm test chạy trên MySQL thật), **20 test giao diện** và **36 kịch bản quy tắc CSDL** (`database/run_tests.py`, xem [database/README.md](database/README.md)); tất cả đều đạt. Chi tiết ở [chiến lược kiểm thử](docs/testing/test-strategy.md).
+Kết quả chạy ngày 2026-11-06: **88 test backend** (gồm 53 test chạy trên MySQL thật qua Testcontainers, 0 lỗi), **25 test giao diện** (0 lỗi) và **36 kịch bản quy tắc CSDL** (`database/run_tests.py`, xem [database/README.md](database/README.md)), 36/36 đạt trên MySQL 8.4 nạp từ `database/01..06_*.sql`. Chi tiết ở [chiến lược kiểm thử](docs/testing/test-strategy.md).
 
 ---
 

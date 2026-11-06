@@ -6,7 +6,7 @@
 # (đơn, hóa đơn, ca, chấm công) rỗng và tồn kho về mức ban đầu, để tự thao tác luồng khi test/demo.
 # Muốn giữ dữ liệu của lần chạy trước: KEEP_DATA=1 scripts/dev-mysql.sh
 # Muốn có sẵn đơn mẫu của ngày hôm nay: SPRING_FLYWAY_TARGET=latest scripts/dev-mysql.sh
-export SPRING_FLYWAY_TARGET="${SPRING_FLYWAY_TARGET:-4}"
+export SPRING_FLYWAY_TARGET="${SPRING_FLYWAY_TARGET:-7}"
 set -euo pipefail
 cd "$(dirname "$0")/.."
 DB_PORT="${DB_PORT:-3307}"

@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import { PanelLeftClose, PanelLeftOpen, type LucideIcon } from 'lucide-react'
 import { useCallback, useState, type ReactNode } from 'react'
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Wordmark } from '@/components/shared/Wordmark'
 import { Logo } from '@/components/shared/Logo'
 import { NotificationBell, type NotifExtra } from '@/components/layout/NotificationBell'
@@ -66,6 +66,7 @@ export function AppShell({
   children?: ReactNode
 }) {
   const { user, logout } = useAuth()
+  const { pathname } = useLocation()
   const conn = useConnectionState()
   const [collapsed, setCollapsed] = useState(() => {
     try {
@@ -203,7 +204,11 @@ export function AppShell({
             ))}
           </nav>
         )}
-        <main className="flex-1 p-3 md:px-6 md:pb-6">{children ?? <Outlet />}</main>
+        <main className="flex-1 p-3 md:px-6 md:pb-6">
+          <div key={pathname} className="vt-panel-in">
+            {children ?? <Outlet />}
+          </div>
+        </main>
       </div>
     </div>
   )
