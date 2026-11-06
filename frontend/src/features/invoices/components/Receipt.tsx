@@ -22,12 +22,19 @@ export function Receipt({ invoice, reprint }: { invoice: InvoiceDetail; reprint?
         {reprint && (
           <p className="my-1 border border-black px-2 font-bold tracking-widest">REPRINT</p>
         )}
-        {invoice.status === 'CANCELLED' && <p className="font-bold">*** ĐÃ HỦY ***</p>}
+        {invoice.status === 'CANCELLED' && <p className="font-bold">*** ĐÃ HỦY (CANCELLED) ***</p>}
       </div>
       <p className="mt-2">Số: {invoice.invoiceNo}</p>
       <p>Đơn: {orderLabel(invoice)}</p>
       <p>Giờ: {formatDateTime(invoice.issuedAt)}</p>
       <p>Thu ngân: {invoice.issuedBy}</p>
+      {reprint && invoice.reprints.length > 0 && (
+        <p>
+          In lại lần {invoice.reprints.length}:{' '}
+          {invoice.reprints[invoice.reprints.length - 1].reprintedBy},{' '}
+          {formatDateTime(invoice.reprints[invoice.reprints.length - 1].reprintedAt)}
+        </p>
+      )}
       {invoice.customerName && <p>Khách: {invoice.customerName}</p>}
       <hr className="my-2 border-dashed border-black" />
       {lines.map((l) => (

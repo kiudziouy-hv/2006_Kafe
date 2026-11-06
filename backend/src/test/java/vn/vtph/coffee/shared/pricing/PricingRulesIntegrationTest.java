@@ -38,7 +38,7 @@ class PricingRulesIntegrationTest extends AbstractMySqlIT {
         jdbc.execute((java.sql.Connection c) -> {
             try (var st = c.createStatement()) {
                 st.execute("SET FOREIGN_KEY_CHECKS = 0");
-                for (String t : List.of("point_transaction", "refund_record", "invoice", "order_line_topping", "order_line", "waste_record", "stock_adjustment",
+                for (String t : List.of("point_transaction", "refund_record", "invoice_reprint", "invoice", "order_line_topping", "order_line", "waste_record", "stock_adjustment",
                         "order_batch", "takeaway_order", "dine_in_order", "orders", "cashier_session", "attendance_edit", "attendance"))
                     st.execute("TRUNCATE TABLE " + t);
                 st.execute("SET FOREIGN_KEY_CHECKS = 1");

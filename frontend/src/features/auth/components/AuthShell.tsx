@@ -62,11 +62,11 @@ export function AuthShell({
       <div
         ref={ref}
         style={{ transform: `scale(${scale})` }}
-        className="grid w-full max-w-[1040px] overflow-hidden rounded-[36px] border-2 border-double border-brass bg-gradient-to-br from-[#fbf0d9] to-[#f0dcb4] shadow-[0_30px_70px_-20px_rgba(60,30,10,0.5)] lg:grid-cols-[0.85fr_1fr]"
+        className="grid w-full max-w-[940px] overflow-hidden rounded-[36px] border-2 border-double border-brass bg-gradient-to-br from-[#fbf0d9] to-[#f0dcb4] shadow-[0_30px_70px_-20px_rgba(60,30,10,0.5)] lg:grid-cols-[0.85fr_1fr]"
       >
         <aside
           className={clsx(
-            'relative h-52 overflow-hidden lg:h-auto lg:min-h-[640px]',
+            'relative h-52 overflow-hidden lg:h-auto lg:min-h-[560px]',
             compact && 'vt-aside-compact',
           )}
           aria-hidden
@@ -83,7 +83,7 @@ export function AuthShell({
 
         <section
           className={clsx(
-            'relative flex flex-col items-center justify-center gap-4 px-6 sm:px-12 lg:py-10',
+            'relative flex flex-col items-center justify-center gap-4 px-6 sm:px-12 lg:py-8',
             compact ? 'pb-6 pt-5 sm:pb-9' : 'pb-9 pt-0',
           )}
         >

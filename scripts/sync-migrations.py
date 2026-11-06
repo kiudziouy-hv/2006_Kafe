@@ -18,8 +18,9 @@ MAP = {  # tệp nguồn -> (thư mục, tên Flyway)
     "02_triggers.sql": ("migration", "V2__triggers.sql"),
     "03_seed_master.sql": ("seed", "V3__seed_master.sql"),
     "04_views_procedures.sql": ("migration", "V4__views_procedures.sql"),
-    "05_seed_transactions.sql": ("seed", "V5__seed_transactions.sql"),
-    "06_fix_expiry_view.sql": ("migration", "V6__fix_expiry_view.sql"),  # V5 đã thuộc db/seed
+    "05_seed_transactions.sql": ("seed", "V8__seed_transactions.sql"),  # đặt cuối để target=7 bỏ qua đơn mẫu
+    "06_fix_expiry_view.sql": ("migration", "V6__fix_expiry_view.sql"),
+    "07_invoice_reprint_log.sql": ("migration", "V7__invoice_reprint_log.sql"),
 }
 
 def convert(text: str) -> str:

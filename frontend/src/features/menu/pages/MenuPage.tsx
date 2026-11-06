@@ -1,7 +1,7 @@
 import { BookOpen, Coffee, Percent, Sparkles } from 'lucide-react'
 import { PageTitle } from '@/components/ui/PageTitle'
 import { useState } from 'react'
-import { Tabs } from '@/components/ui/Tabs'
+import { Tabs, TabPanel } from '@/components/ui/Tabs'
 import { ItemsTab } from '../components/ItemsTab'
 import { PromotionsTab } from '../components/PromotionsTab'
 import { ToppingsTab } from '../components/ToppingsTab'
@@ -23,9 +23,11 @@ export default function MenuPage() {
           { id: 'promotions', label: 'Khuyến mãi', icon: Percent },
         ]}
       />
-      {tab === 'items' && <ItemsTab />}
-      {tab === 'toppings' && <ToppingsTab />}
-      {tab === 'promotions' && <PromotionsTab />}
+      <TabPanel id={tab}>
+        {tab === 'items' && <ItemsTab />}
+        {tab === 'toppings' && <ToppingsTab />}
+        {tab === 'promotions' && <PromotionsTab />}
+      </TabPanel>
     </section>
   )
 }

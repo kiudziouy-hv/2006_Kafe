@@ -66,6 +66,7 @@ export interface InvoiceDetail extends InvoiceSummary {
   lines: InvoiceLine[]
   canCancel: boolean
   refunds: Refund[]
+  reprints: { reprintedAt: string; reprintedBy: string }[]
 }
 
 export interface InvoiceFilter {

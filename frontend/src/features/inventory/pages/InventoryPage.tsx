@@ -10,7 +10,7 @@ import {
 import { PageTitle } from '@/components/ui/PageTitle'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Tabs } from '@/components/ui/Tabs'
+import { Tabs, TabPanel } from '@/components/ui/Tabs'
 import { inventoryApi } from '../api/inventoryApi'
 import { AdjustTab } from '../components/AdjustTab'
 import { AlertsTab } from '../components/AlertsTab'
@@ -45,12 +45,14 @@ export default function InventoryPage() {
           { id: 'waste', label: 'Hao hụt', icon: Trash2 },
         ]}
       />
-      {tab === 'alerts' && <AlertsTab />}
-      {tab === 'ingredients' && <IngredientsTab />}
-      {tab === 'recipes' && <RecipesTab />}
-      {tab === 'stockin' && <StockInTab />}
-      {tab === 'adjust' && <AdjustTab />}
-      {tab === 'waste' && <WasteTab />}
+      <TabPanel id={tab}>
+        {tab === 'alerts' && <AlertsTab />}
+        {tab === 'ingredients' && <IngredientsTab />}
+        {tab === 'recipes' && <RecipesTab />}
+        {tab === 'stockin' && <StockInTab />}
+        {tab === 'adjust' && <AdjustTab />}
+        {tab === 'waste' && <WasteTab />}
+      </TabPanel>
     </section>
   )
 }

@@ -244,7 +244,11 @@ function Summary({ d }: { d: InvoiceDetail }) {
         <Row label="Điểm đã dùng">
           {d.pointsUsed} (-{formatMoney(d.pointsUsed * 1000)})
         </Row>
-        <Row label="In lại">{d.reprintCount} lần</Row>
+        <Row label="In lại">
+          {d.reprintCount} lần
+          {d.reprints.length > 0 &&
+            ` (gần nhất: ${d.reprints[d.reprints.length - 1].reprintedBy}, ${formatDateTime(d.reprints[d.reprints.length - 1].reprintedAt)})`}
+        </Row>
         <Row label="Điểm tích mới">+{d.pointsEarned}</Row>
         {d.customerName && (
           <div className="sm:col-span-2">

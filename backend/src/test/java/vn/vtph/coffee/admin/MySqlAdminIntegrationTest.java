@@ -42,7 +42,7 @@ class MySqlAdminIntegrationTest extends AbstractMySqlIT {
         jdbc.execute((java.sql.Connection c) -> {
             try (var st = c.createStatement()) {
                 st.execute("SET FOREIGN_KEY_CHECKS = 0");
-                for (String t : List.of("point_transaction", "refund_record", "invoice", "order_line_topping", "order_line", "waste_record", "stock_adjustment",
+                for (String t : List.of("point_transaction", "refund_record", "invoice_reprint", "invoice", "order_line_topping", "order_line", "waste_record", "stock_adjustment",
                         "order_batch", "takeaway_order", "dine_in_order", "orders", "cashier_session", "attendance_edit", "attendance"))
                     st.execute("TRUNCATE TABLE " + t);
                 st.execute("SET FOREIGN_KEY_CHECKS = 1");
@@ -185,7 +185,14 @@ class MySqlAdminIntegrationTest extends AbstractMySqlIT {
         openShift();
         JsonNode o = takeaway("{\"method\":\"CASH\",\"received\":200000,\"lines\":[" + line(2, 1, "M") + "," + line(1, 1, "M") + "]}");
         int inv = jdbc.queryForObject("SELECT invoice_id FROM invoice", Integer.class);
-        assertEquals(1, ok(cashier, "POST", "/api/invoices/" + inv + "/reprint", null).get("reprintCount").asInt());
+        long totalBefore = jdbc.queryForObject("SELECT total FROM invoice WHERE invoice_id = ?", Long.class, inv);
+        JsonNode rp = ok(cashier, "POST", "/api/invoices/" + inv + "/reprint", null);
+        assertEquals(1, rp.get("reprintCount").asInt());
+        assertEquals(1, rp.get("reprints").size()); // ghi người và giờ in lại
+        assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM invoice_reprint WHERE invoice_id = ? AND reprinted_at IS NOT NULL", Integer.class, inv));
+        assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM invoice", Integer.class)); // in lại không tạo giao dịch mới
+        assertEquals(totalBefore, jdbc.queryForObject("SELECT total FROM invoice WHERE invoice_id = ?", Long.class, inv));
+        assertEquals("PAID", jdbc.queryForObject("SELECT status FROM invoice WHERE invoice_id = ?", String.class, inv));
         ok(owner, "POST", "/api/invoices/" + inv + "/lines/" + o.get("lines").get(1).get("id").asInt() + "/cancel", "{\"reason\":\"Hết món\"}");
         JsonNode r = ok(owner, "GET", "/api/reports/summary", null);
         assertEquals(61000 - 29000, r.get("revenue").asInt()); // 32.000 + 29.000 trừ hoàn 29.000

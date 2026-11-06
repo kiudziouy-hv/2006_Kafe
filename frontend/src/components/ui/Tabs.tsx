@@ -32,6 +32,15 @@ export function TabAction({ children }: { children: ReactNode }) {
   return mounted && target ? createPortal(children, target) : null
 }
 
+/** Bọc nội dung của tab đang mở: đổi tab thì nội dung mới trượt nhẹ vào thay vì đổi đột ngột. */
+export function TabPanel({ id, children }: { id: string; children: ReactNode }) {
+  return (
+    <div key={id} className="vt-panel-in">
+      {children}
+    </div>
+  )
+}
+
 /** Thanh tab ngang, cuộn được trên điện thoại; nút hành động của tab nằm cùng hàng ở bên phải. */
 export function Tabs<T extends string>({
   tabs,

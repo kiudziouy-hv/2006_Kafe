@@ -27,11 +27,11 @@ class MySqlAuthIntegrationTest extends AbstractMySqlIT {
 
     @Test
     void flywayBuiltTheWholeSchemaAndSeed() {
-        assertEquals(28, jdbc.queryForObject(
+        assertEquals(29, jdbc.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE' AND table_name <> 'flyway_schema_history'", Integer.class));
         assertEquals(15, jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.triggers WHERE trigger_schema = DATABASE()", Integer.class));
         assertEquals(11, jdbc.queryForObject("SELECT COUNT(*) FROM account", Integer.class));
-        assertEquals(6, jdbc.queryForObject("SELECT COUNT(*) FROM flyway_schema_history WHERE success = 1", Integer.class));
+        assertEquals(8, jdbc.queryForObject("SELECT COUNT(*) FROM flyway_schema_history WHERE success = 1", Integer.class));
         assertEquals("utf8mb4_0900_as_ci", jdbc.queryForObject("SELECT @@collation_database", String.class));
     }
 

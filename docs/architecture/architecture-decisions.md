@@ -4,7 +4,7 @@
 Mã "Đợt 1" đã có đăng nhập, phân quyền, toast, tài khoản giả lập và các nghiệp vụ gọi món/pha chế/thanh toán kèm kiểm tra business rule. Khung mới được **thêm vào** (Security, WebSocket, Flyway, test, giao diện React), không thay thế.
 
 ## ADR-002 Dùng MySQL 8.4, không dùng PostgreSQL
-Lược đồ Chương 5 (28 bảng, 15 trigger, thủ tục, 36 kịch bản kiểm thử) đã viết và kiểm thử trên MySQL, và là nội dung Chương 5 của báo cáo. Đổi sang PostgreSQL phải viết lại trigger/thủ tục và mất kết quả kiểm thử đã có. Kiến trúc không phụ thuộc MySQL ngoài thư mục `database/` và cấu hình `application-mysql.properties`.
+Lược đồ Chương 5 (29 bảng, 15 trigger, thủ tục, 36 kịch bản kiểm thử) đã viết và kiểm thử trên MySQL, và là nội dung Chương 5 của báo cáo. Đổi sang PostgreSQL phải viết lại trigger/thủ tục và mất kết quả kiểm thử đã có. Kiến trúc không phụ thuộc MySQL ngoài thư mục `database/` và cấu hình `application-mysql.properties`.
 
 ## ADR-003 Phiên cookie, không dùng JWT
 `AuthController` đã dùng phiên máy chủ. Phiên hợp với yêu cầu tự đăng xuất 5 phút (`session.maxInactiveInterval = 300` cho Thu ngân/Pha chế), thu hồi tức thì khi đăng xuất, và dùng lại được cho WebSocket. JWT thêm độ phức tạp (làm mới, thu hồi) mà chưa có nhu cầu (không có ứng dụng di động gốc hay dịch vụ ngoài).
