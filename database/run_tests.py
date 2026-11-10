@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 # Chạy kịch bản kiểm thử ràng buộc nghiệp vụ trên VTPH_Coffee. Mỗi test chạy trong một giao dịch rồi ROLLBACK.
 # Mật khẩu lấy từ biến môi trường MYSQL_PWD (không lưu trong file). Dùng: MYSQL_PWD=... python3 run_tests.py
-import subprocess, os, sys
-MYSQL='/usr/local/mysql/bin/mysql'
+import subprocess, os, sys, shutil
+# Đường dẫn mysql: biến MYSQL_BIN, nếu không có thì tìm trong PATH, cuối cùng là đường dẫn mặc định của macOS.
+MYSQL=os.environ.get('MYSQL_BIN') or shutil.which('mysql') or '/usr/local/mysql/bin/mysql'
 USER=os.environ.get('MYSQL_USER','vtph')
+HOST=os.environ.get('MYSQL_HOST','localhost')
+PORT=os.environ.get('MYSQL_TCP_PORT','3306')
+if not os.environ.get('MYSQL_PWD'):
+    sys.exit("Thiếu mật khẩu. Chạy: MYSQL_PWD='<mật khẩu>' python3 run_tests.py (xem database/README.md)")
 SETUP_ORDER=("INSERT INTO orders (order_id,order_type,status,created_by) VALUES (%d,'DINE_IN','PROCESSING',4);"
              "INSERT INTO dine_in_order (order_id,table_id) VALUES (%d,%d);")
 T=[]
@@ -79,7 +84,7 @@ t('T36','UC-31 còn đơn mang đi chưa giao khách thì không được chốt
   "UPDATE orders SET status='CANCELLED' WHERE order_id=3;UPDATE cashier_session SET status='CLOSED',closed_at=NOW(),closed_by=2,expected_cash=1000,actual_cash=1000,difference=0 WHERE session_id=1;")
 def run(sql):
     full="START TRANSACTION;"+sql+";ROLLBACK;"
-    p=subprocess.run([MYSQL,'-u',USER,'--default-character-set=utf8mb4','--batch','-e',full,'VTPH_Coffee'],capture_output=True,text=True)
+    p=subprocess.run([MYSQL,'-h',HOST,'-P',PORT,'-u',USER,'--default-character-set=utf8mb4','--batch','-e',full,'VTPH_Coffee'],capture_output=True,text=True)
     return p.returncode,(p.stderr or '').strip()
 ok=0; rows=[]
 for id_,rule,exp,sql in T:

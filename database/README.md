@@ -16,31 +16,53 @@ Cơ sở dữ liệu của đồ án "Hệ thống quản lý quán cà phê VTP
 | `run_tests.py` | 36 kịch bản kiểm thử quy tắc nghiệp vụ, mỗi kịch bản chạy trong giao dịch rồi hoàn tác |
 | `06_test_results.md` | Kết quả lần chạy kiểm thử gần nhất |
 
-## Cách chạy
+## Cách chạy và kiểm thử
 
-Tạo cơ sở dữ liệu và tài khoản (đăng nhập bằng `root`, thay mật khẩu bằng mật khẩu của bạn):
+Yêu cầu: MySQL 8.4 đang chạy, Python 3. Chạy các lệnh dưới đây trong thư mục `database/`. Trong ví dụ, `<mật khẩu root>` là mật khẩu `root` của MySQL, `<mật khẩu>` là mật khẩu bạn tự chọn cho tài khoản `vtph`.
 
-```sql
+### Bước 1. Tạo cơ sở dữ liệu và tài khoản (một lần)
+
+```bash
+mysql -u root -p -e "
 CREATE DATABASE IF NOT EXISTS VTPH_Coffee CHARACTER SET utf8mb4;
 CREATE USER IF NOT EXISTS 'vtph'@'localhost' IDENTIFIED BY '<mật khẩu>';
 GRANT ALL PRIVILEGES ON VTPH_Coffee.* TO 'vtph'@'localhost';
--- chỉ cần một lần để tạo được trigger khi MySQL bật binary log:
-SET GLOBAL log_bin_trust_function_creators = 1;
+SET GLOBAL log_bin_trust_function_creators = 1;"
 ```
 
-Nạp các tập lệnh:
+Dòng `SET GLOBAL` bắt buộc, nếu thiếu thì `02_triggers.sql` báo lỗi 1419 và nhiều test không đạt. Dòng này mất hiệu lực khi MySQL khởi động lại.
+
+Trên macOS cài bằng gói chính thức, lệnh `mysql` nằm ở `/usr/local/mysql/bin/mysql`. Hãy gõ đường dẫn đầy đủ nếu terminal báo không tìm thấy lệnh.
+
+### Bước 2. Nạp các tập lệnh (đúng thứ tự 01 đến 07)
 
 ```bash
-for f in 01_schema.sql 02_triggers.sql 03_seed_master.sql 04_views_procedures.sql 05_seed_transactions.sql 06_fix_expiry_view.sql 07_invoice_reprint_log.sql; do
-  /usr/local/mysql/bin/mysql -u vtph -p --default-character-set=utf8mb4 VTPH_Coffee < $f
-done
+export MYSQL_PWD='<mật khẩu>'
+mysql -u vtph -e "DROP DATABASE IF EXISTS VTPH_Coffee; CREATE DATABASE VTPH_Coffee CHARACTER SET utf8mb4;"
+for f in 0*.sql; do mysql -u vtph --default-character-set=utf8mb4 VTPH_Coffee < "$f"; done
 ```
 
-Chạy kiểm thử (mật khẩu đọc từ biến môi trường, không lưu trong tệp):
+Lệnh này xóa dữ liệu cũ rồi nạp lại từ đầu, cũng là cách cập nhật khi schema trong repo thay đổi.
+
+### Bước 3. Chạy kiểm thử
 
 ```bash
 MYSQL_PWD='<mật khẩu>' python3 run_tests.py
 ```
+
+Kết quả đúng: dòng cuối là `Tổng: 36/36 đạt`. Mỗi kịch bản chạy trong một giao dịch rồi hoàn tác nên không làm thay đổi dữ liệu.
+
+Các biến môi trường tùy chọn: `MYSQL_USER` (mặc định `vtph`), `MYSQL_HOST` (`localhost`), `MYSQL_TCP_PORT` (`3306`), `MYSQL_BIN` (đường dẫn tới `mysql` nếu không có trong `PATH`).
+
+### Xử lý lỗi thường gặp
+
+| Triệu chứng | Nguyên nhân và cách xử lý |
+|---|---|
+| Mọi test `KHÔNG ĐẠT`, báo `Access denied ... (using password: NO)` | Chưa đặt `MYSQL_PWD`. Chạy lại theo Bước 3 |
+| Mọi test `KHÔNG ĐẠT`, báo `Access denied ... (using password: YES)` | Sai mật khẩu `vtph`. Đặt lại bằng `ALTER USER 'vtph'@'localhost' IDENTIFIED BY '<mật khẩu>';` (đăng nhập root) |
+| Nhiều test `KHÔNG ĐẠT` với chữ `thực hiện thành công` | Trigger chưa được tạo. Làm lại Bước 1 (dòng `SET GLOBAL`) rồi Bước 2 |
+| Báo `Unknown column 'handed_over_at'` | Cơ sở dữ liệu được nạp từ schema cũ. Làm lại Bước 2 |
+| `mysql: command not found` | Dùng đường dẫn đầy đủ tới `mysql`, và đặt `MYSQL_BIN` khi chạy `run_tests.py` |
 
 ## Lưu ý
 
