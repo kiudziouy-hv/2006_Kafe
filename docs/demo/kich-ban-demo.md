@@ -127,7 +127,7 @@ Nói ngắn: quán 14 bàn, 1 chi nhánh, 4 vai trò, 4 loại thiết bị. H�
 
 ## 3. Điều hệ thống chưa làm (nói trước để tránh bị hỏi dồn)
 
-Theo mục "Chưa làm" trong [README](../../README.md), các mục sau thuộc nhóm Level 2 hoặc ngoài phạm vi:
+Theo mục "Chưa làm" trong [docs/business-rules.md](../business-rules.md), các mục sau chưa làm hoặc ngoài phạm vi:
 - Xuất Excel, Dashboard, báo cáo theo khung giờ, Nhật ký thao tác (Audit Log), cảnh báo đơn chờ pha chế quá 10 phút.
 - **Tài khoản dùng chung theo vai trò:** thu ngân, pha chế và phục vụ đăng nhập bằng tài khoản dùng chung của vai trò, riêng thu ngân và phục vụ chọn thêm tên mình lúc đăng nhập (điều chỉnh có chủ đích so với yêu cầu gốc, lý do ở README); người trực ca được biết qua chấm công, truy vết sâu hơn do quán tự xử lý (hỏi nhân viên trực ca, xem camera).
 - Ngoài phạm vi theo yêu cầu của khách: lương, công nợ nhà cung cấp, đặt bàn trước, tách hóa đơn, gộp bàn, thanh toán một hóa đơn bằng nhiều phương thức, hóa đơn điện tử.

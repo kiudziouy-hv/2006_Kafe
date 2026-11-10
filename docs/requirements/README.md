@@ -28,4 +28,4 @@ Tất cả 34 use case (UC-01..UC-34) đã có API và giao diện. Số UC theo
 | 30..32 | Mở ca, chốt ca, chốt ngày | `ops/`, `shift/` | `features/payments`, `features/staff` |
 | 33, 34 | Báo cáo doanh thu; danh sách hóa đơn | `report/`, `payment/` | `features/reports`, `features/invoices` |
 
-Ngoài phạm vi phiên bản này (Level 2): xuất Excel, dashboard, báo cáo theo khung giờ (FR-M11-007..009).
+Ngoài phạm vi phiên bản này: xuất Excel, dashboard, báo cáo theo khung giờ (FR-M11-007..009).
