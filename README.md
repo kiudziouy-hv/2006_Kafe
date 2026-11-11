@@ -170,7 +170,6 @@ mvn -f backend/pom.xml spring-boot:run
 npm --prefix frontend run dev
 ```
 
-Chế độ này chỉ có luồng gọi món → pha chế → thanh toán cơ bản; các màn quản trị (thực đơn, kho, hóa đơn, nhân sự, báo cáo...) không dùng được, và dữ liệu **mất hết** khi tắt backend. Tài khoản: `chuquan` / `Quan@2026`, PIN Phục vụ `123456`, Thu ngân `234567`, Pha chế `345678`. Chế độ này không có chấm công và không có CSDL nên **không áp dụng** ràng buộc chấm công mới được đăng nhập, nhân viên phụ trách và các trigger.
 
 ---
 
@@ -186,6 +185,7 @@ npm --prefix frontend run lint && npm --prefix frontend run typecheck
 ---
 
 ## 8. Cấu trúc thư mục và tài liệu
+docs/architecture/system-overview.md
 
 ```
 backend/    Spring Boot (API, nghiệp vụ, bảo mật, WebSocket); backend/uploads là ảnh món và topping

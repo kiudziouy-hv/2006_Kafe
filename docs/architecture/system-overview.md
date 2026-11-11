@@ -8,6 +8,135 @@ Trình duyệt (React) ── REST /api ──▶ Spring Security ─▶ Control
         └────────── WebSocket /ws (STOMP, chỉ báo "có thay đổi") ◀── NotificationBridge ◀── sự kiện
 ```
 
+## Cấu trúc thư mục
+
+```
+2006 Kafé/
+├── .editorconfig
+├── .env.example
+├── .gitignore
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+├── .vscode/                          # extensions, launch, settings, tasks
+├── 2006-kafe.code-workspace
+├── CONTRIBUTING.md
+├── Makefile
+├── README.md
+│
+├── backend/                          # Spring Boot (Java)
+│   ├── pom.xml
+│   ├── uploads/
+│   │   ├── menu/                     # ảnh món (1.jpg … 30.jpg)
+│   │   └── topping/                  # ảnh topping (1.jpg … 5.jpg)
+│   └── src/
+│       ├── main/
+│       │   ├── java/vn/vtph/coffee/
+│       │   │   ├── VtphCoffeeApplication.java
+│       │   │   ├── auth/             # Account, AuthController, AuthService, AccountStore (InMemory/Jdbc), Role…
+│       │   │   ├── common/           # Access, Db, ApiExceptionAdvice, GlobalExceptionHandler
+│       │   │   ├── config/           # SecurityConfig, WebSocketConfig
+│       │   │   ├── customer/         # CustomerController, CustomerService
+│       │   │   ├── inventory/        # InventoryController, InventoryService
+│       │   │   ├── kitchen/
+│       │   │   ├── menu/             # MenuAdmin*, MenuImage*
+│       │   │   ├── notification/     # NotificationBridge
+│       │   │   ├── ops/              # OpsController, OpsService (InMemory/Jdbc), Model, OpsEvent, ShiftDays…
+│       │   │   ├── payment/          # InvoiceController, InvoiceService
+│       │   │   ├── promotion/        # PromotionController, PromotionService
+│       │   │   ├── report/           # ReportController, ReportService
+│       │   │   ├── shared/pricing/   # PricingPolicy
+│       │   │   ├── shift/            # DayController, DayService, OpenWork
+│       │   │   ├── staff/            # Attendance*, Staff*
+│       │   │   ├── table/
+│       │   │   ├── takeaway/
+│       │   │   └── web/              # HealthController
+│       │   └── resources/
+│       │       ├── application.properties
+│       │       ├── application-mysql.properties
+│       │       ├── mock-accounts.json
+│       │       └── db/
+│       │           ├── migration/    # V1__schema, V2__triggers, V4__views_procedures, V6, V7
+│       │           └── seed/         # V3__seed_master, V8__seed_transactions
+│       └── test/java/vn/vtph/coffee/
+│           ├── admin/                # MySqlAdminIntegrationTest
+│           ├── auth/                 # AuthServiceTest, MySqlAuth*/Attendance* IT
+│           ├── common/               # DbInputTest
+│           ├── menu/                 # MenuImageIntegrationTest
+│           ├── notification/         # NotificationBridgeTest, NotificationAfterCommitTest
+│           ├── ops/                  # AccessAndRealtimeTest, MySqlOpsIntegrationTest
+│           ├── shared/pricing/       # PricingPolicyTest, PricingRulesIntegrationTest
+│           └── support/              # AbstractMySqlIT, MySqlContainerHolder
+│
+├── database/
+│   ├── README.md
+│   ├── run_tests.py
+│   ├── 01_schema.sql
+│   ├── 02_triggers.sql
+│   ├── 03_seed_master.sql
+│   ├── 04_views_procedures.sql
+│   ├── 05_seed_transactions.sql
+│   ├── 06_fix_expiry_view.sql
+│   ├── 07_invoice_reprint_log.sql
+│   └── tests/
+│       └── run_rules.sh
+│
+├── docs/
+│   ├── api/                          # api-conventions.md, api-permissions.md
+│   ├── architecture/                 # architecture-decisions.md, realtime-flow.md, system-overview.md
+│   ├── database/                     # data-dictionary.md
+│   ├── development/                  # coding-conventions.md, setup.md, team-workflow.md
+│   ├── testing/                      # test-cases.md, test-strategy.md
+│   ├── business-rules.md
+│   ├── huong-dan-chi-tiet.md
+│   └── refactor.md
+│
+├── frontend/                         # React + Vite + TypeScript
+│   ├── index.html
+│   ├── package.json / package-lock.json
+│   ├── vite.config.ts
+│   ├── eslint.config.js, .prettierrc, .gitignore, .env.example
+│   ├── tsconfig.json / tsconfig.app.json / tsconfig.node.json
+│   ├── public/                       # favicon.png, login-bg.jpg, logo.png, wordmark.png
+│   └── src/
+│       ├── main.tsx
+│       ├── app/                      # App.tsx, providers.tsx, query-client.ts, router.tsx
+│       ├── components/
+│       │   ├── feedback/             # QueryState, Toaster
+│       │   ├── layout/               # AppShell, NotificationBell, UserMenu
+│       │   ├── shared/               # Logo, Wordmark
+│       │   └── ui/                   # Badge, Button, Card, DataTable, EmptyState, Field, Modal, PageTitle, Tabs
+│       ├── features/
+│       │   ├── auth/                 # api, components, hooks, pages, schemas
+│       │   ├── customers/            # api, components, pages
+│       │   ├── inventory/            # api, components (7 tab), pages
+│       │   ├── invoices/             # api, components, pages
+│       │   ├── kitchen/              # api, pages
+│       │   ├── menu/                 # api, components, pages
+│       │   ├── orders/               # api, components, pages
+│       │   ├── payments/             # api, components, pages
+│       │   ├── reports/              # api, pages
+│       │   ├── staff/                # api, components, pages
+│       │   └── tables/               # api, components, pages
+│       ├── hooks/                    # useAction, useIdleLogout, useOpsNotifications, useTopic
+│       ├── layouts/                  # Admin / Cashier / Kitchen / Service Layout
+│       ├── lib/                      # http.ts, logger.ts, notifications.ts, websocket.ts
+│       ├── styles/                   # index.css
+│       ├── test/                     # renderWithProviders.tsx, setup.ts
+│       ├── types/                    # api.ts
+│       └── utils/                    # format.ts, format.test.ts
+│
+└── scripts/
+    ├── BACKUP.md
+    ├── backup.sh
+    ├── restore.sh
+    ├── check-environment.sh
+    ├── dev-mysql.sh
+    ├── dev-start.sh
+    ├── dev-start.bat
+    └── sync-migrations.py
+```
+
 ## Module backend (`backend/src/main/java/vn/vtph/coffee`)
 
 | Package | Vai trò | Trạng thái |
@@ -43,3 +172,19 @@ Trong RAD, Chủ quán và Quản lý dùng chung một vai trò (`OWNER_MANAGER
 ## Giao diện (`frontend/src`)
 
 `app/` (router, providers) · `features/<tên>/` (auth, tables, kitchen, payments) · `layouts/` (Admin, Service, Cashier, Kitchen) · `components/` (ui, layout, feedback, shared) · `lib/` (http, websocket, logger) · `hooks/` · `types/` · `utils/`. Màu và font theo Figma "Mocha v5" (`styles/index.css`).
+
+### Responsive design
+
+Giao diện đáp ứng nhiều kích thước màn hình (điện thoại, máy tính bảng, máy tính) bằng Tailwind CSS 4 theo hướng mobile-first, dùng breakpoint mặc định: `sm` 640px, `md` 768px, `lg` 1024px, `xl` 1280px (có thẻ `viewport` trong `index.html`). Không có breakpoint tự định nghĩa, trừ vài media query riêng cho màn hình đăng nhập (`styles/index.css`).
+
+| Thành phần | Hành vi theo kích thước |
+|---|---|
+| `AppShell` | Từ `md`: thanh bên cố định. Dưới `md`: ẩn thanh bên, dùng thanh điều hướng ngang cuộn được |
+| Sơ đồ bàn (`TableGrid`) | 2 cột → 3 cột (`sm`) → 4 cột (`lg`) |
+| Thực đơn (`ItemGallery`) | 1 → 2 (`sm`) → 3 (`lg`) → 4 cột (`xl`) |
+| Màn hình pha chế (`KitchenBoardPage`) | Xếp dọc → 3 cột (`lg`) |
+| Báo cáo (`ReportsPage`) | Thẻ chỉ số 2 cột (`sm`) → 4 cột, biểu đồ chia 2 cột (`xl`) |
+| `Modal` | Bottom sheet trên điện thoại, hộp thoại giữa màn hình từ `sm` |
+| Đăng nhập (`AuthShell`) | Co theo khung nhìn, bố cục riêng cho máy tính bảng |
+
+Phạm vi: các hành vi trên là những gì mã thể hiện; chưa có báo cáo kiểm thử trên từng dòng thiết bị cụ thể, nên không khẳng định tương thích với mọi thiết bị.
