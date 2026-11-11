@@ -17,7 +17,7 @@ Hệ thống có **bốn vai trò**, dùng trên điện thoại, màn hình qu�
 
 ## 1. Chức năng
 
-Theo bảng đối chiếu trong [docs/requirements/README.md](docs/requirements/README.md), cả **34 use case (UC-01 → UC-34)** của tài liệu RAD đã có API và giao diện:
+Theo bảng đối chiếu dưới đây, cả **34 use case (UC-01 → UC-34)** của tài liệu RAD đã có API và giao diện:
 
 | Nhóm | Nội dung |
 |---|---|
@@ -195,11 +195,9 @@ scripts/    Script chạy, sao lưu, khôi phục, kiểm tra môi trường và
 docs/       Tài liệu kỹ thuật
 ```
 
-- Yêu cầu và use case: [docs/requirements/README.md](docs/requirements/README.md)
 - Kiến trúc: [tổng quan](docs/architecture/system-overview.md), [quyết định kiến trúc](docs/architecture/architecture-decisions.md), [luồng thời gian thực](docs/architecture/realtime-flow.md)
 - Cơ sở dữ liệu: [từ điển dữ liệu](docs/database/data-dictionary.md), [README CSDL](database/README.md)
 - API: [quy ước API](docs/api/api-conventions.md), [bảng phân quyền theo từng API](docs/api/api-permissions.md)
-- Demo: [kịch bản demo](docs/demo/kich-ban-demo.md)
 - Hướng dẫn chi tiết (cài công cụ, luồng demo từng bước): [docs/huong-dan-chi-tiet.md](docs/huong-dan-chi-tiet.md)
 - Phát triển: [cài đặt chi tiết và xử lý sự cố](docs/development/setup.md), [quy ước mã nguồn](docs/development/coding-conventions.md), [quy trình nhóm](docs/development/team-workflow.md), [chiến lược kiểm thử](docs/testing/test-strategy.md)
 - Refactor backend: [docs/refactor.md](docs/refactor.md)

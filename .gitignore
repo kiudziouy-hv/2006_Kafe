@@ -37,3 +37,12 @@ frontend/*.local
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# Tài liệu học thuật và kịch bản demo: chỉ giữ trên máy, không đưa lên Git
+docs/report/
+docs/Slide/
+docs/requirements/
+docs/demo/
+*.docx
+*.pptx
+*.drawio

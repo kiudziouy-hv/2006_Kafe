@@ -8,7 +8,7 @@ Tách từ README gốc để README ngắn gọn. Nội dung giữ nguyên.
 
 ## Chức năng
 
-Theo bảng đối chiếu trong [docs/requirements/README.md](requirements/README.md), cả **34 use case (UC-01 → UC-34)** của tài liệu RAD đã có API và giao diện:
+Theo bảng đối chiếu dưới đây, cả **34 use case (UC-01 → UC-34)** của tài liệu RAD đã có API và giao diện:
 
 | Nhóm | Nội dung |
 |---|---|
@@ -205,7 +205,7 @@ Mặc định `scripts/dev-mysql.sh` chỉ nạp **dữ liệu nền** ở trên
 **Bước 9. Xem báo cáo** (`/admin`, trang đầu)
 - Chọn **Hôm nay**, **Hôm qua**, **7 ngày qua**, **Tháng này** hoặc khoảng ngày tự chọn: tổng doanh thu, số hóa đơn, số sản phẩm đã bán, món bán chạy, danh sách hóa đơn. Hóa đơn đã hủy không tính, hoàn tiền một phần được trừ.
 
-Kịch bản demo đầy đủ từng cảnh, thời lượng và cách xử lý sự cố: [docs/demo/kich-ban-demo.md](demo/kich-ban-demo.md).
+Kịch bản demo đầy đủ nằm ở tài liệu riêng của nhóm, không đưa vào kho mã nguồn.
 
 ### Chạy lại để test và demo
 
