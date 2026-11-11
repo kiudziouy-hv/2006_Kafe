@@ -1,0 +1,25 @@
+{
+  "folders": [
+    {
+      "name": "2006 Kafé (gốc)",
+      "path": "."
+    },
+    {
+      "name": "backend (Spring Boot)",
+      "path": "backend"
+    },
+    {
+      "name": "frontend (React)",
+      "path": "frontend"
+    },
+    {
+      "name": "database (MySQL)",
+      "path": "database"
+    },
+    {
+      "name": "docs",
+      "path": "docs"
+    }
+  ],
+  "settings": {}
+}

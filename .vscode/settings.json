@@ -1,0 +1,25 @@
+{
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.import.maven.enabled": true,
+  "java.compile.nullAnalysis.mode": "automatic",
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[java]": {
+    "editor.defaultFormatter": "redhat.java"
+  },
+  "eslint.workingDirectories": [
+    {
+      "directory": "frontend"
+    }
+  ],
+  "prettier.configPath": "frontend/.prettierrc",
+  "files.exclude": {
+    "**/.DS_Store": true,
+    "**/target": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/target": true,
+    "**/dist": true
+  }
+}

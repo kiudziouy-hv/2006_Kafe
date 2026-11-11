@@ -1,0 +1,9 @@
+{
+  "_note": "Tài khoản thử nghiệm (dữ liệu giả lập trong bộ nhớ, chưa nối bảng account trong MySQL). Chỉ dùng cho demo.",
+  "accounts": [
+    { "id": 1, "username": "chuquan", "fullName": "Chủ quán mẫu", "role": "OWNER",   "secret": "Quan@2026" },
+    { "id": 2, "username": "nvA",     "fullName": "Nhân viên mẫu A", "role": "WAITER",  "secret": "123456" },
+    { "id": 3, "username": "nvB",     "fullName": "Nhân viên mẫu B", "role": "CASHIER", "secret": "234567" },
+    { "id": 4, "username": "nvC",     "fullName": "Nhân viên mẫu C", "role": "BARISTA", "secret": "345678" }
+  ]
+}

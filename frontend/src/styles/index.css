@@ -1,0 +1,418 @@
+@import 'tailwindcss';
+
+/* Mã màu theo Figma "Mocha v5" (biến Color/Primitives): tông nâu #652410 → #fac697 */
+@theme {
+  /* Chữ nội dung: Be Vietnam Pro (thiết kế cho tiếng Việt, rõ ở cỡ nhỏ). Chữ tiêu đề và tên quán: Playfair Display (serif cổ điển). */
+  --font-sans: 'Be Vietnam Pro', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Playfair Display', ui-serif, Georgia, serif;
+
+  /* Vintage café: giấy da, nâu espresso, đồng thau. Tên token giữ nguyên để mọi component tự đổi màu theo. */
+  --color-white: #faf6ec; /* mọi "trắng" trong giao diện thành màu kem nhạt (theo Figma) */
+  --color-canvas: #f6f0e2;
+  --color-ivory: #fff6e2;
+  --color-coffee-950: #20100a;
+  --color-coffee-900: #3a1a0e;
+  --color-coffee-700: #5e2a14;
+  --color-coffee-600: #86421f;
+  --color-coffee-300: #d9a86a;
+  --color-coffee-200: #ecc88f;
+  --color-coffee-100: #f3dcb2;
+  --color-coffee-50: #f8ebcf;
+  --color-brass: #b58437;
+  --color-brass-dark: #8a5f1e;
+  --color-brass-light: #e6c07a;
+  --color-ink: #2b1a0c;
+  --color-ink-soft: #7a6648;
+  --color-ink-faint: #a08266;
+  --color-line: #e3d8c0;
+  --color-success: #2f6b46;
+  --color-success-bg: #dfe9cf;
+  --color-danger: #a8372f;
+  --color-danger-bg: #f4d9cc;
+  --color-warning: #7d5210;
+  --color-warning-bg: #f5e2b4;
+  --radius-card: 18px;
+  --shadow-card: 0 1px 2px rgb(58 36 16 / 0.05), 0 8px 20px rgb(58 36 16 / 0.05);
+  --shadow-lift: 0 2px 4px rgb(58 36 16 / 0.06), 0 14px 28px rgb(58 36 16 / 0.12);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+/* Nền kem phẳng theo Figma, chỉ có vầng sáng nhẹ phía trên */
+body {
+  margin: 0;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  background-color: var(--color-canvas);
+  background-image: radial-gradient(ellipse at 50% -10%, #fffaf0 0%, rgb(255 250 240 / 0) 55%);
+  background-attachment: fixed;
+}
+
+::selection {
+  background: var(--color-brass-light);
+  color: var(--color-coffee-950);
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  font-feature-settings: 'lnum' 1; /* chữ số đều chiều cao, không lệch dòng như số kiểu cổ */
+}
+
+td,
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-brass);
+  outline-offset: 2px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  box-shadow: 0 0 0 3px rgb(181 132 55 / 0.3);
+}
+
+/* Ô nhập có khung riêng: hiệu ứng nằm ở khung, không phải ở thẻ input bên trong */
+.vt-field input:focus,
+.vt-field input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+.vt-field {
+  position: relative;
+  overflow: hidden;
+  transition:
+    border-color 0.25s ease,
+    background-color 0.25s ease,
+    box-shadow 0.3s ease,
+    transform 0.25s ease;
+}
+.vt-field::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-brass),
+    var(--color-brass-light),
+    var(--color-brass),
+    transparent
+  );
+  transform: scaleX(0);
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.vt-field:hover {
+  border-color: var(--color-brass-light);
+}
+.vt-field:focus-within {
+  border-color: var(--color-brass);
+  background-color: rgb(255 248 230 / 0.85);
+  box-shadow:
+    0 0 0 4px rgb(181 132 55 / 0.18),
+    0 8px 20px -8px rgb(107 58 31 / 0.35),
+    inset 0 0 18px rgb(255 214 140 / 0.35);
+  transform: translateY(-1px);
+}
+.vt-field:focus-within::after {
+  transform: scaleX(1);
+}
+.vt-field svg {
+  transition:
+    color 0.25s ease,
+    transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.vt-field:focus-within svg {
+  color: var(--color-brass-dark);
+  transform: scale(1.18) rotate(-6deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .vt-field,
+  .vt-field::after,
+  .vt-field svg {
+    transition: none;
+  }
+}
+
+/* Thanh cuộn nâu đồng */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-brass) transparent;
+}
+
+/* ====== Thành phần vintage dùng chung ====== */
+@layer components {
+  /* Thẻ phẳng: nền kem, viền mảnh, đổ bóng nhẹ */
+  .vt-card {
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+    background: rgb(250 246 236 / 0.92);
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Nút: nâu đậm chuyển sắc nhẹ, nổi khi rê chuột, lún khi nhấn */
+  .vt-btn {
+    position: relative;
+    border: 1px solid transparent;
+    transition:
+      transform 0.18s ease,
+      box-shadow 0.18s ease,
+      filter 0.18s ease,
+      background-color 0.18s ease;
+  }
+  .vt-btn:not(:disabled):hover {
+    transform: translateY(-1px);
+  }
+  .vt-btn:not(:disabled):active {
+    transform: translateY(1px);
+    filter: brightness(0.95);
+  }
+  .vt-btn-primary {
+    color: #fbf7ec;
+    background-image: linear-gradient(90deg, #825423 0%, #693714 100%);
+    box-shadow: 0 1px 2px rgb(105 55 20 / 0.3);
+  }
+  .vt-btn-primary:not(:disabled):hover {
+    box-shadow: 0 6px 14px rgb(105 55 20 / 0.22);
+    filter: brightness(1.05);
+  }
+  .vt-btn-secondary {
+    color: var(--color-coffee-900);
+    border-color: var(--color-line);
+    background-color: #fffdf7;
+    box-shadow: none;
+  }
+  .vt-btn-secondary:not(:disabled):hover {
+    border-color: var(--color-brass);
+    background-color: #fff;
+    box-shadow: 0 4px 10px rgb(58 36 16 / 0.08);
+  }
+  .vt-btn-danger {
+    color: #fff3e6;
+    background-image: linear-gradient(90deg, #c2403a 0%, #a8372f 100%);
+    box-shadow: 0 1px 2px rgb(168 55 47 / 0.3);
+  }
+  .vt-btn-danger:not(:disabled):hover {
+    box-shadow: 0 6px 14px rgb(168 55 47 / 0.22);
+  }
+  .vt-btn-ghost {
+    color: var(--color-coffee-700);
+    background-color: transparent;
+  }
+  .vt-btn-ghost:not(:disabled):hover {
+    background-color: rgb(230 192 122 / 0.28);
+    transform: none;
+  }
+
+  /* Chip/ô chọn và bảng */
+  .vt-hover-lift {
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease,
+      background-color 0.2s ease;
+  }
+  .vt-hover-lift:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgb(58 36 16 / 0.16);
+  }
+
+  .vt-table thead {
+    background: #f3ecda;
+    color: var(--color-ink-soft);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .vt-table tbody tr {
+    transition: background-color 0.15s ease;
+  }
+  .vt-table tbody tr:hover {
+    background-color: rgb(236 226 200 / 0.3);
+  }
+
+  /* Thanh bên: thẻ kem nổi bên trái; mục đang chọn là viên thuốc trắng */
+  .vt-sidebar {
+    color: var(--color-ink);
+    border: 1px solid var(--color-line);
+    border-radius: 28px;
+    background: rgb(250 246 236 / 0.95);
+    box-shadow: var(--shadow-card);
+  }
+  .vt-nav {
+    position: relative;
+    border-radius: 16px;
+    border: 1px solid transparent;
+    color: var(--color-ink);
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+  .vt-nav:hover {
+    background-color: rgb(239 229 206 / 0.7);
+  }
+  .vt-nav[aria-current='page'] {
+    color: var(--color-coffee-950);
+    background-color: #fffdf7;
+    border-color: var(--color-line);
+    box-shadow: 0 4px 12px rgb(58 36 16 / 0.1);
+  }
+
+  .vt-topbar {
+    border: 1px solid var(--color-line);
+    border-radius: 9999px;
+    background: rgb(250 246 236 / 0.92);
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Nội dung tab và trang mới trượt nhẹ vào, không nhảy cục */
+  .vt-panel-in {
+    animation: vt-panel-in 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes vt-panel-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .vt-panel-in {
+      animation: none;
+    }
+  }
+
+  .vt-tab {
+    border: 1px solid var(--color-line);
+    transition:
+      background-color 0.2s ease,
+      box-shadow 0.2s ease,
+      color 0.2s ease;
+  }
+  .vt-tab:hover {
+    border-color: var(--color-brass);
+  }
+  .vt-tab[aria-selected='true'] {
+    color: #fbf7ec;
+    border-color: transparent;
+    background-image: linear-gradient(90deg, #825423, #693714);
+    box-shadow: 0 2px 6px rgb(105 55 20 / 0.2);
+  }
+
+  .vt-modal {
+    border: 1px solid var(--color-line);
+    background: #fbf7ec;
+    box-shadow: 0 30px 60px rgb(43 26 12 / 0.35);
+  }
+  .vt-modal-head {
+    background: #efe5ce;
+    border-bottom: 1px solid var(--color-line);
+  }
+}
+
+@keyframes vt-ring {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  10%,
+  30% {
+    transform: rotate(14deg);
+  }
+  20%,
+  40% {
+    transform: rotate(-14deg);
+  }
+  50% {
+    transform: rotate(0);
+  }
+}
+
+@keyframes vt-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+main {
+  animation: vt-rise 0.35s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+/* In hóa đơn trên máy in nhiệt khổ 80 mm (UC-22, UC-23): chỉ in vùng .print-area */
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 3mm;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: fixed;
+    inset: 0 auto auto 0;
+    width: 74mm;
+    background: #fff;
+    color: #000;
+  }
+}
+
+/* Khung đăng nhập / chấm công kiểu gọn: ảnh quán chỉ hiện khi đủ chỗ để form không phải cuộn */
+@layer components {
+  .vt-aside-compact {
+    display: none;
+  }
+  @media (min-width: 640px) and (min-height: 901px) {
+    .vt-aside-compact {
+      display: block;
+    }
+  }
+  @media (min-width: 1024px) {
+    .vt-aside-compact {
+      display: block;
+    }
+  }
+  /* Ảnh nằm trên form (máy tính bảng, màn cao): logo chồng lên mép ảnh */
+  @media (min-width: 640px) and (max-width: 1023px) and (min-height: 901px) {
+    .vt-header-overlap {
+      margin-top: -4.75rem;
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Backend (gi\u1ea3 l\u1eadp, c\u1ed5ng 8080)",
+      "request": "launch",
+      "mainClass": "vn.vtph.coffee.VtphCoffeeApplication",
+      "projectName": "vtph-coffee"
+    },
+    {
+      "type": "java",
+      "name": "Backend (MySQL)",
+      "request": "launch",
+      "mainClass": "vn.vtph.coffee.VtphCoffeeApplication",
+      "projectName": "vtph-coffee",
+      "env": {
+        "SPRING_PROFILES_ACTIVE": "mysql",
+        "LEGACY_DEMO_HASH": "true"
+      }
+    }
+  ]
+}
