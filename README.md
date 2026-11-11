@@ -170,7 +170,6 @@ mvn -f backend/pom.xml spring-boot:run
 npm --prefix frontend run dev
 ```
 
-
 ---
 
 ## 7. Kiểm thử
@@ -185,7 +184,6 @@ npm --prefix frontend run lint && npm --prefix frontend run typecheck
 ---
 
 ## 8. Cấu trúc thư mục và tài liệu
-docs/architecture/system-overview.md
 
 ```
 backend/    Spring Boot (API, nghiệp vụ, bảo mật, WebSocket); backend/uploads là ảnh món và topping
