@@ -1,12 +1,11 @@
 package vn.vtph.coffee.support;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
+import vn.vtph.coffee.common.BusinessTime;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -60,7 +59,7 @@ public abstract class AbstractMySqlIT {
             }
             return null;
         });
-        baseJdbc.update("INSERT INTO business_day (business_date, status) VALUES (?, 'OPEN')", LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh")));
+        baseJdbc.update("INSERT INTO business_day (business_date, status) VALUES (?, 'OPEN')", BusinessTime.today());
     }
 
     @DynamicPropertySource

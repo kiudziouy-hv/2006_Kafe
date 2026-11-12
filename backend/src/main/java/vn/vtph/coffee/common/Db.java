@@ -39,7 +39,10 @@ public class Db {
 
     public static LocalDateTime nowUtc() { return LocalDateTime.now(ZoneOffset.UTC); }
 
-    public LocalDate today() { return LocalDate.now(zone); }
+    public LocalDate today() { return BusinessTime.today(zone); }
+
+    /** 00:00 của ngày theo giờ nghiệp vụ, đổi sang UTC để so với cột DATETIME. */
+    public LocalDateTime startOfDayUtc(LocalDate d) { return BusinessTime.startOfDayUtc(d, zone); }
 
     /** Khoảng ngày của bộ lọc: bắt đầu không sau kết thúc, không chọn ngày tương lai, dài tối đa {@code maxDays} ngày. */
     public void checkRange(LocalDate from, LocalDate to, int maxDays) {

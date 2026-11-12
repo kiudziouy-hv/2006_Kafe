@@ -543,4 +543,4 @@ INSERT INTO customer (customer_id, full_name, phone, points) VALUES
 (1,'Nguyễn Thị Hoa','0912345678',24),
 (2,'Trần Quốc Khánh','0987654321',0),
 (3,'Lê Mai Anh','0933222111',8);
-INSERT INTO business_day (business_date, status) VALUES (CURDATE(),'OPEN');
+INSERT INTO business_day (business_date, status) VALUES (DATE(UTC_TIMESTAMP() + INTERVAL 7 HOUR),'OPEN');

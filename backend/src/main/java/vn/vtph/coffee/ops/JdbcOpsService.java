@@ -28,6 +28,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.vtph.coffee.common.BusinessTime;
 import vn.vtph.coffee.auth.Account;
 import vn.vtph.coffee.ops.Model.Line;
 import vn.vtph.coffee.ops.Model.Order;
@@ -80,7 +81,7 @@ public class JdbcOpsService implements OpsService {
     // ================= tiện ích =================
     private static LocalDateTime nowUtc() { return LocalDateTime.now(ZoneOffset.UTC); }
 
-    private LocalDate today() { return LocalDate.now(zone); }
+    private LocalDate today() { return BusinessTime.today(zone); }
 
     private static Instant instant(ResultSet rs, String col) throws SQLException {
         LocalDateTime t = rs.getObject(col, LocalDateTime.class);

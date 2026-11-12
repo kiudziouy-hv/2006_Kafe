@@ -24,7 +24,7 @@ public class ReportService {
     public ReportService(Db db) { this.db = db; }
 
     private java.time.LocalDateTime startUtc(LocalDate d) {
-        return d.atStartOfDay(db.zone).toInstant().atZone(java.time.ZoneOffset.UTC).toLocalDateTime();
+        return db.startOfDayUtc(d);
     }
 
     private static long num(Object o) { return o == null ? 0 : ((Number) o).longValue(); }
