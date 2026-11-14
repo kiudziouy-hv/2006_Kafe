@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.vtph.coffee.auth.Account;
+import vn.vtph.coffee.auth.AuthException;
 import vn.vtph.coffee.auth.AuthService;
 import vn.vtph.coffee.common.Db;
 import vn.vtph.coffee.ops.OpsException;
@@ -19,7 +20,8 @@ import vn.vtph.coffee.ops.OpsException;
  */
 @Service
 @Profile("mysql")
-@Transactional
+// noRollbackFor: PIN sai ném AuthException sau khi đã ghi bộ đếm sai/khóa tạm; rollback sẽ xóa bộ đếm và cho dò PIN vô hạn.
+@Transactional(noRollbackFor = AuthException.class)
 public class AttendanceService {
     private static final List<String> SHIFTS = List.of("MORNING", "EVENING");
     private final Db db;
@@ -103,8 +105,8 @@ public class AttendanceService {
     public List<Map<String, Object>> list(LocalDate from, LocalDate to, Integer employeeId) {
         LocalDate f = from == null ? db.today().minusDays(6) : from, t = to == null ? db.today() : to;
         db.checkRange(f, t, 366);
-        LocalDateTime lo = f.atStartOfDay(db.zone).toInstant().atZone(java.time.ZoneOffset.UTC).toLocalDateTime();
-        LocalDateTime hi = t.plusDays(1).atStartOfDay(db.zone).toInstant().atZone(java.time.ZoneOffset.UTC).toLocalDateTime();
+        LocalDateTime lo = db.startOfDayUtc(f);
+        LocalDateTime hi = db.startOfDayUtc(t.plusDays(1));
         String sql = LIST_SQL + " WHERE a.check_in_time >= ? AND a.check_in_time < ?" + (employeeId == null ? "" : " AND a.employee_id = ?")
                 + " ORDER BY a.check_in_time DESC";
         return employeeId == null ? db.rows(sql, lo, hi) : db.rows(sql, lo, hi, employeeId);

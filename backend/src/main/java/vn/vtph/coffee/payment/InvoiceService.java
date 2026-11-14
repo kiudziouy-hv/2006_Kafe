@@ -50,7 +50,7 @@ public class InvoiceService {
             LEFT JOIN employee x ON x.employee_id = i.cancelled_by""";
 
     private java.time.LocalDateTime startUtc(LocalDate d) {
-        return d.atStartOfDay(db.zone).toInstant().atZone(java.time.ZoneOffset.UTC).toLocalDateTime();
+        return db.startOfDayUtc(d);
     }
 
     @Transactional(readOnly = true)

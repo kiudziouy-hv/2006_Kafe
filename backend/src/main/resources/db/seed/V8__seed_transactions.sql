@@ -17,7 +17,7 @@ UPDATE item_size SET status = 'SELLING', status_source = NULL;
 
 -- Phiên ca thu ngân đang mở
 INSERT INTO cashier_session (session_id, business_date, shift, opening_cash, opened_by)
-VALUES (1, CURDATE(), 'EVENING', 500000, 2);
+VALUES (1, DATE(UTC_TIMESTAMP() + INTERVAL 7 HOUR), 'EVENING', 500000, 2);
 
 -- Đơn 1: tại quán, bàn 3, thành viên Nguyễn Thị Hoa dùng 10 điểm, trả tiền mặt
 INSERT INTO orders (order_id, order_type, status, created_by) VALUES (1, 'DINE_IN', 'PROCESSING', 4);
@@ -44,7 +44,7 @@ UPDATE dining_table SET status = 'EMPTY' WHERE table_id = 3;
 
 -- Đơn 2: mang đi, tiền mặt, thanh toán ngay khi xác nhận; món đang chờ pha chế (New)
 INSERT INTO orders (order_id, order_type, status, created_by) VALUES (2, 'TAKEAWAY', 'PROCESSING', 2);
-INSERT INTO takeaway_order (order_id, queue_date, queue_number, payment_method) VALUES (2, CURDATE(), 1, 'CASH');
+INSERT INTO takeaway_order (order_id, queue_date, queue_number, payment_method) VALUES (2, DATE(UTC_TIMESTAMP() + INTERVAL 7 HOUR), 1, 'CASH');
 INSERT INTO order_batch (batch_id, order_id) VALUES (2, 2);
 INSERT INTO order_line (line_id, batch_id, item_id, size, quantity, temperature, sugar_level, ice_level, unit_price, discount_percent)
 VALUES (3, 2, 2, 'L', 2, 'COLD', 70, 'NORMAL', 39000, 0);           -- Cà phê sữa L x2

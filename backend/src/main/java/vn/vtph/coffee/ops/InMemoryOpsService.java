@@ -304,7 +304,7 @@ public class InMemoryOpsService implements OpsService {
         List<Shift> week = new ArrayList<>(shifts);
         Collections.reverse(week);
         week.forEach(this::fillTransfer);
-        m.put("days", ShiftDays.group(week, java.time.LocalDate.now().toString()));
+        m.put("days", ShiftDays.group(week, vn.vtph.coffee.common.BusinessTime.today().toString()));
         if (s != null) { m.put("cashSales", cashSales(s)); m.put("expected", s.openingCash + cashSales(s)); m.put("drafts", drafts().size()); m.put("undelivered", handovers().size()); }
         return m;
     }
@@ -327,7 +327,7 @@ public class InMemoryOpsService implements OpsService {
         if (openShift() != null) throw new OpsException(409, "SHIFT_OPEN", "Đã có phiên ca đang mở, hãy chốt ca trước.");
         if (!List.of("MORNING", "EVENING").contains(type)) throw new OpsException(422, "BAD_TYPE", "Chọn ca sáng hoặc ca tối.");
         if (cash == null || cash < 0) throw new OpsException(422, "BAD_CASH", "Tiền mặt đầu ca không hợp lệ.");
-        Shift s = new Shift(); s.id = shifts.size() + 1; s.type = type; s.openingCash = cash; s.openedBy = by.fullName; s.businessDate = java.time.LocalDate.now().toString(); shifts.add(s);
+        Shift s = new Shift(); s.id = shifts.size() + 1; s.type = type; s.openingCash = cash; s.openedBy = by.fullName; s.businessDate = vn.vtph.coffee.common.BusinessTime.today().toString(); shifts.add(s);
         emit("SHIFT_OPENED", Map.of("shiftId", s.id, "label", type.equals("MORNING") ? "Ca sáng" : "Ca tối"));
         return s;
     }

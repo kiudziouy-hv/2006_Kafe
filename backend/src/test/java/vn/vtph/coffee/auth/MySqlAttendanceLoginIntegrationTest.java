@@ -85,4 +85,35 @@ class MySqlAttendanceLoginIntegrationTest extends AbstractMySqlIT {
         assertEquals("owner", user);
         send("/api/auth/owner/login", "{\"username\":\"owner\",\"password\":\"admin123\"}").andExpect(status().isOk());
     }
+
+    /** Lỗi cũ: @Transactional ở AttendanceService rollback bộ đếm sai nên chấm công cho dò PIN vô hạn. */
+    @Test
+    void wrongPinOnAttendanceCountsAndLocksAfterFiveAttempts() throws Exception {
+        String wrong = "{\"accountId\":3,\"pin\":\"000000\",\"shift\":\"MORNING\"}";
+        for (int left = 4; left >= 1; left--)
+            send("/api/auth/attendance/in", wrong).andExpect(status().isUnauthorized())
+                    .andExpect(jsonPath("$.code").value("WRONG_SECRET")).andExpect(jsonPath("$.attemptsLeft").value(left));
+        assertEquals(4, jdbc.queryForObject("SELECT failed_attempts FROM account WHERE account_id = 3", Integer.class));
+
+        // lần sai thứ 5: khóa tạm 15 phút
+        send("/api/auth/attendance/in", wrong).andExpect(status().isLocked())
+                .andExpect(jsonPath("$.code").value("LOCKED")).andExpect(jsonPath("$.lockSeconds").value(900));
+        assertEquals(5, jdbc.queryForObject("SELECT failed_attempts FROM account WHERE account_id = 3", Integer.class));
+        assertEquals("TEMP_LOCKED", jdbc.queryForObject("SELECT status FROM account WHERE account_id = 3", String.class));
+        assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM account WHERE account_id = 3 AND locked_until IS NOT NULL", Integer.class));
+
+        // đang khóa thì PIN đúng cũng bị từ chối, cả ở chấm công vào, chấm công ra lẫn đăng nhập; không phát sinh bản ghi chấm công
+        send("/api/auth/attendance/in", "{\"accountId\":3,\"pin\":\"456789\",\"shift\":\"MORNING\"}").andExpect(status().isLocked());
+        send("/api/auth/attendance/out", "{\"accountId\":3,\"pin\":\"456789\"}").andExpect(status().isLocked());
+        staffLogin(3, "456789").andExpect(status().isLocked());
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM attendance", Integer.class));
+    }
+
+    @Test
+    void successfulCheckInResetsWrongPinCounter() throws Exception {
+        send("/api/auth/attendance/in", "{\"accountId\":3,\"pin\":\"000000\",\"shift\":\"MORNING\"}").andExpect(status().isUnauthorized());
+        assertEquals(1, jdbc.queryForObject("SELECT failed_attempts FROM account WHERE account_id = 3", Integer.class));
+        send("/api/auth/attendance/in", "{\"accountId\":3,\"pin\":\"456789\",\"shift\":\"MORNING\"}").andExpect(status().isOk());
+        assertEquals(0, jdbc.queryForObject("SELECT failed_attempts FROM account WHERE account_id = 3", Integer.class));
+    }
 }
