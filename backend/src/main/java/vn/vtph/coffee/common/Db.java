@@ -51,13 +51,6 @@ public class Db {
         if (java.time.temporal.ChronoUnit.DAYS.between(from, to) > maxDays) throw new OpsException(422, "BAD_RANGE", "Khoảng thời gian tối đa " + maxDays + " ngày.");
     }
 
-    /** Khoảng ngày của bộ lọc: bắt đầu không sau kết thúc, không chọn ngày tương lai, dài tối đa {@code maxDays} ngày. */
-    public void checkRange(LocalDate from, LocalDate to, int maxDays) {
-        if (from.isAfter(to)) throw new OpsException(422, "BAD_RANGE", "Ngày bắt đầu không được sau ngày kết thúc.");
-        if (to.isAfter(today())) throw new OpsException(422, "BAD_RANGE", "Không chọn ngày trong tương lai.");
-        if (java.time.temporal.ChronoUnit.DAYS.between(from, to) > maxDays) throw new OpsException(422, "BAD_RANGE", "Khoảng thời gian tối đa " + maxDays + " ngày.");
-    }
-
     /** Độ lệch múi giờ dạng '+07:00' để dùng với CONVERT_TZ khi gom báo cáo theo ngày địa phương. */
     public String offset() {
         String id = zone.getRules().getOffset(Instant.now()).getId();
