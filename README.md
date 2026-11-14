@@ -198,7 +198,6 @@ docs/       Tài liệu kỹ thuật
 - API: [quy ước API](docs/api/api-conventions.md), [bảng phân quyền theo từng API](docs/api/api-permissions.md)
 - Hướng dẫn chi tiết (cài công cụ, luồng demo từng bước): [docs/huong-dan-chi-tiet.md](docs/huong-dan-chi-tiet.md)
 - Phát triển: [cài đặt chi tiết và xử lý sự cố](docs/development/setup.md), [quy ước mã nguồn](docs/development/coding-conventions.md), [quy trình nhóm](docs/development/team-workflow.md), [chiến lược kiểm thử](docs/testing/test-strategy.md)
-- Refactor backend: [docs/refactor.md](docs/refactor.md)
 
 ## 9. Nhóm thực hiện
 

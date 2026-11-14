@@ -43,6 +43,7 @@ docs/report/
 docs/Slide/
 docs/requirements/
 docs/demo/
+docs/refactor.md
 *.docx
 *.pptx
 *.drawio

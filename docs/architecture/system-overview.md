@@ -88,8 +88,7 @@ Trình duyệt (React) ── REST /api ──▶ Spring Security ─▶ Control
 │   ├── development/                  # coding-conventions.md, setup.md, team-workflow.md
 │   ├── testing/                      # test-cases.md, test-strategy.md
 │   ├── business-rules.md
-│   ├── huong-dan-chi-tiet.md
-│   └── refactor.md
+│   └── huong-dan-chi-tiet.md
 │
 ├── frontend/                         # React + Vite + TypeScript
 │   ├── index.html
