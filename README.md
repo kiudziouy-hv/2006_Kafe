@@ -17,7 +17,7 @@ Hệ thống có **bốn vai trò**, dùng trên điện thoại, màn hình qu�
 
 ## 1. Chức năng
 
-Theo bảng đối chiếu dưới đây, cả **34 use case (UC-01 → UC-34)** của tài liệu RAD đã có API và giao diện:
+Theo bảng đối chiếu dưới đây, cả **34 use case (UC-01 → UC-34)** của tài liệu đã có API và giao diện:
 
 | Nhóm | Nội dung |
 |---|---|
