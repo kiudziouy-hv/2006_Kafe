@@ -1,7 +1,5 @@
 # 2006 Kafé — Hệ thống quản lý quán cà phê
 
-Tên trong tài liệu RAD: *VTPH Coffee* · Đồ án môn RAD · Nhóm N15 · Trường Đại học Tôn Đức Thắng (TDTU)
-
 Phần mềm giúp một quán cà phê vận hành trọn vòng đời của một ly nước: **phục vụ ghi món → pha chế làm món → thu ngân thanh toán → chủ quán xem báo cáo**, cùng với quản lý thực đơn, kho, nhân sự, thành viên tích điểm và khuyến mãi.
 
 Hệ thống có **bốn vai trò**, dùng trên điện thoại, màn hình quầy bar, máy thu ngân và máy tính; mỗi vai trò có giao diện riêng:
