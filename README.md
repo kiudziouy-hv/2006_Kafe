@@ -131,7 +131,7 @@ Nhân viên phải **chấm công vào ca** trước khi đăng nhập (liên k�
 
 ### Luồng nghiệp vụ
 
-Chấm công → Thu ngân mở ca → Phục vụ gọi món → Pha chế làm món → Thu ngân thanh toán → chốt ca, Chủ quán chốt ngày → xem báo cáo. Từng bước: [docs/huong-dan-chi-tiet.md](docs/huong-dan-chi-tiet.md) và [kịch bản demo](docs/demo/kich-ban-demo.md).
+Chấm công → Thu ngân mở ca → Phục vụ gọi món → Pha chế làm món → Thu ngân thanh toán → chốt ca, Chủ quán chốt ngày → xem báo cáo. Từng bước: [docs/huong-dan-chi-tiet.md](docs/huong-dan-chi-tiet.md).
 
 ### Chạy lại để test và demo
 
