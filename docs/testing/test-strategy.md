@@ -1,6 +1,6 @@
 # Chiến lược kiểm thử
 
-Số liệu cập nhật 2026-11-05: **88 test backend** (0 lỗi), **25 test giao diện** (0 lỗi) và **36 kịch bản quy tắc CSDL** (36/36 đạt).
+Số liệu cập nhật 2026-11-16: **103 test backend** (0 lỗi, 0 bỏ qua), **25 test giao diện** (0 lỗi) và **36 kịch bản quy tắc CSDL** (36/36 đạt).
 
 ## Backend (JUnit 5, `mvn -f backend/pom.xml test`)
 
@@ -15,8 +15,10 @@ Số liệu cập nhật 2026-11-05: **88 test backend** (0 lỗi), **25 test gi
 | Tích hợp MySQL: gọi món đến thanh toán | như trên, qua MockMvc | Bàn và thực đơn từ CSDL; gửi đơn ghi đủ order/batch/line/topping; gọi thêm; hủy theo vai trò; bánh trừ/hoàn kho; chuyển bàn; pha chế qua `sp_start_making`; thiếu nguyên liệu đánh dấu Hết hàng bền vững; chờ thanh toán → hóa đơn → bàn trống; mang đi tiền mặt, chuyển khoản, đơn nháp; chốt ca; JSON khớp mô hình; trigger vẫn chặn khi qua mặt service; giao khách đơn mang đi, doanh thu chuyển khoản trong ca, nhân viên phụ trách đang chấm công, chốt ca bị chặn khi còn đơn chưa giao | 19 |
 | Tích hợp MySQL: tính tiền | như trên | Khuyến mãi, điểm, làm tròn, hoàn một phần theo tỷ lệ, tiền lưu trên hóa đơn | 5 |
 | Tích hợp MySQL: quản trị | như trên | Thành viên, khuyến mãi, nhân viên và khóa tài khoản, chấm công và lịch sử chỉnh sửa, thực đơn/topping, kho (nhập, công thức, kiểm kê, tự bán lại), hao hụt, chốt ca/ngày, hủy hóa đơn và hoàn tiền, báo cáo | 13 |
-| Tích hợp MySQL: chấm công mới được đăng nhập | như trên, bật `vtph.auth.require-attendance` | Chưa chấm công thì tài khoản cá nhân và quầy bị chặn; chấm công vai trò nào mở cửa vai trò đó; chấm công ra thì chặn lại; Chủ quán không bị ràng buộc | 3 |
+| Tích hợp MySQL: chấm công mới được đăng nhập | như trên, bật `vtph.auth.require-attendance` | Chưa chấm công thì tài khoản cá nhân và quầy bị chặn; chấm công vai trò nào mở cửa vai trò đó; chấm công ra thì chặn lại; Thu ngân dùng PIN cá nhân chứ không dùng PIN quầy; Chủ quán không bị ràng buộc; sai PIN khi chấm công vẫn tính bộ đếm và khóa sau 5 lần; chấm công thành công thì đặt lại bộ đếm sai PIN | 5 |
 | Đơn vị | JUnit 5 | `Db`: số tiền không âm/không thập phân/không quá trần, chuỗi không vượt độ dài cột, số nguyên quá dài | 4 |
+| Đơn vị | JUnit 5 | `BusinessTime`: ngày kinh doanh theo giờ Việt Nam quanh nửa đêm, khung 00:00-07:00 khi ngày UTC còn là hôm qua, không phụ thuộc múi giờ của đồng hồ, đầu ngày theo UTC | 10 |
+| Tích hợp MySQL: ngày kinh doanh | như trên (container chạy UTC) | Ngày hiện tại của CSDL, biểu thức ngày trong dữ liệu mẫu và trạng thái ngày do API trả về đều trùng ngày theo giờ Việt Nam | 3 |
 | Tích hợp MySQL: ảnh | như trên | Tải ảnh món và topping, phân quyền, không trùng khi cùng mã | 2 |
 
 Các test MySQL cần Docker đang chạy; không có Docker thì tự bỏ qua.
