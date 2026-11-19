@@ -11,6 +11,10 @@ Hệ thống có **bốn vai trò**, dùng trên điện thoại, màn hình qu�
 | **Thu ngân** | Máy thu ngân | Mở/chốt ca, thanh toán, đơn mang đi, in hóa đơn |
 | **Chủ quán / Quản lý** | Máy tính | Thực đơn, kho, nhân viên, khách hàng, hóa đơn, báo cáo, chốt ngày |
 
+**Prototype giao diện (Figma):** [2006 Kafé — UI](https://www.figma.com/design/rSMSQOVVFzblXpB2accLqZ/2006-Kaf%C3%A9-UI?node-id=19-6&p=f&t=KWqUcWHWD2HbDHEz-0)
+
+Báo cáo và slide được nộp riêng trên Elearning.
+
 ---
 
 ## 1. Chức năng
