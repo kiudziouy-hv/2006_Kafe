@@ -63,8 +63,8 @@ class MySqlAdminIntegrationTest extends AbstractMySqlIT {
         jdbc.execute((java.sql.Connection c) -> {
             try (var st = c.createStatement()) {
                 st.execute("SET FOREIGN_KEY_CHECKS = 0");
-                st.execute("DELETE FROM account WHERE account_id > 10");
-                st.execute("DELETE FROM employee WHERE employee_id > 10");
+                st.execute("DELETE FROM account WHERE account_id > 11");
+                st.execute("DELETE FROM employee WHERE employee_id > 11");
                 st.execute("DELETE FROM recipe_line WHERE recipe_id IN (SELECT recipe_id FROM recipe WHERE item_id > 30)");
                 st.execute("DELETE FROM recipe WHERE item_id > 30");
                 st.execute("DELETE FROM menu_item_topping WHERE item_id > 30");
