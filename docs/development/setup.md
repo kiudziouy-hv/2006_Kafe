@@ -28,7 +28,7 @@ Cách nhanh nhất: `scripts/dev-mysql.sh` (tự chạy container `vtph-mysql` c
 Docker chỉ dùng để chạy MySQL (và test Testcontainers); backend và giao diện chạy trực tiếp trên máy bằng `scripts/dev-mysql.sh`. Dự án không còn cấu hình đóng gói toàn bộ hệ thống bằng `docker compose` (đã gỡ để tránh lệch với cách chạy chính).
 
 ## Chạy test MySQL (Testcontainers)
-Cần Docker đang chạy; `mvn -f backend/pom.xml test` tự bỏ qua 20 test này nếu không có Docker. Trên macOS với Docker Desktop, nếu thấy "Could not find a valid Docker environment": `export DOCKER_HOST=unix://$HOME/.docker/run/docker.sock`. Surefire đã đặt `-Dapi.version=1.44` vì Docker Desktop 29 từ chối API cũ.
+Cần Docker đang chạy; `mvn -f backend/pom.xml test` nếu không có Docker thì 58 test dùng MySQL thật báo lỗi chứ không tự bỏ qua. Trên macOS với Docker Desktop, nếu thấy "Could not find a valid Docker environment": `export DOCKER_HOST=unix://$HOME/.docker/run/docker.sock`. Surefire đã đặt `-Dapi.version=1.44` vì Docker Desktop 29 từ chối API cũ.
 
 ## Xử lý sự cố
 | Hiện tượng | Nguyên nhân thường gặp |

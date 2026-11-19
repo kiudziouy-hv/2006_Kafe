@@ -61,11 +61,13 @@ Backend và giao diện trao đổi bằng REST và WebSocket, dữ liệu JSON.
 
 | Công cụ | Phiên bản | Dùng để |
 |---|---|---|
-| Java (JDK) | **21** | Chạy backend |
+| Java (JDK) | **21** (bắt buộc; `mvn -v` phải báo Java 21) | Chạy backend |
 | Maven | 3.9 trở lên | Build và chạy backend |
 | Node.js (kèm npm) | **22 trở lên** | Chạy giao diện |
 | Docker Desktop | bản mới | Chạy MySQL trong container (không cần cài MySQL lên máy) |
 | Git Bash hoặc WSL | chỉ Windows | Chạy được file `.sh` |
+
+Nếu `mvn -v` hiện Java khác 21, đặt `JAVA_HOME` trỏ tới JDK 21 (ví dụ macOS: `export JAVA_HOME=$(/usr/libexec/java_home -v 21)`).
 
 **Kiểm tra máy đã đủ công cụ** (ở thư mục gốc dự án, trong Terminal hoặc Git Bash):
 ```bash
@@ -95,7 +97,7 @@ Script tự tạo MySQL (cổng 3307), chạy backend (8080), giao diện (5173)
 | Dừng backend và giao diện | `Ctrl+C` trong terminal đang chạy |
 | Dừng MySQL | `docker stop vtph-mysql` |
 | Đặt lại dữ liệu mẫu | chạy lại `scripts/dev-mysql.sh` (tự dựng lại); xóa hẳn: `docker rm -f vtph-mysql && docker volume rm vtph_mysql_data` |
-| Chạy test backend | `mvn -f backend/pom.xml test` (**cần Docker đang chạy**: 53/88 test dùng MySQL thật, không có Docker thì các test này báo lỗi chứ không tự bỏ qua) |
+| Chạy test backend | `mvn -f backend/pom.xml test` (**cần Docker đang chạy**: 58/103 test dùng MySQL thật, không có Docker thì các test này báo lỗi chứ không tự bỏ qua) |
 | Chạy test giao diện | `npm --prefix frontend run test` |
 | Kiểm tra mã giao diện | `npm --prefix frontend run lint && npm --prefix frontend run typecheck` |
 | Sau khi sửa `database/*.sql` | `python3 scripts/sync-migrations.py` (kiểm tra không ghi: thêm `--check`) |
@@ -112,8 +114,8 @@ Script tự tạo MySQL (cổng 3307), chạy backend (8080), giao diện (5173)
 |---|---|---|---|
 | Chủ quán / Quản lý | Huỳnh Thị Kiều Vy | Tab **Quản lý** | `owner` / `admin123` |
 | Thu ngân | Dùng chung cho máy thu ngân (tài khoản "Quầy Thu ngân") | Tab **Nhân viên** → Thu ngân | chọn tên rồi nhập **PIN riêng**: Hồ Quốc Tiến `234567`, Lê Hoàng Cường `456789` |
-| Phục vụ | Dùng chung cho các điện thoại phục vụ (tài khoản "Điện thoại Phục vụ") | Tab **Nhân viên** → Phục vụ | PIN `123456`, không chọn tên |
-| Pha chế | Dùng chung cho màn hình pha chế (tài khoản "Màn hình Pha chế") | Tab **Nhân viên** → Pha chế | PIN `345678`, không chọn tên |
+| Phục vụ | Dùng chung cho các điện thoại phục vụ (tài khoản "Điện thoại Phục vụ") | Tab **Nhân viên** → Phục vụ | chọn tên (người đang chấm công) rồi nhập PIN chung `123456` |
+| Pha chế | Dùng chung cho màn hình pha chế (tài khoản "Màn hình Pha chế") | Tab **Nhân viên** → Pha chế | PIN `345678` (không chọn tên) |
 
 Nhân viên phải **chấm công vào ca** trước khi đăng nhập (liên kết "Chấm công vào / ra ca" ở màn đăng nhập, đường dẫn `/attendance`). Nhập sai PIN 5 lần bị khóa 15 phút. Thu ngân và Pha chế tự đăng xuất sau 5 phút không thao tác. Chi tiết: [docs/business-rules.md](docs/business-rules.md).
 
@@ -142,6 +144,8 @@ Dùng ở thư mục gốc dự án. **Mỗi lần chạy `scripts/dev-mysql.sh`
 | **Test/demo từ trống** (mặc định) | `Ctrl+C` ở terminal đang chạy, rồi `scripts/dev-mysql.sh`; mở http://localhost:5173 |
 | **Giữ dữ liệu lần chạy trước** | `KEEP_DATA=1 scripts/dev-mysql.sh` |
 | **Có sẵn đơn mẫu** (ca đang mở, 3 đơn mẫu, 1 phiếu hao hụt để xem ngay; đơn mang đi mẫu chưa giao nên phải giao khách và xử lý đơn nháp trước khi chốt ca) | `SPRING_FLYWAY_TARGET=latest scripts/dev-mysql.sh` |
+
+> **Lưu ý khi dùng `KEEP_DATA=1`:** nếu CSDL được dựng bằng bản cũ rồi chạy lại với `KEEP_DATA=1`, Flyway có thể báo lỗi checksum ở V3/V8 (dữ liệu mẫu đã đổi sang tính ngày theo giờ Việt Nam). Cách xử lý: chạy lại `scripts/dev-mysql.sh` không có `KEEP_DATA` để dựng CSDL sạch.
 
 ---
 
@@ -173,7 +177,7 @@ npm --prefix frontend run dev
 ## 7. Kiểm thử
 
 ```bash
-mvn -f backend/pom.xml test        # test backend (cần Docker đang chạy; 53/88 test dùng MySQL thật, thiếu Docker thì báo lỗi)
+mvn -f backend/pom.xml test        # test backend (cần Docker đang chạy; 58/103 test dùng MySQL thật, thiếu Docker thì báo lỗi)
 npm --prefix frontend run test     # test giao diện
 npm --prefix frontend run lint && npm --prefix frontend run typecheck
 ```

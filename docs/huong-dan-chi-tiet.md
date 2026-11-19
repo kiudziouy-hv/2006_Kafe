@@ -94,7 +94,7 @@ Dự án đã có sẵn ảnh cho 30 món và 5 topping. Chủ quán thêm ảnh
 ### Dữ liệu có được giữ lại không?
 **Mặc định là không.** Mỗi lần chạy `scripts/dev-mysql.sh`, cơ sở dữ liệu được dựng lại từ đầu: chỉ có dữ liệu nền (thực đơn, kho, nhân viên, bàn, khách mẫu), còn đơn, hóa đơn, ca thu ngân và chấm công **rỗng**, tồn kho về mức ban đầu. Nhờ đó lần nào cũng demo được từ trống. Chi tiết và các tùy chọn ở mục 4, phần *Chạy lại để test và demo*.
 
-- Muốn **giữ dữ liệu** lần chạy trước: `KEEP_DATA=1 scripts/dev-mysql.sh`.
+- Muốn **giữ dữ liệu** lần chạy trước: `KEEP_DATA=1 scripts/dev-mysql.sh`. Nếu CSDL được dựng bằng bản cũ, Flyway có thể báo lỗi checksum ở V3/V8 (dữ liệu mẫu đã đổi sang tính ngày theo giờ Việt Nam); khi đó chạy lại `scripts/dev-mysql.sh` không có `KEEP_DATA` để dựng CSDL sạch.
 - Muốn **xóa hẳn** container và volume (ví dụ sau khi đổi lược đồ lớn): `docker rm -f vtph-mysql && docker volume rm vtph_mysql_data`, rồi `scripts/dev-mysql.sh`.
 
 **Lưu ý khi demo:** chốt ngày xong thì hôm đó không mở thêm ca được (chạy lại script để dựng lại dữ liệu); đừng bấm *Chốt ngày* trước buổi trình bày. Nếu backend báo lỗi `checksum mismatch` của Flyway khi khởi động, nghĩa là CSDL cũ không khớp lược đồ mới, hãy xóa hẳn container và volume như trên. Nhớ **chấm công trước** khi đăng nhập các vai trò (mục 4).
@@ -108,7 +108,7 @@ Dự án đã có sẵn ảnh cho 30 món và 5 topping. Chủ quán thêm ảnh
 | Dừng backend và giao diện | `Ctrl+C` trong terminal đang chạy |
 | Dừng MySQL | `docker stop vtph-mysql` |
 | Đặt lại dữ liệu mẫu | chạy lại `scripts/dev-mysql.sh` (tự dựng lại); xóa hẳn: `docker rm -f vtph-mysql && docker volume rm vtph_mysql_data` |
-| Chạy test backend | `mvn -f backend/pom.xml test` (**cần Docker đang chạy**: 53/88 test dùng MySQL thật, không có Docker thì các test này báo lỗi chứ không tự bỏ qua) |
+| Chạy test backend | `mvn -f backend/pom.xml test` (**cần Docker đang chạy**: 58/103 test dùng MySQL thật, không có Docker thì các test này báo lỗi chứ không tự bỏ qua) |
 | Chạy test giao diện | `npm --prefix frontend run test` |
 | Kiểm tra mã giao diện | `npm --prefix frontend run lint && npm --prefix frontend run typecheck` |
 | Sau khi sửa `database/*.sql` | `python3 scripts/sync-migrations.py` (kiểm tra không ghi: thêm `--check`) |
@@ -127,8 +127,8 @@ Dự án đã có sẵn ảnh cho 30 món và 5 topping. Chủ quán thêm ảnh
 |---|---|---|---|
 | Chủ quán / Quản lý | Huỳnh Thị Kiều Vy | Tab **Quản lý** | `owner` / `admin123` |
 | Thu ngân | Dùng chung cho máy thu ngân (tài khoản "Quầy Thu ngân") | Tab **Nhân viên** → Thu ngân | chọn tên rồi nhập **PIN riêng**: Hồ Quốc Tiến `234567`, Lê Hoàng Cường `456789` |
-| Phục vụ | Dùng chung cho các điện thoại phục vụ (tài khoản "Điện thoại Phục vụ") | Tab **Nhân viên** → Phục vụ | PIN `123456`, không chọn tên |
-| Pha chế | Dùng chung cho màn hình pha chế (tài khoản "Màn hình Pha chế") | Tab **Nhân viên** → Pha chế | PIN `345678`, không chọn tên |
+| Phục vụ | Dùng chung cho các điện thoại phục vụ (tài khoản "Điện thoại Phục vụ") | Tab **Nhân viên** → Phục vụ | chọn tên (người đang chấm công) rồi nhập PIN chung `123456` |
+| Pha chế | Dùng chung cho màn hình pha chế (tài khoản "Màn hình Pha chế") | Tab **Nhân viên** → Pha chế | PIN `345678` (không chọn tên) |
 
 - **Đăng nhập nhân viên không hiện danh sách tài khoản.** Cả ba vai trò đăng nhập bằng cách chọn vai trò rồi nhập PIN của vai trò đó (tài khoản dùng chung). Riêng Thu ngân và Phục vụ còn chọn tên mình trong số người cùng vai trò đang chấm công; Pha chế chỉ thể hiện vai trò. **Thu ngân nhập PIN riêng của chính người đã chọn** (quán có hai thu ngân theo ca sáng và ca tối: *Hồ Quốc Tiến*, *Lê Hoàng Cường*), nên chọn tên người khác thì không vào được; Chủ quán đặt hoặc đổi PIN từng người ở màn Nhân viên. **PIN của các vai trò phải khác nhau** (phục vụ `123456`, pha chế `345678`, thu ngân Hồ Quốc Tiến `234567` và Lê Hoàng Cường `456789` ở dữ liệu mẫu); nếu hai vai trò dùng chung một PIN thì người này có thể vào tài khoản của vai trò kia và nâng quyền. Thao tác của Thu ngân và Phục vụ ghi theo người đã chọn lúc đăng nhập (thu ngân có PIN riêng nên không chọn nhầm được; phục vụ dùng PIN chung nên chỉ là tên chọn); thao tác của Pha chế ghi vào tài khoản dùng chung, muốn biết ai trực ca đó thì xem bảng chấm công. Tài khoản dùng chung không dùng để chấm công.
 - **Chấm công** luôn dùng tài khoản cá nhân: ở trang `/attendance`, mỗi người chọn **vai trò** (Thu ngân, Phục vụ, Pha chế), rồi chọn **tên** trong danh sách của vai trò đó và nhập PIN. Backend từ chối nếu tên không thuộc vai trò đã chọn (`WRONG_ROLE`). PIN ở dữ liệu mẫu **theo vai trò**, đồng bộ với đăng nhập: thu ngân `234567`, phục vụ `123456`, pha chế `345678`. Tài khoản cá nhân: phục vụ Võ Tấn Phát, Võ Thị Em, Đỗ Quang Huy; thu ngân Hồ Quốc Tiến, Lê Hoàng Cường; pha chế Trần Thanh Huy, Đặng Thị Giang. Các tài khoản quầy dùng chung không xuất hiện ở trang chấm công. Khi dùng thật, Chủ quán đặt PIN riêng cho từng người ở **Nhân sự & ca → Nhân viên**.
@@ -234,8 +234,8 @@ Mỗi vai trò dùng một trình duyệt hoặc cửa sổ ẩn danh riêng đ�
 ### Kịch bản gợi ý: một ly nước đi từ đầu đến cuối
 
 0. **Chấm công trước** (`/attendance`): chọn vai trò, chọn tên, nhập PIN, cho ít nhất một thu ngân, một phục vụ và một pha chế. Không có bước này thì không đăng nhập được các vai trò nhân viên.
-1. **Phục vụ** (tab Nhân viên → Phục vụ, PIN `123456`, không chọn tên): vào *Sơ đồ bàn*, chọn một bàn trống. Thực đơn nằm bên trái: bấm món, chọn kích cỡ, nóng/lạnh, đường, đá, topping rồi *Thêm*. Món vừa chọn hiện ở khối *Món đã chọn* bên phải (bấm biểu tượng thùng rác để bỏ), bấm *Gửi order* thì chỉ hiện thông báo và món chuyển xuống quầy pha chế.
-2. **Pha chế** (chọn vai trò Pha chế, PIN `345678`, không chọn tên): món mới hiện trên bảng, bấm *Bắt đầu pha* (nguyên liệu trong kho được trừ theo công thức; nếu thiếu nguyên liệu nút báo "Thiếu nguyên liệu"), pha xong bấm *Hoàn thành* để báo Phục vụ và Thu ngân.
+1. **Phục vụ** (tab Nhân viên → Phục vụ, chọn tên mình trong danh sách đang chấm công, PIN chung `123456`): vào *Sơ đồ bàn*, chọn một bàn trống. Thực đơn nằm bên trái: bấm món, chọn kích cỡ, nóng/lạnh, đường, đá, topping rồi *Thêm*. Món vừa chọn hiện ở khối *Món đã chọn* bên phải (bấm biểu tượng thùng rác để bỏ), bấm *Gửi order* thì chỉ hiện thông báo và món chuyển xuống quầy pha chế.
+2. **Pha chế** (chọn vai trò Pha chế, PIN `345678`, không phải chọn tên): món mới hiện trên bảng, bấm *Bắt đầu pha* (nguyên liệu trong kho được trừ theo công thức; nếu thiếu nguyên liệu nút báo "Thiếu nguyên liệu"), pha xong bấm *Hoàn thành* để báo Phục vụ và Thu ngân.
 3. **Thu ngân** (chọn vai trò Thu ngân, chọn tên, nhập PIN riêng của người đó, ví dụ Hồ Quốc Tiến `234567`): chọn bàn đang chờ thanh toán. Nhập số điện thoại thành viên (ví dụ `0912345678`) để dùng điểm, chọn phương thức rồi thanh toán và in hóa đơn.
 4. **Chủ quán** (`owner` / `admin123`): xem *Báo cáo* (doanh thu, món bán chạy), *Hóa đơn* (in lại, hủy, hoàn tiền), *Kho* (cảnh báo sắp hết, xác nhận hao hụt). Avatar ở cuối thanh bên mở menu *Thông tin cá nhân* và *Đăng xuất*.
 5. Cuối ngày: Thu ngân **chốt ca**, Chủ quán **chốt ngày**.
